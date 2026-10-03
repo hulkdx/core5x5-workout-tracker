@@ -1,31 +1,82 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# Core5x5 Mobile
 
-* [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+Kotlin Multiplatform for Android and iOS, with feature-first Gradle modules, shared Compose UI, AndroidX ViewModels, UDF, lightweight Clean Architecture, and Koin.
 
-* [/shared](./shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
+This is an architecture-only scaffold. The shared shell displays “Core5x5”; workout features, navigation, storage, and the full design system are deliberately deferred.
 
-### Running the apps
+Read [the project context](../docs/PROJECT_CONTEXT.md) for product requirements and [the architecture guide](../docs/ARCHITECTURE.md) for dependency rules, state conventions, DI lifecycle, and future code placement. Design references live in [design/](../design/README.md).
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
+## Modules
 
-- Android app: `./gradlew :androidApp:assembleDebug`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+- `feature:workout`: Today, active-workout, rest, and completion flow; build configuration only for now.
+- `feature:history`: completed-session history and details; build configuration only for now.
+- `feature:settings`: training and application preferences; build configuration only for now.
+- `core:ui`: reusable visual foundations, currently the minimal theme; no feature logic.
+- `shared`: app composition, shell, Koin startup, and the `Shared` iOS framework; depends on features and core UI.
+- `androidApp`: thin Android host using `App()`.
+- `iosApp`: thin SwiftUI host using `MainViewController()` from `Shared`.
 
-### Running tests
+Each feature keeps its `presentation`, `domain`, `data`, and `di` packages inside its own `src/commonMain`. Add packages when real code needs them, not as empty placeholders. Shared tests live in each module's `src/commonTest`. The supported targets are Android, iOS devices (`iosArm64`), and Apple Silicon iOS simulators (`iosSimulatorArm64`).
 
-Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
+Features depend on `core:ui`, not other features. `shared` coordinates them. See [feature conventions](feature/README.md) and [shared UI boundaries](core/ui/README.md).
 
-- Android tests: `./gradlew :shared:testAndroidHostTest`
-- iOS tests: `./gradlew :shared:iosSimulatorArm64Test`
+## Build and run
 
----
+Agents must follow the [KMM tooling and command approval policy](../AGENTS.md#kmm-tooling-and-command-approval): use `android` first for supported Android operations; suggest relevant Gradle commands at the end of the task and wait for explicit approval. Commands below are references for manual use or approved validation, not automatic agent steps. The approval rule also covers IDE sync and Xcode build phases that invoke Gradle.
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+Open this directory in Android Studio. Keep local SDK settings out of version control and use the checked-in Gradle wrapper and version catalog.
+
+```bash
+./gradlew :androidApp:assembleDebug
+```
+
+For manual development, run `androidApp` on an Android device/emulator from the IDE. For iOS, open [iosApp/iosApp.xcodeproj](iosApp/iosApp.xcodeproj) in Xcode and run the `iosApp` scheme. Its build phase invokes Gradle to compile and embed `Shared`. Device deployment requires your own signing configuration; simulator builds do not require a development team.
+
+To validate just the Kotlin framework on macOS with Xcode installed:
+
+```bash
+./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+./gradlew :shared:linkDebugFrameworkIosArm64
+```
+
+Dependency and plugin versions are centralized in [gradle/libs.versions.toml](gradle/libs.versions.toml); the Gradle distribution and its SHA-256 checksum are pinned in [gradle/wrapper/gradle-wrapper.properties](gradle/wrapper/gradle-wrapper.properties). App identifiers are preserved.
+
+## Tests
+
+```bash
+./gradlew :shared:testAndroidHostTest
+./gradlew :shared:iosSimulatorArm64Test
+```
+
+`AppCompositionTest` loads the actual app graph and checks ViewModel retention, isolation between owners, cancellation on owner clearing, and isolation between app graphs. It uses `kotlin.test`, local Koin containers, and a controlled coroutine dispatcher. iOS test execution requires an installed compatible simulator runtime.
+
+Each feature exposes the same platform test tasks, such as `:feature:workout:testAndroidHostTest`, for future tests of its rules, repositories, and ViewModels. Empty feature modules do not yet provide behavior coverage. Before shipping app-root changes, also check Android Activity recreation and iOS background/foreground behavior on running apps. See [the testing strategy](../docs/ARCHITECTURE.md#testing-strategy) for details.
+
+## Dependency updates
+
+Versions were checked against official release pages and Maven metadata on **2026-10-03**. Use stable releases, with Material 3 aligned to the version shipped with stable Compose Multiplatform.
+
+| Dependency / tool | Version |
+| --- | --- |
+| Android Gradle plugin | 9.4.1 |
+| Gradle distribution | 9.8.0 |
+| Kotlin and Compose compiler | 2.4.20 |
+| Compose Multiplatform | 1.12.1 |
+| Compose Material 3 | 1.12.0-alpha03 |
+| Multiplatform AndroidX Lifecycle | 2.11.0 |
+| Koin | 4.2.2 |
+| kotlinx.coroutines | 1.11.0 |
+| AndroidX Activity | 1.13.0 |
+| AndroidX AppCompat | 1.8.0 |
+| AndroidX Core | 1.19.1 |
+| AndroidX Espresso | 3.7.0 |
+| AndroidX Test JUnit extension | 1.3.0 |
+| JUnit 4 | 4.13.2 |
+
+[Compose Multiplatform 1.12.1](https://github.com/JetBrains/compose-multiplatform/releases/tag/v1.12.1) ships Material 3 `1.12.0-alpha03`. Keep that independent version pin: Material 3 does not have a matching `1.12.1` stable artifact. The newer `1.13.0-alpha01` belongs to the Compose 1.13 preview track.
+
+[AGP 9.4](https://developer.android.com/build/releases/agp-9-4-0-release-notes) requires Gradle 9.6.0 or newer. The latest stable AGP and Gradle pins exceed [Kotlin 2.4.20's fully supported range](https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin), which ends at AGP 9.3.1 and Gradle 9.7.0. Kotlin permits newer releases but warns about possible deprecations or unsupported new features. Validate Android compilation, shared host tests, and iOS framework linking with approved Gradle commands before merging updates.
+
+[Dependabot](.github/dependabot.yml) checks Gradle dependencies and plugins every Monday, with at most five open version-update pull requests. It monitors the repository root, including module build files, [the version catalog](gradle/libs.versions.toml), and the Gradle wrapper. Review and validate updates before merging them.
+
+To activate version updates on GitHub, commit the configuration to the mobile repository's default branch. The mobile checkout is a separate repository, so its configured directory is `/`, not `/kmm`. See [GitHub's Dependabot configuration guide](https://docs.github.com/en/code-security/concepts/supply-chain-security/about-the-dependabot-yml-file). Dependabot alerts and security updates are configured separately in GitHub settings; Gradle security updates also require [dependency graph submissions](https://docs.github.com/en/code-security/reference/supply-chain-security/supported-ecosystems-and-repositories#gradle).

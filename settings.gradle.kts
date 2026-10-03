@@ -28,4 +28,8 @@ dependencyResolutionManagement {
 }
 
 include(":androidApp")
+include(":core:ui")
+include(":feature:workout")
+include(":feature:history")
+include(":feature:settings")
 include(":shared")
