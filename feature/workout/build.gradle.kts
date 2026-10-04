@@ -21,6 +21,11 @@ kotlin {
             enable = true
         }
         withHostTest {}
+        withDeviceTestBuilder {
+            sourceSetTreeName = "test"
+        }.configure {
+            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        }
     }
     iosArm64()
     iosSimulatorArm64()
@@ -42,6 +47,10 @@ kotlin {
             implementation(libs.koin.core.viewmodel)
             implementation(libs.koin.compose.viewmodel)
         }
+        getByName("androidDeviceTest").dependencies {
+            implementation(libs.androidx.testExt.junit)
+            implementation(libs.androidx.test.runner)
+        }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
@@ -56,6 +65,6 @@ dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
 }
 
-room {
+room3 {
     schemaDirectory("$projectDir/schemas")
 }
