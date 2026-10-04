@@ -2,13 +2,13 @@
 
 Kotlin Multiplatform for Android and iOS, with feature-first Gradle modules, shared Compose UI, AndroidX ViewModels, UDF, lightweight Clean Architecture, and Koin.
 
-This is an architecture-only scaffold. The shared shell displays “Core5x5”; workout features, navigation, storage, and the full design system are deliberately deferred.
+The shared shell displays “Core5x5”. The workout domain defines the fixed A/B program, exercise prescriptions, and 20 kg starting weights. Interactive workout features, navigation, storage, and the full design system are deferred.
 
 Read [the project context](../docs/PROJECT_CONTEXT.md) for product requirements and [the architecture guide](../docs/ARCHITECTURE.md) for dependency rules, state conventions, DI lifecycle, and future code placement. Design references live in [design/](../design/README.md).
 
 ## Modules
 
-- `feature:workout`: Today, active-workout, rest, and completion flow; build configuration only for now.
+- `feature:workout`: fixed program domain and tests; future Today, active-workout, rest, and completion flow.
 - `feature:history`: completed-session history and details; build configuration only for now.
 - `feature:settings`: training and application preferences; build configuration only for now.
 - `core:ui`: reusable visual foundations, currently the minimal theme; no feature logic.
@@ -46,11 +46,13 @@ Dependency and plugin versions are centralized in [gradle/libs.versions.toml](gr
 ```bash
 ./gradlew :shared:testAndroidHostTest
 ./gradlew :shared:iosSimulatorArm64Test
+./gradlew :feature:workout:testAndroidHostTest
+./gradlew :feature:workout:iosSimulatorArm64Test
 ```
 
 `AppCompositionTest` loads the actual app graph and checks ViewModel retention, isolation between owners, cancellation on owner clearing, and isolation between app graphs. It uses `kotlin.test`, local Koin containers, and a controlled coroutine dispatcher. iOS test execution requires an installed compatible simulator runtime.
 
-Each feature exposes the same platform test tasks, such as `:feature:workout:testAndroidHostTest`, for future tests of its rules, repositories, and ViewModels. Empty feature modules do not yet provide behavior coverage. Before shipping app-root changes, also check Android Activity recreation and iOS background/foreground behavior on running apps. See [the testing strategy](../docs/ARCHITECTURE.md#testing-strategy) for details.
+`WorkoutProgramTest` checks the fixed A/B contents and order, five exercises, sets/reps (including Deadlift at 1×5), and 20 kg starting weights on the workout module’s Android host and iOS simulator test targets. History and settings remain empty and do not yet provide behavior coverage. Before shipping app-root changes, also check Android Activity recreation and iOS background/foreground behavior on running apps. See [the testing strategy](../docs/ARCHITECTURE.md#testing-strategy) for details.
 
 ## Dependency updates
 

@@ -1,4 +1,4 @@
-# Feature modules
+ # Feature modules
 
 Gradle modules follow product capabilities. Clean Architecture layers are packages inside each feature, not separate project-wide modules.
 
@@ -8,7 +8,7 @@ Gradle modules follow product capabilities. Clean Architecture layers are packag
 | `:feature:history` | Completed-session history and details |
 | `:feature:settings` | Training and application preferences |
 
-The modules currently contain build configuration only. No product screens, workout behavior, repositories, navigation, or storage have been implemented.
+The workout module contains a pure Kotlin fixed program definition in `domain`: `Exercise` holds prescribed sets/reps and starting weight in kg, and `Workout` holds the ordered exercises for A/B. Focused common tests verify the program. History and settings contain build configuration only. Product screens, session behavior, repositories, navigation, and storage are not implemented.
 
 Each feature is a Compose Multiplatform library targeting Android, `iosArm64`, and `iosSimulatorArm64`. Compose, AndroidX ViewModels, coroutines, Koin, and common-test dependencies are ready.
 
