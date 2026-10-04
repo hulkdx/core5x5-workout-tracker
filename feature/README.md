@@ -12,7 +12,7 @@ The workout module contains a pure Kotlin fixed program definition in `domain`: 
 
 Each feature is a Compose Multiplatform library targeting Android, `iosArm64`, and `iosSimulatorArm64`. Compose, AndroidX ViewModels, coroutines, Koin, and common-test dependencies are ready.
 
-When implementing a feature, add code under `<feature>/src/commonMain/kotlin/com/example/myapplication/feature/<feature>/`, using `presentation`, `domain`, `data`, and `di` packages only where needed. Put its tests in that feature's `src/commonTest`.
+When implementing a feature, add code under `<feature>/src/commonMain/kotlin/com/hulkdx/core5x5/feature/<feature>/`, using `presentation`, `domain`, `data`, and `di` packages only where needed. Put its tests in that feature's `src/commonTest`.
 
 Keep implementation types `internal`. Expose only entry-point composables and a Koin module when they exist; `:shared` composes the application. Do not make one feature depend on another feature. Extract a narrowly named shared capability only when a real cross-feature dependency is required.
 

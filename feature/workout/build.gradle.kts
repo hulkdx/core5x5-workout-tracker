@@ -11,7 +11,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "com.example.myapplication.feature.workout"
+        namespace = "com.hulkdx.core5x5.feature.workout"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {

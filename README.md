@@ -12,9 +12,9 @@ Read [the project context](../docs/PROJECT_CONTEXT.md) for product requirements 
 - `feature:history`: completed-session history and details; build configuration only for now.
 - `feature:settings`: training and application preferences; build configuration only for now.
 - `core:ui`: reusable visual foundations, currently the minimal theme; no feature logic.
-- `shared`: app composition, shell, Koin startup, and the `Shared` iOS framework; depends on features and core UI.
+- `shared`: app composition, shell, Koin startup, and the `Core5x5Shared` iOS framework; depends on features and core UI.
 - `androidApp`: thin Android host using `App()`.
-- `iosApp`: thin SwiftUI host using `MainViewController()` from `Shared`.
+- `iosApp`: thin SwiftUI host using `MainViewController()` from `Core5x5Shared`.
 
 Each feature keeps its `presentation`, `domain`, `data`, and `di` packages inside its own `src/commonMain`. Add packages when real code needs them, not as empty placeholders. Shared tests live in each module's `src/commonTest`. The supported targets are Android, iOS devices (`iosArm64`), and Apple Silicon iOS simulators (`iosSimulatorArm64`).
 
@@ -30,7 +30,7 @@ Open this directory in Android Studio. Keep local SDK settings out of version co
 ./gradlew :androidApp:assembleDebug
 ```
 
-For manual development, run `androidApp` on an Android device/emulator from the IDE. For iOS, open [iosApp/iosApp.xcodeproj](iosApp/iosApp.xcodeproj) in Xcode and run the `iosApp` scheme. Its build phase invokes Gradle to compile and embed `Shared`. Device deployment requires your own signing configuration; simulator builds do not require a development team.
+For manual development, run `androidApp` on an Android device/emulator from the IDE. For iOS, open [iosApp/Core5x5.xcodeproj](iosApp/Core5x5.xcodeproj) in Xcode and run the `Core5x5` scheme. Its build phase invokes Gradle to compile and embed `Core5x5Shared`. Device deployment requires your own signing configuration; simulator builds do not require a development team.
 
 To validate just the Kotlin framework on macOS with Xcode installed:
 
@@ -39,7 +39,7 @@ To validate just the Kotlin framework on macOS with Xcode installed:
 ./gradlew :shared:linkDebugFrameworkIosArm64
 ```
 
-Dependency and plugin versions are centralized in [gradle/libs.versions.toml](gradle/libs.versions.toml); the Gradle distribution and its SHA-256 checksum are pinned in [gradle/wrapper/gradle-wrapper.properties](gradle/wrapper/gradle-wrapper.properties). App identifiers are preserved.
+Dependency and plugin versions are centralized in [gradle/libs.versions.toml](gradle/libs.versions.toml); the Gradle distribution and its SHA-256 checksum are pinned in [gradle/wrapper/gradle-wrapper.properties](gradle/wrapper/gradle-wrapper.properties). The Gradle project and native app products are named `Core5x5`; Android and iOS use `com.hulkdx.core5x5`. Kotlin packages use the same base, and the iOS framework is `Core5x5Shared`.
 
 ## Tests
 

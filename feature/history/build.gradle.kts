@@ -9,7 +9,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "com.example.myapplication.feature.history"
+        namespace = "com.hulkdx.core5x5.feature.history"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {

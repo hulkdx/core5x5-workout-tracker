@@ -1,4 +1,4 @@
-rootProject.name = "MyApplication"
+rootProject.name = "Core5x5"
 
 pluginManagement {
     repositories {

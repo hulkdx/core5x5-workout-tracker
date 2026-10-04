@@ -13,13 +13,13 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "Shared"
+            baseName = "Core5x5Shared"
             isStatic = true
         }
     }
 
     android {
-        namespace = "com.example.myapplication.shared"
+        namespace = "com.hulkdx.core5x5.shared"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
