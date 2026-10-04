@@ -2,6 +2,7 @@ package com.hulkdx.core5x5.feature.workout.data
 
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
+import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -137,6 +138,82 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
             }
             assertNull(dao.getSession())
             assertEquals(emptyList(), dao.getExercises())
+        }
+    }
+
+    @Test
+    fun loadReturnsNullWithoutCreatingSession() = runTest {
+        withDatabase("load-empty.db") { database ->
+            val dao = database.unfinishedWorkoutDao()
+            val repository = RoomWorkoutRepository(dao) { error("Loading must not read the clock") }
+            assertNull(repository.getUnfinishedWorkout())
+            assertNull(repository.getUnfinishedWorkout())
+            assertNull(dao.getUnfinishedWorkout())
+            assertEquals(emptyList(), dao.getExercises())
+        }
+    }
+
+    @Test
+    fun loadReturnsCreatedSessionWithAllPrescriptionsAfterReopen() = runTest {
+        for (workout in Workout.entries) {
+            val name = "load-${workout.name}.db"
+            deleteDatabase(name)
+            try {
+                val database = openDatabase(name)
+                val created = try {
+                    RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1234L }
+                        .startWorkout(workout)
+                } finally {
+                    database.close()
+                }
+                val reopened = openDatabase(name)
+                try {
+                    val repository = RoomWorkoutRepository(reopened.unfinishedWorkoutDao()) {
+                        error("Loading must not read the clock")
+                    }
+                    val loaded = requireNotNull(repository.getUnfinishedWorkout())
+                    assertEquals(created, loaded)
+                    assertEquals(workout, loaded.workout)
+                    assertEquals(1234L, loaded.startedAtEpochMillis)
+                    assertProgram(workout, loaded)
+                    assertEquals(loaded, repository.getUnfinishedWorkout())
+                } finally {
+                    reopened.close()
+                }
+            } finally {
+                deleteDatabase(name)
+            }
+        }
+    }
+
+    @Test
+    fun loadUsesStoredPrescriptionsAndPositionRatherThanProgramDefaultsOrInsertOrder() = runTest {
+        withDatabase("load-snapshot.db") { database ->
+            val dao = database.unfinishedWorkoutDao()
+            // Distinct persisted values prove loading maps the snapshot, not today's program defaults.
+            dao.insertSessionIfAbsent(
+                UnfinishedWorkoutEntity(Workout.B, 5678L),
+                listOf(
+                    UnfinishedWorkoutExerciseEntity(1, 2, Exercise.DEADLIFT, 1, 4, 60.0),
+                    UnfinishedWorkoutExerciseEntity(1, 0, Exercise.SQUAT, 3, 5, 40.0),
+                    UnfinishedWorkoutExerciseEntity(1, 1, Exercise.OVERHEAD_PRESS, 5, 3, 25.0),
+                ),
+            )
+            val before = dao.getSession()
+            val loaded = RoomWorkoutRepository(dao).getUnfinishedWorkout()
+            assertEquals(
+                UnfinishedWorkout(
+                    Workout.B,
+                    5678L,
+                    listOf(
+                        UnfinishedWorkoutExercise(Exercise.SQUAT, 3, 5, 40.0),
+                        UnfinishedWorkoutExercise(Exercise.OVERHEAD_PRESS, 5, 3, 25.0),
+                        UnfinishedWorkoutExercise(Exercise.DEADLIFT, 1, 4, 60.0),
+                    ),
+                ),
+                loaded,
+            )
+            assertEquals(before, dao.getSession())
         }
     }
 

@@ -10,6 +10,9 @@ internal class RoomWorkoutRepository(
     private val dao: UnfinishedWorkoutDao,
     private val nowEpochMillis: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) : WorkoutRepository {
+    override suspend fun getUnfinishedWorkout(): UnfinishedWorkout? =
+        dao.getSession()?.toDomain()
+
     override suspend fun startWorkout(workout: Workout): UnfinishedWorkout {
         val session = UnfinishedWorkoutEntity(workout, nowEpochMillis())
         val exercises = workout.exercises.mapIndexed { position, exercise ->
@@ -22,13 +25,14 @@ internal class RoomWorkoutRepository(
                 weightKg = exercise.startingWeightKg,
             )
         }
-        val stored = dao.insertSessionIfAbsent(session, exercises)
-        return UnfinishedWorkout(
-            workout = stored.session.workout,
-            startedAtEpochMillis = stored.session.startedAtEpochMillis,
-            exercises = stored.exercises.map {
-                UnfinishedWorkoutExercise(it.exercise, it.sets, it.reps, it.weightKg)
-            },
-        )
+        return dao.insertSessionIfAbsent(session, exercises).toDomain()
     }
+
+    private fun StoredUnfinishedWorkout.toDomain(): UnfinishedWorkout = UnfinishedWorkout(
+        workout = session.workout,
+        startedAtEpochMillis = session.startedAtEpochMillis,
+        exercises = exercises.map {
+            UnfinishedWorkoutExercise(it.exercise, it.sets, it.reps, it.weightKg)
+        },
+    )
 }
