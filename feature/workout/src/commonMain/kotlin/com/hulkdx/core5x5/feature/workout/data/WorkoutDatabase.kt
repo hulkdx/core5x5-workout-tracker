@@ -8,7 +8,11 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
-@Database(entities = [UnfinishedWorkoutEntity::class], version = 1, exportSchema = true)
+@Database(
+    entities = [UnfinishedWorkoutEntity::class, UnfinishedWorkoutExerciseEntity::class],
+    version = 1,
+    exportSchema = true,
+)
 @ConstructedBy(WorkoutDatabaseConstructor::class)
 internal abstract class WorkoutDatabase : RoomDatabase() {
     abstract fun unfinishedWorkoutDao(): UnfinishedWorkoutDao

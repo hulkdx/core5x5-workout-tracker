@@ -1,6 +1,11 @@
 package com.hulkdx.core5x5.feature.workout.data
 
+import com.hulkdx.core5x5.feature.workout.domain.Exercise
+import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.Workout
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -9,6 +14,7 @@ import kotlin.test.assertNull
 
 /** Shared contract exercised by a platform fixture with a real on-disk Room database. */
 internal abstract class UnfinishedWorkoutPersistenceTest {
+    abstract fun databasePath(name: String): String
     abstract fun openDatabase(name: String): WorkoutDatabase
     abstract fun deleteDatabase(name: String)
 
@@ -46,4 +52,117 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
             }
         }
     }
+
+    @Test
+    fun startCreatesAndPersistsSelectedProgramInOrder() = runTest {
+        for (workout in Workout.entries) {
+            withDatabase("start-${workout.name}.db") { database ->
+                val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1234L }
+                val session = repository.startWorkout(workout)
+                assertEquals(workout, session.workout)
+                assertEquals(1234L, session.startedAtEpochMillis)
+                assertProgram(workout, session)
+                val stored = requireNotNull(database.unfinishedWorkoutDao().getSession())
+                assertEquals(workout, stored.session.workout)
+                assertEquals(1234L, stored.session.startedAtEpochMillis)
+                assertEquals(listOf(0, 1, 2), stored.exercises.map { it.position })
+                assertEquals(session.exercises.map { it.exercise }, stored.exercises.map { it.exercise })
+                assertEquals(session.exercises.map { it.sets }, stored.exercises.map { it.sets })
+                assertEquals(listOf(5, 5, 5), stored.exercises.map { it.reps })
+                assertEquals(listOf(20.0, 20.0, 20.0), stored.exercises.map { it.weightKg })
+            }
+        }
+    }
+
+    @Test
+    fun repeatedStartPreservesOriginalSessionEvenAfterReopen() = runTest {
+        val name = "repeat-start.db"
+        deleteDatabase(name)
+        try {
+            val database = openDatabase(name)
+            val original = try {
+                val dao = database.unfinishedWorkoutDao()
+                val session = RoomWorkoutRepository(dao) { 100L }.startWorkout(Workout.A)
+                assertEquals(session, RoomWorkoutRepository(dao) { 200L }.startWorkout(Workout.B))
+                session
+            } finally {
+                database.close()
+            }
+            val reopened = openDatabase(name)
+            try {
+                val dao = reopened.unfinishedWorkoutDao()
+                assertEquals(original, RoomWorkoutRepository(dao) { 300L }.startWorkout(Workout.B))
+                assertEquals(3, dao.getExercises().size)
+            } finally {
+                reopened.close()
+            }
+        } finally {
+            deleteDatabase(name)
+        }
+    }
+
+    @Test
+    fun concurrentStartsAcrossDatabaseInstancesReturnOneSession() = runTest {
+        withDatabase("concurrent-start.db") { database ->
+            val second = openDatabase("concurrent-start.db")
+            try {
+                val results = listOf(
+                    async(Dispatchers.Default) {
+                        RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 100L }
+                            .startWorkout(Workout.A)
+                    },
+                    async(Dispatchers.Default) {
+                        RoomWorkoutRepository(second.unfinishedWorkoutDao()) { 200L }
+                            .startWorkout(Workout.B)
+                    },
+                ).awaitAll()
+                assertEquals(results.first(), results.last())
+                assertProgram(results.first().workout, results.first())
+                assertEquals(3, database.unfinishedWorkoutDao().getExercises().size)
+            } finally {
+                second.close()
+            }
+        }
+    }
+
+    @Test
+    fun failedExerciseInsertRollsBackSession() = runTest {
+        withDatabase("failed-start.db") { database ->
+            val dao = database.unfinishedWorkoutDao()
+            assertFails {
+                dao.insertSessionIfAbsent(
+                    UnfinishedWorkoutEntity(Workout.A, 100L),
+                    listOf(UnfinishedWorkoutExerciseEntity(2, 0, Exercise.SQUAT, 5, 5, 20.0)),
+                )
+            }
+            assertNull(dao.getSession())
+            assertEquals(emptyList(), dao.getExercises())
+        }
+    }
+
+    private suspend fun withDatabase(name: String, block: suspend (WorkoutDatabase) -> Unit) {
+        deleteDatabase(name)
+        try {
+            val database = openDatabase(name)
+            try {
+                block(database)
+            } finally {
+                database.close()
+            }
+        } finally {
+            deleteDatabase(name)
+        }
+    }
+
+    private fun assertProgram(workout: Workout, session: UnfinishedWorkout) {
+        val expected = when (workout) {
+            Workout.A -> listOf(Exercise.SQUAT, Exercise.BENCH_PRESS, Exercise.BARBELL_ROW)
+            Workout.B -> listOf(Exercise.SQUAT, Exercise.OVERHEAD_PRESS, Exercise.DEADLIFT)
+        }
+        assertEquals(expected, session.exercises.map { it.exercise })
+        assertEquals(if (workout == Workout.A) listOf(5, 5, 5) else listOf(5, 5, 1), session.exercises.map { it.sets })
+        assertEquals(listOf(5, 5, 5), session.exercises.map { it.reps })
+        assertEquals(listOf(20.0, 20.0, 20.0), session.exercises.map { it.weightKg })
+    }
+
 }

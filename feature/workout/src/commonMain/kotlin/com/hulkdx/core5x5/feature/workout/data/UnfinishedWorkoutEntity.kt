@@ -4,7 +4,7 @@ import androidx.room3.Entity
 import androidx.room3.PrimaryKey
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 
-/** The single unfinished session; fixed prescriptions remain in the domain. */
+/** Metadata for the single unfinished session; exercise snapshots are stored separately. */
 @Entity(tableName = "unfinished_workout")
 internal data class UnfinishedWorkoutEntity(
     val workout: Workout,

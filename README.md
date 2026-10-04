@@ -2,7 +2,7 @@
 
 Kotlin Multiplatform for Android and iOS, with feature-first Gradle modules, shared Compose UI, AndroidX ViewModels, UDF, lightweight Clean Architecture, and Koin.
 
-The shared shell displays “Core5x5”. The workout domain defines the fixed A/B program, exercise prescriptions, and 20 kg starting weights. The workout feature also has a minimal Room persistence foundation for one unfinished workout (A/B and start timestamp), with Android/iOS builders and on-disk round-trip tests on Android devices/emulators and the iOS simulator. Interactive workout features, navigation, and the full design system are deferred.
+The shared shell displays “Core5x5”. The workout domain defines the fixed A/B program, exercise prescriptions, and 20 kg starting weights. The workout repository starts a selected A/B workout and atomically persists one unfinished session with ordered exercise prescriptions in Room. Repeated starts preserve and return the active session. Database tests on Android devices/emulators and the iOS simulator cover creation, reopen, duplicate/concurrent starts, and rollback. Starting is not connected to the UI. Interactive workout features, navigation, and the full design system are deferred.
 
 Read [the project context](../docs/PROJECT_CONTEXT.md) for product requirements and [the architecture guide](../docs/ARCHITECTURE.md) for dependency rules, state conventions, DI lifecycle, and future code placement. Design references live in [design/](../design/README.md).
 
