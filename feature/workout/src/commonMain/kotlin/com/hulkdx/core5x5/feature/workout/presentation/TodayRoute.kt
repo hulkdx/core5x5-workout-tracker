@@ -7,14 +7,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun TodayRoute() {
+fun TodayRoute(onWorkoutRequested: () -> Unit) {
     val viewModel: TodayViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(uiState.requestedWorkout) {
         if (uiState.requestedWorkout != null) {
-            // Today stays visible until Active Workout navigation is implemented.
             viewModel.onWorkoutRequestHandled()
+            onWorkoutRequested()
         }
     }
 
