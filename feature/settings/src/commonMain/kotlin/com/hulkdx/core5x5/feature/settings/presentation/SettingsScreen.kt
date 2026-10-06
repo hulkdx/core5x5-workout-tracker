@@ -49,13 +49,13 @@ import com.hulkdx.core5x5.core.ui.components.Core5x5BottomNavigation
 import com.hulkdx.core5x5.core.ui.components.Core5x5PrimaryButton
 import com.hulkdx.core5x5.core.ui.components.Core5x5SecondaryButton
 import com.hulkdx.core5x5.core.ui.components.Core5x5SettingRow
-import com.hulkdx.core5x5.core.ui.components.Core5x5Tab
+import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
 
-/** Insets and bottom navigation belong to the shell; this screen owns only its content padding. */
+/** AppNavigation owns insets and bottom navigation; this screen owns only its content padding. */
 @Composable
 internal fun SettingsScreen(
     uiState: SettingsUiState,
@@ -286,7 +286,11 @@ private fun SettingsPreview(preferences: TrainingPreferences = TrainingPreferenc
                 onSelectUnit = {}, onRestDurationInput = {}, onSaveRestDuration = {},
                 onDismissDialog = {}, onRetryLoad = {}, onOpenRepository = {},
             )
-            Core5x5BottomNavigation(Core5x5Tab.SETTINGS, onSelectTab = {}, bottomInsets = WindowInsets(0, 0, 0, 0))
+            Core5x5BottomNavigation(
+                selectedItem = Core5x5NavigationItem.SETTINGS,
+                onItemSelected = {},
+                historyEnabled = false,
+            )
         }
     }
 }

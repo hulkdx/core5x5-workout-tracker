@@ -1,18 +1,29 @@
 package com.hulkdx.core5x5.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.hulkdx.core5x5.core.ui.components.Core5x5Tab
+import com.hulkdx.core5x5.core.ui.components.Core5x5BottomNavigation
+import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
+import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
+import com.hulkdx.core5x5.feature.history.presentation.HistoryRoute
 import com.hulkdx.core5x5.feature.settings.presentation.SettingsRoute
 import com.hulkdx.core5x5.feature.workout.presentation.ActiveWorkoutRoute
 import com.hulkdx.core5x5.feature.workout.presentation.TodayRoute
@@ -27,96 +38,99 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
     val backStack = rememberSaveable(saver = AppBackStackSaver) {
         mutableStateListOf<AppDestination>(AppDestination.Today)
     }
-    val onSelectTab: (Core5x5Tab) -> Unit = { tab ->
-        when (tab) {
-            Core5x5Tab.TODAY -> {
-                while (backStack.size > 1) backStack.removeLastOrNull()
-                viewModel.loadPreferences()
-            }
-            Core5x5Tab.SETTINGS -> {
-                if (backStack.lastOrNull() != AppDestination.Settings) backStack.add(AppDestination.Settings)
-            }
-            Core5x5Tab.HISTORY -> Unit // Task 5.4 connects History after its data/state/UI are implemented.
-        }
+
+    val selectedItem = backStack.last().navigationItem
+    val contentInsets = if (selectedItem != null) {
+        Modifier.windowInsetsPadding(
+            WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
+        )
+    } else {
+        // Workout destinations own their safe insets and have no bottom navigation.
+        Modifier
     }
 
-    NavDisplay(
-        backStack = backStack,
-        onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
-        entryDecorators = listOf(
-            rememberSaveableStateHolderNavEntryDecorator(),
-            rememberViewModelStoreNavEntryDecorator(),
-        ),
-        entryProvider = entryProvider {
-            entry<AppDestination.Today>(clazzContentKey = { "today" }) {
-                ShellScreen(uiState = uiState, onSelectTab = onSelectTab, onRetryPreferences = viewModel::loadPreferences) {
-                    TodayRoute(
-                        weightUnit = uiState.weightUnit,
-                        onWorkoutRequested = { workoutId -> backStack.add(AppDestination.ActiveWorkout(workoutId)) },
-                    )
-                }
-            }
-            entry<AppDestination.Settings>(clazzContentKey = { "settings" }) {
-                ShellScreen(
-                    uiState = uiState,
-                    selectedTab = Core5x5Tab.SETTINGS,
-                    onSelectTab = onSelectTab,
-                    onRetryPreferences = viewModel::loadPreferences,
-                ) {
-                    SettingsRoute()
-                }
-            }
-            entry<AppDestination.ActiveWorkout>(clazzContentKey = { "active:${it.workoutId}" }) { destination ->
-                ActiveWorkoutRoute(
-                    workoutId = destination.workoutId,
-                    weightUnit = uiState.weightUnit,
-                    onBack = { backStack.removeLastOrNull() },
-                    onWorkoutCompleted = { workoutId ->
-                        // Replace Active so neither system Back nor the return action reopens a saved workout.
-                        if (backStack.lastOrNull() == destination) {
-                            backStack[backStack.lastIndex] = AppDestination.WorkoutComplete(workoutId)
+    Column(modifier = Modifier.fillMaxSize().background(Core5x5Colors.Background)) {
+        Box(modifier = Modifier.fillMaxWidth().weight(1f).then(contentInsets)) {
+            NavDisplay(
+                modifier = Modifier.fillMaxSize(),
+                backStack = backStack,
+                onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
+                entryDecorators = listOf(
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator(),
+                ),
+                entryProvider = entryProvider {
+                    entry<AppDestination.Today>(clazzContentKey = { "today" }) {
+                        ShellScreen(uiState = uiState, onRetryPreferences = viewModel::loadPreferences) {
+                            TodayRoute(
+                                weightUnit = uiState.weightUnit,
+                                onWorkoutRequested = { workoutId ->
+                                    backStack.add(AppDestination.ActiveWorkout(workoutId))
+                                },
+                            )
+                        }
+                    }
+                    entry<AppDestination.History>(clazzContentKey = { "history" }) {
+                        ShellScreen(
+                            uiState = uiState.copy(title = "History"),
+                            onRetryPreferences = viewModel::loadPreferences,
+                        ) {
+                            // List/detail behavior remains in the History roadmap tasks.
+                            HistoryRoute(onWorkoutSelected = {})
+                        }
+                    }
+                    entry<AppDestination.Settings>(clazzContentKey = { "settings" }) {
+                        ShellScreen(
+                            uiState = uiState,
+                            showTitle = false,
+                            onRetryPreferences = viewModel::loadPreferences,
+                        ) {
+                            SettingsRoute()
+                        }
+                    }
+                    entry<AppDestination.ActiveWorkout>(clazzContentKey = { "active:${it.workoutId}" }) { destination ->
+                        ActiveWorkoutRoute(
+                            workoutId = destination.workoutId,
+                            weightUnit = uiState.weightUnit,
+                            onBack = { backStack.removeLastOrNull() },
+                            onWorkoutCompleted = { workoutId ->
+                                // Replace Active so Back cannot reopen a saved workout.
+                                if (backStack.lastOrNull() == destination) {
+                                    backStack[backStack.lastIndex] = AppDestination.WorkoutComplete(workoutId)
+                                }
+                            },
+                        )
+                    }
+                    entry<AppDestination.WorkoutComplete>(clazzContentKey = { "complete:${it.workoutId}" }) { destination ->
+                        WorkoutCompleteRoute(
+                            workoutId = destination.workoutId,
+                            weightUnit = uiState.weightUnit,
+                            onBackToToday = { backStack.removeLastOrNull() },
+                        )
+                    }
+                },
+            )
+        }
+        if (selectedItem != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Core5x5Colors.Elevated)
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal),
+                    ),
+            ) {
+                Core5x5BottomNavigation(
+                    selectedItem = selectedItem,
+                    historyEnabled = false,
+                    onItemSelected = { item ->
+                        if (backStack.lastOrNull()?.navigationItem != null) {
+                            backStack.selectNavigationItem(item)
+                            if (item == Core5x5NavigationItem.TODAY) viewModel.loadPreferences()
                         }
                     },
                 )
             }
-            entry<AppDestination.WorkoutComplete>(clazzContentKey = { "complete:${it.workoutId}" }) { destination ->
-                WorkoutCompleteRoute(
-                    workoutId = destination.workoutId,
-                    weightUnit = uiState.weightUnit,
-                    onBackToToday = { backStack.removeLastOrNull() },
-                )
-            }
-        },
-    )
-}
-
-internal sealed interface AppDestination {
-    data object Today : AppDestination
-    data object Settings : AppDestination
-    data class ActiveWorkout(val workoutId: Long) : AppDestination
-    data class WorkoutComplete(val workoutId: Long) : AppDestination
-}
-
-internal val AppBackStackSaver = listSaver<SnapshotStateList<AppDestination>, String>(
-    save = { destinations ->
-        destinations.map { destination ->
-            when (destination) {
-                AppDestination.Today -> "today"
-                AppDestination.Settings -> "settings"
-                is AppDestination.ActiveWorkout -> "active:${destination.workoutId}"
-                is AppDestination.WorkoutComplete -> "complete:${destination.workoutId}"
-            }
         }
-    },
-    restore = { keys ->
-        keys.map { key ->
-            when {
-                key == "today" -> AppDestination.Today
-                key == "settings" -> AppDestination.Settings
-                key.startsWith("active:") -> AppDestination.ActiveWorkout(key.substringAfter(':').toLong())
-                key.startsWith("complete:") -> AppDestination.WorkoutComplete(key.substringAfter(':').toLong())
-                else -> error("Unknown saved destination: $key")
-            }
-        }.toMutableStateList()
-    },
-)
+    }
+}
