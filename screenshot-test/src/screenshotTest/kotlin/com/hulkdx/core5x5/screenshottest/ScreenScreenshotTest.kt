@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.android.tools.screenshot.PreviewTest
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
-import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.ui.components.Core5x5BottomNavigation
 import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
@@ -28,10 +27,8 @@ import com.hulkdx.core5x5.feature.workout.presentation.ActiveWorkoutScreen
 import com.hulkdx.core5x5.feature.workout.presentation.ActiveWorkoutUiState
 import com.hulkdx.core5x5.feature.workout.presentation.RestTimerScreen
 import com.hulkdx.core5x5.feature.workout.presentation.RestTimerUiState
-import com.hulkdx.core5x5.feature.workout.presentation.TodayError
 import com.hulkdx.core5x5.feature.workout.presentation.TodayScreen
 import com.hulkdx.core5x5.feature.workout.presentation.TodayUiState
-import com.hulkdx.core5x5.feature.workout.presentation.WorkoutCompleteError
 import com.hulkdx.core5x5.feature.workout.presentation.WorkoutCompleteScreen
 import com.hulkdx.core5x5.feature.workout.presentation.WorkoutCompleteUiState
 import com.hulkdx.core5x5.shell.ShellScreen
@@ -39,31 +36,31 @@ import com.hulkdx.core5x5.shell.ShellUiState
 
 class ScreenScreenshotTest {
     @PreviewTest
-    @ScreenSizes
+    @ReferenceScreen
     @Composable
     fun Today() = TodaySnapshot(TodayUiState(isLoading = false, nextWorkout = Workout.A))
 
     @PreviewTest
-    @ScreenSizes
+    @ReferenceScreen
     @Composable
     fun ActiveWorkout() = ActiveWorkoutSnapshot(
         ActiveWorkoutUiState(isLoading = false, unfinishedWorkout = unfinishedWorkout(Workout.A)),
     )
 
     @PreviewTest
-    @ScreenSizes
+    @ReferenceScreen
     @Composable
     fun RestTimerScaffold() = ScreenFrame {
         RestTimerScreen(uiState = RestTimerUiState, modifier = Modifier.fillMaxSize())
     }
 
     @PreviewTest
-    @ScreenSizes
+    @ReferenceScreen
     @Composable
     fun WorkoutComplete() = WorkoutCompleteSnapshot(completedWorkoutState(Workout.A))
 
     @PreviewTest
-    @ScreenSizes
+    @ReferenceScreen
     @Composable
     fun HistoryScaffold() = ScreenFrame(
         navigationItem = Core5x5NavigationItem.HISTORY,
@@ -73,7 +70,7 @@ class ScreenScreenshotTest {
     }
 
     @PreviewTest
-    @ScreenSizes
+    @ReferenceScreen
     @Composable
     fun WorkoutDetailScaffold() = ScreenFrame {
         WorkoutDetailScreen(
@@ -84,84 +81,11 @@ class ScreenScreenshotTest {
     }
 
     @PreviewTest
-    @ScreenSizes
+    @ReferenceScreen
     @Composable
     fun Settings() = SettingsSnapshot(
         SettingsUiState(isLoading = false, preferences = TrainingPreferences(), versionName = "1.0"),
     )
-
-    @PreviewTest
-    @ReferenceScreen
-    @Composable
-    fun TodayWorkoutB() = TodaySnapshot(TodayUiState(isLoading = false, nextWorkout = Workout.B))
-
-    @PreviewTest
-    @ReferenceScreen
-    @Composable
-    fun TodayResume() = TodaySnapshot(
-        TodayUiState(isLoading = false, unfinishedWorkout = unfinishedWorkout(Workout.A)),
-    )
-
-    @PreviewTest
-    @ReferenceScreen
-    @Composable
-    fun TodayLoading() = TodaySnapshot(TodayUiState())
-
-    @PreviewTest
-    @ReferenceScreen
-    @Composable
-    fun TodayLoadError() = TodaySnapshot(TodayUiState(isLoading = false, error = TodayError.LOAD))
-
-    @PreviewTest
-    @ReferenceScreen
-    @Composable
-    fun ActiveWorkoutB() = ActiveWorkoutSnapshot(
-        ActiveWorkoutUiState(isLoading = false, unfinishedWorkout = unfinishedWorkout(Workout.B)),
-    )
-
-    @PreviewTest
-    @ReferenceScreen
-    @Composable
-    fun ActiveWorkoutSaveError() = ActiveWorkoutSnapshot(
-        ActiveWorkoutUiState(
-            isLoading = false,
-            unfinishedWorkout = unfinishedWorkout(Workout.A),
-            hasSaveError = true,
-        ),
-    )
-
-    @PreviewTest
-    @ReferenceScreen
-    @Composable
-    fun WorkoutCompletePartialB() = WorkoutCompleteSnapshot(completedWorkoutState(Workout.B, completedSets = 7))
-
-    @PreviewTest
-    @ReferenceScreen
-    @Composable
-    fun WorkoutCompleteLoadError() = WorkoutCompleteSnapshot(
-        WorkoutCompleteUiState(isLoading = false, error = WorkoutCompleteError.LOAD),
-    )
-
-    @PreviewTest
-    @ReferenceScreen
-    @Composable
-    fun SettingsPounds() = SettingsSnapshot(
-        SettingsUiState(
-            isLoading = false,
-            preferences = TrainingPreferences(weightUnit = WeightUnit.LB, restDurationSeconds = 3_601L),
-            versionName = "1.0",
-        ),
-    )
-
-    @PreviewTest
-    @ReferenceScreen
-    @Composable
-    fun SettingsLoading() = SettingsSnapshot(SettingsUiState(versionName = "1.0"))
-
-    @PreviewTest
-    @ReferenceScreen
-    @Composable
-    fun SettingsLoadError() = SettingsSnapshot(SettingsUiState(isLoading = false, versionName = "1.0"))
 }
 
 @Composable
