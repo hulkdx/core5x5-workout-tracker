@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.composeScreenshot)
 }
 
 kotlin {
@@ -16,9 +17,14 @@ dependencies {
     implementation(libs.androidx.activity.compose)
 
     debugImplementation(libs.compose.uiTooling)
+
+    screenshotTestImplementation(libs.screenshot.validation.api)
+    screenshotTestImplementation(libs.compose.uiTooling)
 }
 
 android {
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
+
     namespace = "com.hulkdx.core5x5"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
