@@ -21,6 +21,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.hulkdx.core5x5.core.ui.components.Core5x5BottomNavigation
+import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.feature.history.presentation.HistoryRoute
 import com.hulkdx.core5x5.feature.settings.presentation.SettingsRoute
@@ -60,26 +61,37 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
                 ),
                 entryProvider = entryProvider {
                     entry<AppDestination.Today>(clazzContentKey = { "today" }) {
-                        ShellScreen(uiState = uiState) {
-                            TodayRoute(onWorkoutRequested = { workoutId ->
-                                backStack.add(AppDestination.ActiveWorkout(workoutId))
-                            })
+                        ShellScreen(uiState = uiState, onRetryPreferences = viewModel::loadPreferences) {
+                            TodayRoute(
+                                weightUnit = uiState.weightUnit,
+                                onWorkoutRequested = { workoutId ->
+                                    backStack.add(AppDestination.ActiveWorkout(workoutId))
+                                },
+                            )
                         }
                     }
                     entry<AppDestination.History>(clazzContentKey = { "history" }) {
-                        ShellScreen(uiState = uiState.copy(title = "History")) {
+                        ShellScreen(
+                            uiState = uiState.copy(title = "History"),
+                            onRetryPreferences = viewModel::loadPreferences,
+                        ) {
                             // List/detail behavior remains in the History roadmap tasks.
                             HistoryRoute(onWorkoutSelected = {})
                         }
                     }
                     entry<AppDestination.Settings>(clazzContentKey = { "settings" }) {
-                        ShellScreen(uiState = uiState.copy(title = "Settings")) {
+                        ShellScreen(
+                            uiState = uiState,
+                            showTitle = false,
+                            onRetryPreferences = viewModel::loadPreferences,
+                        ) {
                             SettingsRoute()
                         }
                     }
                     entry<AppDestination.ActiveWorkout>(clazzContentKey = { "active:${it.workoutId}" }) { destination ->
                         ActiveWorkoutRoute(
                             workoutId = destination.workoutId,
+                            weightUnit = uiState.weightUnit,
                             onBack = { backStack.removeLastOrNull() },
                             onWorkoutCompleted = { workoutId ->
                                 // Replace Active so Back cannot reopen a saved workout.
@@ -92,6 +104,7 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
                     entry<AppDestination.WorkoutComplete>(clazzContentKey = { "complete:${it.workoutId}" }) { destination ->
                         WorkoutCompleteRoute(
                             workoutId = destination.workoutId,
+                            weightUnit = uiState.weightUnit,
                             onBackToToday = { backStack.removeLastOrNull() },
                         )
                     }
@@ -109,7 +122,13 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
             ) {
                 Core5x5BottomNavigation(
                     selectedItem = selectedItem,
-                    onItemSelected = backStack::selectNavigationItem,
+                    historyEnabled = false,
+                    onItemSelected = { item ->
+                        if (backStack.lastOrNull()?.navigationItem != null) {
+                            backStack.selectNavigationItem(item)
+                            if (item == Core5x5NavigationItem.TODAY) viewModel.loadPreferences()
+                        }
+                    },
                 )
             }
         }

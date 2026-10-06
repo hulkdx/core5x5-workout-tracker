@@ -33,6 +33,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":core:preferences"))
             implementation(project(":core:ui"))
             implementation(project(":feature:workout"))
             implementation(project(":feature:history"))

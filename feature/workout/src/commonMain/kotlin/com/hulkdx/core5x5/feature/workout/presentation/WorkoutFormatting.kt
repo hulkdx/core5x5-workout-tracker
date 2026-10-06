@@ -10,8 +10,6 @@ internal fun Exercise.displayName(): String = when (this) {
     Exercise.DEADLIFT -> "Deadlift"
 }
 
-internal fun Double.formatWeight(): String = if (this % 1.0 == 0.0) toLong().toString() else toString()
-
 /** Elapsed duration from saved timestamps, never a clock that continues running on the summary. */
 internal fun Long.formatWorkoutDuration(): String {
     val seconds = coerceAtLeast(0L) / 1_000

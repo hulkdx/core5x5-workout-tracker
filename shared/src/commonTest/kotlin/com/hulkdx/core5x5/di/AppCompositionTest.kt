@@ -3,6 +3,8 @@ package com.hulkdx.core5x5.di
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
+import com.hulkdx.core5x5.shell.FakeTrainingPreferencesRepository
 import com.hulkdx.core5x5.shell.ShellViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -16,6 +18,7 @@ import org.koin.core.Koin
 import org.koin.core.KoinApplication
 import org.koin.core.annotation.KoinInternalApi
 import org.koin.dsl.koinApplication
+import org.koin.dsl.module
 import org.koin.viewmodel.resolveViewModel
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -33,7 +36,7 @@ class AppCompositionTest {
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(dispatcher)
-        application = koinApplication { modules(appModule) }
+        application = newApplication()
     }
 
     @AfterTest
@@ -72,7 +75,7 @@ class AppCompositionTest {
     @Test
     fun aFreshAppGraphHasNoViewModelFromAnEarlierGraph() {
         val original = resolve(newStore())
-        val nextApplication = koinApplication { modules(appModule) }
+        val nextApplication = newApplication()
         val nextStore = ViewModelStore()
         try {
             assertNotSame(original, resolve(nextStore, nextApplication.koin))
@@ -83,6 +86,12 @@ class AppCompositionTest {
     }
 
     private fun newStore(): ViewModelStore = ViewModelStore().also(stores::add)
+
+    private fun newApplication() = koinApplication {
+        modules(appModule, module {
+            single<TrainingPreferencesRepository> { FakeTrainingPreferencesRepository() }
+        })
+    }
 
     // Exercise the resolver used by koinViewModel without a Compose UI test harness.
     // Keep this pinned-version integration API confined to tests.

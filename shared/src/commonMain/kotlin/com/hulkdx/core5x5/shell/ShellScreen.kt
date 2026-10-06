@@ -14,6 +14,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import com.hulkdx.core5x5.core.ui.components.Core5x5SecondaryButton
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
@@ -23,6 +24,8 @@ import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
 internal fun ShellScreen(
     uiState: ShellUiState,
     modifier: Modifier = Modifier,
+    showTitle: Boolean = true,
+    onRetryPreferences: () -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     Surface(
@@ -32,7 +35,7 @@ internal fun ShellScreen(
     ) {
         // AppNavigation owns safe insets and reserves the anchored navigation bar.
         Column(modifier = Modifier.fillMaxSize()) {
-            Text(
+            if (showTitle) Text(
                 text = buildAnnotatedString {
                     val accentIndex = uiState.title.indexOf("5x5")
                     if (accentIndex < 0) {
@@ -48,11 +51,21 @@ internal fun ShellScreen(
                 color = Core5x5Colors.PrimaryText,
                 modifier = Modifier.padding(
                     start = Core5x5Dimensions.ScreenInset,
-                    top = Core5x5Dimensions.ContentPaddingVertical,
+                    top = Core5x5Dimensions.ContentGap,
                     end = Core5x5Dimensions.ScreenInset,
                     bottom = Core5x5Dimensions.ContentGap,
                 ),
             )
+            if (uiState.hasPreferencesError) {
+                Column(modifier = Modifier.padding(Core5x5Dimensions.ScreenInset)) {
+                    Text(
+                        text = "Unable to load weight units. Showing ${uiState.weightUnit.symbol}.",
+                        style = Core5x5Typography.Caption,
+                        color = Core5x5Colors.Destructive,
+                    )
+                    Core5x5SecondaryButton(label = "Retry preferences", onClick = onRetryPreferences)
+                }
+            }
             Box(
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 contentAlignment = Alignment.TopCenter,

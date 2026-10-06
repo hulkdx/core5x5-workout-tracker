@@ -25,6 +25,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":core:preferences"))
             implementation(project(":core:ui"))
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)

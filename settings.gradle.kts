@@ -29,6 +29,7 @@ dependencyResolutionManagement {
 
 include(":androidApp")
 include(":core:ui")
+include(":core:preferences")
 include(":feature:workout")
 include(":feature:history")
 include(":feature:settings")

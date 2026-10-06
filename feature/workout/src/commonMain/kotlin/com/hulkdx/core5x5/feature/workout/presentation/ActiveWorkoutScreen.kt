@@ -21,6 +21,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
+import com.hulkdx.core5x5.core.preferences.domain.formatWeight
 import com.hulkdx.core5x5.core.ui.components.Core5x5PrimaryButton
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
@@ -35,6 +37,7 @@ internal fun ActiveWorkoutScreen(
     onFinishWorkout: () -> Unit,
     onRetryLoad: () -> Unit,
     modifier: Modifier = Modifier,
+    weightUnit: WeightUnit = WeightUnit.KG,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = Background) {
         Column(
@@ -61,7 +64,7 @@ internal fun ActiveWorkoutScreen(
                     Core5x5PrimaryButton(label = "Try Again", onClick = onRetryLoad)
                 }
                 uiState.unfinishedWorkout != null -> {
-                    ActiveWorkoutContent(uiState.unfinishedWorkout)
+                    ActiveWorkoutContent(uiState.unfinishedWorkout, weightUnit)
                     if (uiState.hasSaveError) {
                         Text(
                             text = "Unable to confirm the workout was saved. Try finishing again.",
@@ -83,7 +86,7 @@ internal fun ActiveWorkoutScreen(
 }
 
 @Composable
-private fun ActiveWorkoutContent(workout: UnfinishedWorkout) {
+private fun ActiveWorkoutContent(workout: UnfinishedWorkout, weightUnit: WeightUnit) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -94,12 +97,12 @@ private fun ActiveWorkoutContent(workout: UnfinishedWorkout) {
             fontSize = 24.sp,
             fontWeight = FontWeight.SemiBold,
         )
-        workout.exercises.forEach { exercise -> ActiveExercise(exercise) }
+        workout.exercises.forEach { exercise -> ActiveExercise(exercise, weightUnit) }
     }
 }
 
 @Composable
-private fun ActiveExercise(exercise: UnfinishedWorkoutExercise) {
+private fun ActiveExercise(exercise: UnfinishedWorkoutExercise, weightUnit: WeightUnit) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -111,7 +114,7 @@ private fun ActiveExercise(exercise: UnfinishedWorkoutExercise) {
             fontWeight = FontWeight.Medium,
         )
         Text(
-            text = "${exercise.sets} × ${exercise.reps} · ${exercise.weightKg.formatWeight()} kg",
+            text = "${exercise.sets} × ${exercise.reps} · ${formatWeight(exercise.weightKg, weightUnit)}",
             color = SecondaryText,
             fontSize = 14.sp,
         )
