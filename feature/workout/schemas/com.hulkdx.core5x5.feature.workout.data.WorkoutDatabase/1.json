@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "41997ba8deb2bee89c5577c146583d34",
+    "identityHash": "c039aa8c168c9f06456508fb25e5667b",
     "entities": [
       {
         "tableName": "unfinished_workout",
@@ -95,11 +95,65 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "unfinished_workout_set",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`workoutId` INTEGER NOT NULL, `exercisePosition` INTEGER NOT NULL, `position` INTEGER NOT NULL, `isCompleted` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`workoutId`, `exercisePosition`, `position`), FOREIGN KEY(`workoutId`, `exercisePosition`) REFERENCES `unfinished_workout_exercise`(`workoutId`, `position`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "workoutId",
+            "columnName": "workoutId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "exercisePosition",
+            "columnName": "exercisePosition",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "position",
+            "columnName": "position",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isCompleted",
+            "columnName": "isCompleted",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "workoutId",
+            "exercisePosition",
+            "position"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "unfinished_workout_exercise",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "workoutId",
+              "exercisePosition"
+            ],
+            "referencedColumns": [
+              "workoutId",
+              "position"
+            ]
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '41997ba8deb2bee89c5577c146583d34')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c039aa8c168c9f06456508fb25e5667b')"
     ]
   }
 }

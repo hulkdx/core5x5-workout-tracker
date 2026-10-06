@@ -9,7 +9,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    entities = [UnfinishedWorkoutEntity::class, UnfinishedWorkoutExerciseEntity::class],
+    entities = [
+        UnfinishedWorkoutEntity::class,
+        UnfinishedWorkoutExerciseEntity::class,
+        UnfinishedWorkoutSetEntity::class,
+    ],
+    // Keep the schema at version 1 until the first production release.
     version = 1,
     exportSchema = true,
 )

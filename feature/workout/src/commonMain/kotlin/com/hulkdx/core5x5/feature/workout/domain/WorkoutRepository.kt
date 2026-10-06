@@ -6,4 +6,14 @@ internal interface WorkoutRepository {
 
     /** Starts the selected program, or returns the existing session without changing it. */
     suspend fun startWorkout(workout: Workout): UnfinishedWorkout
+
+    /**
+     * Sets completion for one set in the current session using zero-based exercise/set positions.
+     * Returns false if no matching set exists. Repeating the same value is safe.
+     */
+    suspend fun setSetCompleted(
+        exercisePosition: Int,
+        setPosition: Int,
+        isCompleted: Boolean,
+    ): Boolean
 }

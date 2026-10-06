@@ -12,4 +12,11 @@ internal data class UnfinishedWorkoutExercise(
     val sets: Int,
     val reps: Int,
     val weightKg: Double,
+    val setStates: List<UnfinishedWorkoutSet> = List(sets) { UnfinishedWorkoutSet(it) },
+)
+
+/** An individual set's zero-based position and saved completion state. */
+internal data class UnfinishedWorkoutSet(
+    val position: Int,
+    val isCompleted: Boolean = false,
 )

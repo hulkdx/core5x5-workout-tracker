@@ -3,6 +3,7 @@ package com.hulkdx.core5x5.feature.workout.data
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
+import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutSet
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -11,7 +12,9 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /** Shared contract exercised by a platform fixture with a real on-disk Room database. */
 internal abstract class UnfinishedWorkoutPersistenceTest {
@@ -217,6 +220,143 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
         }
     }
 
+    @Test
+    fun setCanBeMarkedCompletedWithoutChangingOtherSetsOrPrescriptions() = runTest {
+        withDatabase("complete-set.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1234L }
+            val original = repository.startWorkout(Workout.A)
+
+            assertTrue(repository.setSetCompleted(1, 2, true))
+
+            assertEquals(
+                original.copy(exercises = listOf(
+                    original.exercises[0],
+                    original.exercises[1].copy(setStates = List(5) { UnfinishedWorkoutSet(it, it == 2) }),
+                    original.exercises[2],
+                )),
+                repository.getUnfinishedWorkout(),
+            )
+        }
+    }
+
+    @Test
+    fun completedSetCanBeChangedBackToIncompleteWithoutResettingOtherCompletedSets() = runTest {
+        withDatabase("uncomplete-set.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1234L }
+            val original = repository.startWorkout(Workout.A)
+            assertTrue(repository.setSetCompleted(0, 2, true))
+            assertTrue(repository.setSetCompleted(1, 0, true))
+
+            assertTrue(repository.setSetCompleted(0, 2, false))
+
+            assertEquals(
+                original.copy(exercises = listOf(
+                    original.exercises[0],
+                    original.exercises[1].copy(setStates = List(5) { UnfinishedWorkoutSet(it, it == 0) }),
+                    original.exercises[2],
+                )),
+                repository.getUnfinishedWorkout(),
+            )
+        }
+    }
+
+    @Test
+    fun completionStateSurvivesRepositoryAndDatabaseRecreationAndRepeatedStart() = runTest {
+        for (workout in Workout.entries) {
+            val name = "set-reopen-${workout.name}.db"
+            deleteDatabase(name)
+            try {
+                val database = openDatabase(name)
+                val saved = try {
+                    val dao = database.unfinishedWorkoutDao()
+                    val repository = RoomWorkoutRepository(dao) { 1234L }
+                    repository.startWorkout(workout)
+                    assertTrue(repository.setSetCompleted(0, 4, true))
+                    assertTrue(repository.setSetCompleted(1, 1, true))
+                    assertTrue(repository.setSetCompleted(1, 1, false))
+                    assertTrue(repository.setSetCompleted(2, 0, true))
+                    val session = requireNotNull(repository.getUnfinishedWorkout())
+                    assertEquals(listOf(false, false, false, false, true), session.exercises[0].setStates.map { it.isCompleted })
+                    assertEquals(List(5) { false }, session.exercises[1].setStates.map { it.isCompleted })
+                    assertTrue(session.exercises[2].setStates[0].isCompleted)
+                    assertEquals(session, RoomWorkoutRepository(dao).getUnfinishedWorkout())
+                    session
+                } finally {
+                    database.close()
+                }
+                val reopened = openDatabase(name)
+                try {
+                    val repository = RoomWorkoutRepository(reopened.unfinishedWorkoutDao()) { 5678L }
+                    assertEquals(saved, repository.getUnfinishedWorkout())
+                    val otherWorkout = if (workout == Workout.A) Workout.B else Workout.A
+                    assertEquals(saved, repository.startWorkout(otherWorkout))
+                    assertEquals(saved.exercises.sumOf { it.sets }, reopened.unfinishedWorkoutDao().getSets().size)
+                } finally {
+                    reopened.close()
+                }
+            } finally {
+                deleteDatabase(name)
+            }
+        }
+    }
+
+    @Test
+    fun repeatedCompletionWritesKeepTheRequestedState() = runTest {
+        withDatabase("repeat-set.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1234L }
+            val original = repository.startWorkout(Workout.B)
+            assertTrue(repository.setSetCompleted(2, 0, true))
+            val completed = repository.getUnfinishedWorkout()
+            assertTrue(repository.setSetCompleted(2, 0, true))
+            assertEquals(completed, repository.getUnfinishedWorkout())
+            assertTrue(repository.setSetCompleted(2, 0, false))
+            assertTrue(repository.setSetCompleted(2, 0, false))
+            assertEquals(original, repository.getUnfinishedWorkout())
+        }
+    }
+
+    @Test
+    fun missingSetsCannotBeCompletedAndDoNotCreateOrChangeASession() = runTest {
+        withDatabase("missing-set.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1234L }
+            assertFalse(repository.setSetCompleted(0, 0, true))
+            assertNull(repository.getUnfinishedWorkout())
+            val original = repository.startWorkout(Workout.B)
+            for ((exercisePosition, setPosition) in listOf(-1 to 0, 3 to 0, 0 to -1, 0 to 5, 2 to 1)) {
+                assertFalse(repository.setSetCompleted(exercisePosition, setPosition, true))
+                assertFalse(repository.setSetCompleted(exercisePosition, setPosition, false))
+            }
+            assertEquals(original, repository.getUnfinishedWorkout())
+        }
+    }
+
+    @Test
+    fun concurrentUpdatesAcrossDatabaseInstancesPreserveBothSets() = runTest {
+        withDatabase("concurrent-sets.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1234L }
+            val original = repository.startWorkout(Workout.A)
+            val second = openDatabase("concurrent-sets.db")
+            try {
+                val secondRepository = RoomWorkoutRepository(second.unfinishedWorkoutDao())
+                val results = listOf(
+                    async(Dispatchers.Default) { repository.setSetCompleted(0, 0, true) },
+                    async(Dispatchers.Default) { secondRepository.setSetCompleted(0, 1, true) },
+                ).awaitAll()
+                assertEquals(listOf(true, true), results)
+                assertEquals(
+                    original.copy(exercises = listOf(
+                        original.exercises[0].copy(setStates = List(5) { UnfinishedWorkoutSet(it, it < 2) }),
+                        original.exercises[1],
+                        original.exercises[2],
+                    )),
+                    repository.getUnfinishedWorkout(),
+                )
+            } finally {
+                second.close()
+            }
+        }
+    }
+
     private suspend fun withDatabase(name: String, block: suspend (WorkoutDatabase) -> Unit) {
         deleteDatabase(name)
         try {
@@ -240,6 +380,9 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
         assertEquals(if (workout == Workout.A) listOf(5, 5, 5) else listOf(5, 5, 1), session.exercises.map { it.sets })
         assertEquals(listOf(5, 5, 5), session.exercises.map { it.reps })
         assertEquals(listOf(20.0, 20.0, 20.0), session.exercises.map { it.weightKg })
+        session.exercises.forEach { exercise ->
+            assertEquals(List(exercise.sets) { UnfinishedWorkoutSet(it) }, exercise.setStates)
+        }
     }
 
 }

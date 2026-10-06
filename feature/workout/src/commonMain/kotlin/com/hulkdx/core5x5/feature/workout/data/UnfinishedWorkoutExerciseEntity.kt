@@ -26,4 +26,5 @@ internal data class UnfinishedWorkoutExerciseEntity(
 internal data class StoredUnfinishedWorkout(
     val session: UnfinishedWorkoutEntity,
     val exercises: List<UnfinishedWorkoutExerciseEntity>,
+    val sets: List<UnfinishedWorkoutSetEntity>,
 )

@@ -278,6 +278,12 @@ internal class TodayViewModelTest {
             startError?.let { throw it }
             return active ?: session(workout).also { active = it }
         }
+
+        override suspend fun setSetCompleted(
+            exercisePosition: Int,
+            setPosition: Int,
+            isCompleted: Boolean,
+        ): Boolean = error("Today does not change set completion")
     }
 
     companion object {

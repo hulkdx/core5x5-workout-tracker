@@ -20,10 +20,22 @@ internal interface UnfinishedWorkoutDao {
     @Query("SELECT * FROM unfinished_workout_exercise WHERE workoutId = 1 ORDER BY position")
     suspend fun getExercises(): List<UnfinishedWorkoutExerciseEntity>
 
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertSets(sets: List<UnfinishedWorkoutSetEntity>)
+
+    @Query("SELECT * FROM unfinished_workout_set WHERE workoutId = 1 ORDER BY exercisePosition, position")
+    suspend fun getSets(): List<UnfinishedWorkoutSetEntity>
+
+    @Query("""
+        UPDATE unfinished_workout_set SET isCompleted = :isCompleted
+        WHERE workoutId = 1 AND exercisePosition = :exercisePosition AND position = :setPosition
+    """)
+    suspend fun setSetCompleted(exercisePosition: Int, setPosition: Int, isCompleted: Boolean): Int
+
     @Transaction
     suspend fun getSession(): StoredUnfinishedWorkout? {
         val session = getUnfinishedWorkout() ?: return null
-        return StoredUnfinishedWorkout(session, getExercises())
+        return StoredUnfinishedWorkout(session, getExercises(), getSets())
     }
 
     /** The write transaction serializes competing starts, including other database instances. */
@@ -35,6 +47,11 @@ internal interface UnfinishedWorkoutDao {
         getSession()?.let { return it }
         insert(session)
         insertExercises(exercises)
-        return StoredUnfinishedWorkout(session, getExercises())
+        insertSets(exercises.flatMap { exercise ->
+            List(exercise.sets) { position ->
+                UnfinishedWorkoutSetEntity(exercise.workoutId, exercise.position, position)
+            }
+        })
+        return StoredUnfinishedWorkout(session, getExercises(), getSets())
     }
 }
