@@ -6,10 +6,11 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun TodayRoute(onWorkoutRequested: (Long) -> Unit) {
+fun TodayRoute(weightUnit: WeightUnit = WeightUnit.KG, onWorkoutRequested: (Long) -> Unit) {
     val viewModel: TodayViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -26,6 +27,7 @@ fun TodayRoute(onWorkoutRequested: (Long) -> Unit) {
 
     TodayScreen(
         uiState = uiState,
+        weightUnit = weightUnit,
         onStartWorkout = viewModel::startWorkout,
         onResumeWorkout = viewModel::requestResume,
         onRetryLoad = viewModel::loadWorkout,

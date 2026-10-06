@@ -28,6 +28,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
+import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
+import com.hulkdx.core5x5.core.preferences.domain.formatWeight
 import com.hulkdx.core5x5.core.ui.components.Core5x5ExerciseRow
 import com.hulkdx.core5x5.core.ui.components.Core5x5Metrics
 import com.hulkdx.core5x5.core.ui.components.Core5x5PrimaryButton
@@ -50,6 +52,7 @@ internal fun WorkoutCompleteScreen(
     onBackToToday: () -> Unit,
     modifier: Modifier = Modifier,
     windowInsets: WindowInsets = WindowInsets.safeDrawing,
+    weightUnit: WeightUnit = WeightUnit.KG,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = Core5x5Colors.Background) {
         Column(
@@ -104,7 +107,7 @@ internal fun WorkoutCompleteScreen(
                         next.exercises.forEach { exercise ->
                             Core5x5ExerciseRow(
                                 name = exercise.exercise.displayName(),
-                                prescription = "${exercise.sets} × ${exercise.reps} · ${exercise.weightKg.formatWeight()} kg",
+                                prescription = "${exercise.sets} × ${exercise.reps} · ${formatWeight(exercise.weightKg, weightUnit)}",
                             )
                         }
                     }

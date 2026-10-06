@@ -27,6 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
+import com.hulkdx.core5x5.core.preferences.domain.formatWeight
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
 import com.hulkdx.core5x5.feature.workout.domain.ExercisePrescription
@@ -40,6 +42,7 @@ internal fun TodayScreen(
     onStartWorkout: () -> Unit,
     onResumeWorkout: () -> Unit,
     onRetryLoad: () -> Unit,
+    weightUnit: WeightUnit = WeightUnit.KG,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = Background) {
         Column(
@@ -59,7 +62,7 @@ internal fun TodayScreen(
                     WorkoutSummaryCard(
                         eyebrow = "WORKOUT IN PROGRESS",
                         workout = workout.workout,
-                        exercises = workout.exercises.map(UnfinishedWorkoutExercise::toSummary),
+                        exercises = workout.exercises.map { it.toSummary(weightUnit) },
                         buttonLabel = if (uiState.isWorking) "Resuming…" else "Resume Workout",
                         buttonEnabled = uiState.canResume,
                         errorMessage = uiState.error?.message(),
@@ -72,8 +75,8 @@ internal fun TodayScreen(
                     WorkoutSummaryCard(
                         eyebrow = "NEXT WORKOUT",
                         workout = workout,
-                        exercises = uiState.nextWorkoutPrescription?.exercises?.map(ExercisePrescription::toSummary)
-                            ?: workout.exercises.map(Exercise::toSummary),
+                        exercises = uiState.nextWorkoutPrescription?.exercises?.map { it.toSummary(weightUnit) }
+                            ?: workout.exercises.map { it.toSummary(weightUnit) },
                         buttonLabel = if (uiState.isWorking) "Starting…" else "Start Workout",
                         buttonEnabled = uiState.canStart,
                         errorMessage = uiState.error?.message(),
@@ -254,25 +257,25 @@ private data class ExerciseSummary(
     val weightLabel: String,
 )
 
-private fun Exercise.toSummary() = ExerciseSummary(
+private fun Exercise.toSummary(unit: WeightUnit) = ExerciseSummary(
     name = displayName(),
     sets = sets,
     reps = reps,
-    weightLabel = "${startingWeightKg.formatWeight()} kg",
+    weightLabel = formatWeight(startingWeightKg, unit),
 )
 
-private fun UnfinishedWorkoutExercise.toSummary() = ExerciseSummary(
+private fun UnfinishedWorkoutExercise.toSummary(unit: WeightUnit) = ExerciseSummary(
     name = exercise.displayName(),
     sets = sets,
     reps = reps,
-    weightLabel = "${weightKg.formatWeight()} kg",
+    weightLabel = formatWeight(weightKg, unit),
 )
 
-private fun ExercisePrescription.toSummary() = ExerciseSummary(
+private fun ExercisePrescription.toSummary(unit: WeightUnit) = ExerciseSummary(
     name = exercise.displayName(),
     sets = sets,
     reps = reps,
-    weightLabel = "${weightKg.formatWeight()} kg",
+    weightLabel = formatWeight(weightKg, unit),
 )
 
 private fun TodayError.message() = when (this) {

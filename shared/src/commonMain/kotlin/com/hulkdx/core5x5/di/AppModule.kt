@@ -1,5 +1,6 @@
 package com.hulkdx.core5x5.di
 
+import com.hulkdx.core5x5.core.preferences.di.preferencesModule
 import com.hulkdx.core5x5.feature.history.di.historyModule
 import com.hulkdx.core5x5.feature.settings.di.settingsModule
 import com.hulkdx.core5x5.feature.workout.di.restTimerModule
@@ -9,6 +10,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 internal val appModule = module {
-    includes(workoutModule, restTimerModule, historyModule, settingsModule)
-    viewModel { ShellViewModel() }
+    includes(preferencesModule, workoutModule, restTimerModule, historyModule, settingsModule)
+    viewModel { ShellViewModel(get()) }
 }

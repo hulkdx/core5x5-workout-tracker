@@ -9,6 +9,15 @@ import kotlin.test.assertTrue
 
 internal class AppBackStackTest {
     @Test
+    fun settingsRestoresAsADestinationAndBackReturnsToToday() {
+        val original = mutableStateListOf<AppDestination>(AppDestination.Today, AppDestination.Settings)
+        val serialized = with(AppBackStackSaver) { SaverScope { it is String }.save(original) }
+        val restored = requireNotNull(AppBackStackSaver.restore(requireNotNull(serialized)))
+        assertEquals(AppDestination.Settings, restored.removeLastOrNull())
+        assertEquals(listOf(AppDestination.Today), restored.toList())
+    }
+
+    @Test
     fun completionRestoresTheIdentifiedSessionAndReturnsDirectlyToToday() {
         val id = Int.MAX_VALUE.toLong() + 42L
         val original = mutableStateListOf<AppDestination>(
