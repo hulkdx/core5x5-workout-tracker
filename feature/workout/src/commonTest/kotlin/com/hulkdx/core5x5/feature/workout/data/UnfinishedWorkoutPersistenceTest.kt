@@ -1,6 +1,7 @@
 package com.hulkdx.core5x5.feature.workout.data
 
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
+import com.hulkdx.core5x5.feature.workout.domain.CompletedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutSet
@@ -379,6 +380,184 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
                     dao.getWorkout(active.id),
                 )
             }
+        }
+    }
+
+    @Test
+    fun completedReadRejectsMissingAndUnfinishedIdsWithoutWritingOrReadingTheClock() = runTest {
+        withDatabase("completed-read-empty.db") { database ->
+            val dao = database.unfinishedWorkoutDao()
+            val reader = RoomWorkoutRepository(dao) { error("Completed reads must not consult the clock") }
+            assertNull(reader.getCompletedWorkout(1L))
+            val active = RoomWorkoutRepository(dao) { 1234L }.startWorkout(Workout.B)
+            assertNull(reader.getCompletedWorkout(active.id))
+            assertNull(reader.getCompletedWorkout(Long.MAX_VALUE))
+            assertEquals(active, reader.getUnfinishedWorkout())
+        }
+    }
+
+    @Test
+    fun completedSummaryReloadsItsOriginalSessionAndLoggedSetsAfterReopening() = runTest {
+        for (workout in Workout.entries) {
+            val name = "completed-summary-${workout.name}.db"
+            deleteDatabase(name)
+            try {
+                val database = openDatabase(name)
+                val expected = try {
+                    val dao = database.unfinishedWorkoutDao()
+                    val active = RoomWorkoutRepository(dao) { 1000L }.startWorkout(workout)
+                    val repository = RoomWorkoutRepository(dao) { 2_539_000L }
+                    assertTrue(repository.setSetCompleted(0, 0, true))
+                    assertTrue(repository.setSetCompleted(2, 0, true))
+                    val logged = requireNotNull(repository.getUnfinishedWorkout())
+                    assertTrue(repository.finalizeWorkout(active.id))
+                    val saved = requireNotNull(repository.getCompletedWorkout(active.id))
+                    assertEquals(
+                        CompletedWorkout(active.id, workout, 1000L, 2_539_000L, logged.exercises),
+                        saved,
+                    )
+                    assertEquals(2, saved.completedSets)
+                    assertEquals(if (workout == Workout.A) 15 else 11, saved.prescribedSets)
+                    assertEquals(2_538_000L, saved.durationMillis)
+                    saved
+                } finally {
+                    database.close()
+                }
+                val reopened = openDatabase(name)
+                try {
+                    val dao = reopened.unfinishedWorkoutDao()
+                    val reader = RoomWorkoutRepository(dao) { error("Summary reads do not consult the clock") }
+                    assertEquals(expected, reader.getCompletedWorkout(expected.id))
+                    val later = RoomWorkoutRepository(dao) { 3_000_000L }.startWorkout(workout.nextWorkout())
+                    assertEquals(expected, reader.getCompletedWorkout(expected.id))
+                    assertNull(reader.getCompletedWorkout(later.id))
+                    assertEquals(later, reader.getUnfinishedWorkout())
+                } finally {
+                    reopened.close()
+                }
+            } finally {
+                deleteDatabase(name)
+            }
+        }
+    }
+
+    @Test
+    fun completedSummaryUsesSavedNonDefaultPrescriptionsInPersistedOrder() = runTest {
+        withDatabase("completed-summary-snapshots.db") { database ->
+            val dao = database.unfinishedWorkoutDao()
+            val stored = dao.insertSessionIfAbsent(
+                UnfinishedWorkoutEntity(Workout.B, 1234L),
+                listOf(
+                    UnfinishedWorkoutExerciseEntity(0, 2, Exercise.DEADLIFT, 1, 4, 60.0),
+                    UnfinishedWorkoutExerciseEntity(0, 0, Exercise.SQUAT, 3, 5, 40.0),
+                    UnfinishedWorkoutExerciseEntity(0, 1, Exercise.OVERHEAD_PRESS, 5, 3, 25.0),
+                ),
+            )
+            val repository = RoomWorkoutRepository(dao) { 5678L }
+            assertTrue(repository.setSetCompleted(0, 1, true))
+            val logged = requireNotNull(repository.getUnfinishedWorkout())
+            assertTrue(repository.finalizeWorkout(stored.session.id))
+
+            val saved = requireNotNull(repository.getCompletedWorkout(stored.session.id))
+            assertEquals(logged.exercises, saved.exercises)
+            assertEquals(listOf(Exercise.SQUAT, Exercise.OVERHEAD_PRESS, Exercise.DEADLIFT), saved.exercises.map { it.exercise })
+            assertEquals(listOf(40.0, 25.0, 60.0), saved.exercises.map { it.weightKg })
+            assertEquals(9, saved.prescribedSets)
+            assertEquals(1, saved.completedSets)
+        }
+    }
+
+    @Test
+    fun nextPrescriptionBeforeAnyCompletionUsesCanonicalDefaultsAndDoesNotCreateASession() = runTest {
+        withDatabase("next-prescription-empty.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) {
+                error("Prescription reads do not consult the clock")
+            }
+            val prescription = repository.getNextWorkoutPrescription()
+            assertEquals(Workout.A, prescription.workout)
+            assertEquals(Workout.A.exercises, prescription.exercises.map { it.exercise })
+            assertEquals(listOf(5, 5, 5), prescription.exercises.map { it.sets })
+            assertEquals(listOf(5, 5, 5), prescription.exercises.map { it.reps })
+            assertEquals(listOf(20.0, 20.0, 20.0), prescription.exercises.map { it.weightKg })
+            assertNull(repository.getUnfinishedWorkout())
+        }
+    }
+
+    @Test
+    fun nextPrescriptionCarriesEachLiftsLatestSavedWeightAcrossAAndBAndIntoTheNextStart() = runTest {
+        val name = "next-prescription-weights.db"
+        deleteDatabase(name)
+        try {
+            val database = openDatabase(name)
+            val expected = try {
+                val dao = database.unfinishedWorkoutDao()
+                val first = dao.insertSessionIfAbsent(
+                    UnfinishedWorkoutEntity(Workout.A, 100L),
+                    listOf(
+                        UnfinishedWorkoutExerciseEntity(0, 0, Exercise.SQUAT, 5, 5, 40.0),
+                        UnfinishedWorkoutExerciseEntity(0, 1, Exercise.BENCH_PRESS, 5, 5, 27.5),
+                        UnfinishedWorkoutExerciseEntity(0, 2, Exercise.BARBELL_ROW, 5, 5, 35.0),
+                    ),
+                )
+                assertTrue(RoomWorkoutRepository(dao) { 500L }.finalizeWorkout(first.session.id))
+                val nextB = RoomWorkoutRepository(dao).getNextWorkoutPrescription()
+                assertEquals(Workout.B, nextB.workout)
+                assertEquals(listOf(40.0, 20.0, 20.0), nextB.exercises.map { it.weightKg })
+                assertEquals(listOf(5, 5, 1), nextB.exercises.map { it.sets })
+
+                val second = dao.insertSessionIfAbsent(
+                    UnfinishedWorkoutEntity(Workout.B, 200L),
+                    listOf(
+                        UnfinishedWorkoutExerciseEntity(0, 0, Exercise.SQUAT, 5, 5, 45.0),
+                        UnfinishedWorkoutExerciseEntity(0, 1, Exercise.OVERHEAD_PRESS, 5, 5, 32.5),
+                        UnfinishedWorkoutExerciseEntity(0, 2, Exercise.DEADLIFT, 1, 5, 60.0),
+                    ),
+                )
+                // A backward clock and partial completion must not choose older weights or increase them.
+                val repository = RoomWorkoutRepository(dao) { 400L }
+                assertTrue(repository.setSetCompleted(0, 0, true))
+                assertTrue(repository.finalizeWorkout(second.session.id))
+                val nextA = repository.getNextWorkoutPrescription()
+                assertEquals(Workout.A, nextA.workout)
+                assertEquals(listOf(45.0, 27.5, 35.0), nextA.exercises.map { it.weightKg })
+                val started = repository.startWorkout(nextA.workout)
+                assertEquals(nextA.exercises.map { it.exercise }, started.exercises.map { it.exercise })
+                assertEquals(nextA.exercises.map { it.weightKg }, started.exercises.map { it.weightKg })
+                assertTrue(started.exercises.all { exercise -> exercise.setStates.none { it.isCompleted } })
+                assertEquals(nextA, repository.getNextWorkoutPrescription())
+                nextA
+            } finally {
+                database.close()
+            }
+            val reopened = openDatabase(name)
+            try {
+                val reader = RoomWorkoutRepository(reopened.unfinishedWorkoutDao()) {
+                    error("Restored prescription reads do not consult the clock")
+                }
+                assertEquals(expected, reader.getNextWorkoutPrescription())
+            } finally {
+                reopened.close()
+            }
+        } finally {
+            deleteDatabase(name)
+        }
+    }
+
+    @Test
+    fun nextPrescriptionIgnoresWeightsFromAnUnfinishedSession() = runTest {
+        withDatabase("next-prescription-unfinished.db") { database ->
+            val dao = database.unfinishedWorkoutDao()
+            val active = dao.insertSessionIfAbsent(
+                UnfinishedWorkoutEntity(Workout.B, 1234L),
+                Workout.B.exercises.mapIndexed { position, exercise ->
+                    UnfinishedWorkoutExerciseEntity(0, position, exercise, exercise.sets, exercise.reps, 100.0)
+                },
+            )
+            val repository = RoomWorkoutRepository(dao) { error("Prescription reads do not consult the clock") }
+            val before = dao.getSession(active.session.id)
+            assertEquals(Workout.A, repository.getNextWorkoutPrescription().workout)
+            assertEquals(listOf(20.0, 20.0, 20.0), repository.getNextWorkoutPrescription().exercises.map { it.weightKg })
+            assertEquals(before, dao.getSession(active.session.id))
         }
     }
 

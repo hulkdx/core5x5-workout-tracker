@@ -15,10 +15,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.hulkdx.core5x5.feature.workout.domain.Exercise
+import com.hulkdx.core5x5.core.ui.components.Core5x5PrimaryButton
+import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
+import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
+import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 
@@ -26,6 +32,8 @@ import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 internal fun ActiveWorkoutScreen(
     uiState: ActiveWorkoutUiState,
     onBack: () -> Unit,
+    onFinishWorkout: () -> Unit,
+    onRetryLoad: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = Background) {
@@ -34,20 +42,40 @@ internal fun ActiveWorkoutScreen(
                 .fillMaxSize()
                 .safeContentPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(
+                    start = Core5x5Dimensions.ScreenInset,
+                    end = Core5x5Dimensions.ScreenInset,
+                    top = Core5x5Dimensions.ContentGap,
+                    bottom = Core5x5Dimensions.ContentPaddingVertical,
+                ),
+            verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.ContentGap),
         ) {
-            TextButton(onClick = onBack) {
+            TextButton(onClick = onBack, enabled = !uiState.isSaving) {
                 Text(text = "Today", color = Accent)
             }
 
             when {
                 uiState.isLoading -> CircularProgressIndicator(color = Accent)
-                uiState.hasLoadError -> Text(
-                    text = "Unable to load the active workout.",
-                    color = PrimaryText,
-                )
-                uiState.unfinishedWorkout != null -> ActiveWorkoutContent(uiState.unfinishedWorkout)
+                uiState.hasLoadError -> {
+                    Text(text = "Unable to load the active workout.", color = PrimaryText)
+                    Core5x5PrimaryButton(label = "Try Again", onClick = onRetryLoad)
+                }
+                uiState.unfinishedWorkout != null -> {
+                    ActiveWorkoutContent(uiState.unfinishedWorkout)
+                    if (uiState.hasSaveError) {
+                        Text(
+                            text = "Unable to confirm the workout was saved. Try finishing again.",
+                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                            style = Core5x5Typography.Caption,
+                            color = Core5x5Colors.Destructive,
+                        )
+                    }
+                    Core5x5PrimaryButton(
+                        label = if (uiState.isSaving) "Saving…" else "Finish Workout",
+                        onClick = onFinishWorkout,
+                        enabled = uiState.canFinish,
+                    )
+                }
                 else -> Text(text = "No unfinished workout.", color = SecondaryText)
             }
         }
@@ -89,16 +117,6 @@ private fun ActiveExercise(exercise: UnfinishedWorkoutExercise) {
         )
     }
 }
-
-private fun Exercise.displayName() = when (this) {
-    Exercise.SQUAT -> "Squat"
-    Exercise.BENCH_PRESS -> "Bench Press"
-    Exercise.BARBELL_ROW -> "Barbell Row"
-    Exercise.OVERHEAD_PRESS -> "Overhead Press"
-    Exercise.DEADLIFT -> "Deadlift"
-}
-
-private fun Double.formatWeight() = if (this % 1.0 == 0.0) toInt().toString() else toString()
 
 private val Background = Color(0xFF0C1114)
 private val PrimaryText = Color(0xFFF5F8F7)

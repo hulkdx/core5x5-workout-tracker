@@ -2,10 +2,12 @@ package com.hulkdx.core5x5.feature.workout.presentation
 
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.Workout
+import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
 
 internal data class TodayUiState(
     val isLoading: Boolean = true,
     val nextWorkout: Workout? = null,
+    val nextWorkoutPrescription: WorkoutPrescription? = null,
     val unfinishedWorkout: UnfinishedWorkout? = null,
     val isWorking: Boolean = false,
     val error: TodayError? = null,

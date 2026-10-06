@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
+import com.hulkdx.core5x5.feature.workout.domain.ExercisePrescription
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 
@@ -71,7 +72,8 @@ internal fun TodayScreen(
                     WorkoutSummaryCard(
                         eyebrow = "NEXT WORKOUT",
                         workout = workout,
-                        exercises = workout.exercises.map(Exercise::toSummary),
+                        exercises = uiState.nextWorkoutPrescription?.exercises?.map(ExercisePrescription::toSummary)
+                            ?: workout.exercises.map(Exercise::toSummary),
                         buttonLabel = if (uiState.isWorking) "Starting…" else "Start Workout",
                         buttonEnabled = uiState.canStart,
                         errorMessage = uiState.error?.message(),
@@ -266,15 +268,12 @@ private fun UnfinishedWorkoutExercise.toSummary() = ExerciseSummary(
     weightLabel = "${weightKg.formatWeight()} kg",
 )
 
-private fun Exercise.displayName() = when (this) {
-    Exercise.SQUAT -> "Squat"
-    Exercise.BENCH_PRESS -> "Bench Press"
-    Exercise.BARBELL_ROW -> "Barbell Row"
-    Exercise.OVERHEAD_PRESS -> "Overhead Press"
-    Exercise.DEADLIFT -> "Deadlift"
-}
-
-private fun Double.formatWeight() = if (this % 1.0 == 0.0) toInt().toString() else toString()
+private fun ExercisePrescription.toSummary() = ExerciseSummary(
+    name = exercise.displayName(),
+    sets = sets,
+    reps = reps,
+    weightLabel = "${weightKg.formatWeight()} kg",
+)
 
 private fun TodayError.message() = when (this) {
     TodayError.LOAD -> "Unable to refresh your workout. Try again."

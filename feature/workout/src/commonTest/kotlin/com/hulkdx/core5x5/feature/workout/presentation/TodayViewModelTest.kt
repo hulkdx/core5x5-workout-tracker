@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.hulkdx.core5x5.feature.workout.di.workoutModule
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
+import com.hulkdx.core5x5.feature.workout.domain.CompletedWorkout
+import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.Workout
@@ -354,6 +356,30 @@ internal class TodayViewModelTest {
         }
     }
 
+    @Test
+    fun refreshAfterCompletionShowsTheNextProgramAndItsSavedWeights() = runTest(dispatcher) {
+        val active = session(Workout.A)
+        repository.active = active
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        assertSame(active, viewModel.uiState.value.unfinishedWorkout)
+
+        repository.active = null
+        repository.nextWorkout = Workout.B
+        val defaults = WorkoutPrescription(Workout.B)
+        val next = defaults.copy(exercises = defaults.exercises.map { it.copy(weightKg = 32.5) })
+        repository.nextPrescription = next
+        viewModel.loadWorkout()
+        dispatcher.scheduler.runCurrent()
+
+        assertTrue(viewModel.uiState.value.canStart)
+        assertNull(viewModel.uiState.value.unfinishedWorkout)
+        assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
+        assertSame(next, viewModel.uiState.value.nextWorkoutPrescription)
+        assertEquals(listOf(32.5, 32.5, 32.5), viewModel.uiState.value.nextWorkoutPrescription?.exercises?.map { it.weightKg })
+        assertNull(viewModel.uiState.value.requestedWorkout)
+    }
+
     private fun newStore(): ViewModelStore = ViewModelStore().also(stores::add)
 
     private fun createViewModel(): TodayViewModel =
@@ -362,6 +388,7 @@ internal class TodayViewModelTest {
     private class FakeWorkoutRepository : WorkoutRepository {
         var active: UnfinishedWorkout? = null
         var nextWorkout = Workout.A
+        var nextPrescription: WorkoutPrescription? = null
         var readCount = 0
         var nextWorkoutReadCount = 0
         var readError: Exception? = null
@@ -397,6 +424,14 @@ internal class TodayViewModelTest {
             nextWorkoutError?.let { throw it }
             return nextWorkout
         }
+
+        override suspend fun getNextWorkoutPrescription(): WorkoutPrescription {
+            val selected = getNextWorkout()
+            return nextPrescription ?: WorkoutPrescription(selected)
+        }
+
+        override suspend fun getCompletedWorkout(workoutId: Long): CompletedWorkout? =
+            error("Today does not load a completed-session summary")
 
         override suspend fun startWorkout(workout: Workout): UnfinishedWorkout {
             startedWorkouts += workout

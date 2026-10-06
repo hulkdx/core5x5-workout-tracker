@@ -50,9 +50,10 @@ internal class TodayViewModel(
     }
 
     private suspend fun showWorkout(workout: UnfinishedWorkout?, requested: Boolean = false) {
-        val nextWorkout = if (workout == null) repository.getNextWorkout() else null
+        val nextWorkout = if (workout == null) repository.getNextWorkoutPrescription() else null
         _uiState.value = uiState.value.copy(
-            nextWorkout = nextWorkout,
+            nextWorkout = nextWorkout?.workout,
+            nextWorkoutPrescription = nextWorkout,
             unfinishedWorkout = workout,
             requestedWorkout = if (requested) workout else null,
             error = null,
