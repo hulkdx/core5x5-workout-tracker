@@ -17,9 +17,11 @@ internal data class UnfinishedWorkoutEntity(
     val completedAtEpochMillis: Long? = null,
     // The unique slot admits one unfinished session and any number of completed sessions (null).
     val unfinishedSlot: Int? = 1,
+    val restDeadlineEpochMillis: Long? = null,
 ) {
     init {
         require(unfinishedSlot == null || unfinishedSlot == 1)
         require((completedAtEpochMillis == null) == (unfinishedSlot == 1))
+        require(completedAtEpochMillis == null || restDeadlineEpochMillis == null)
     }
 }

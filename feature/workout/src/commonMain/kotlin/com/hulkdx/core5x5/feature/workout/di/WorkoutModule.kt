@@ -11,10 +11,12 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 val workoutModule = module {
-    includes(workoutPlatformModule)
+    includes(workoutPlatformModule, restTimerModule)
     single { get<WorkoutDatabase>().unfinishedWorkoutDao() }
     single<WorkoutRepository> { RoomWorkoutRepository(get()) }
-    viewModel { parameters -> ActiveWorkoutViewModel(repository = get(), workoutId = parameters.getOrNull()) }
+    viewModel { parameters ->
+        ActiveWorkoutViewModel(repository = get(), workoutId = parameters.getOrNull(), restTimerRules = get())
+    }
     viewModel { TodayViewModel(get()) }
     viewModel { parameters -> WorkoutCompleteViewModel(workoutId = parameters.get(), repository = get()) }
 }

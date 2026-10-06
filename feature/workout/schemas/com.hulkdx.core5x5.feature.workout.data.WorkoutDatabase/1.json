@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "6e21d409e66d7015e4dc4a5eb8f63753",
+    "identityHash": "6f7fe3369bcaf9b1377ef5149e89d4c3",
     "entities": [
       {
         "tableName": "unfinished_workout",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`workout` TEXT NOT NULL, `startedAtEpochMillis` INTEGER NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `completedAtEpochMillis` INTEGER, `unfinishedSlot` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`workout` TEXT NOT NULL, `startedAtEpochMillis` INTEGER NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `completedAtEpochMillis` INTEGER, `unfinishedSlot` INTEGER, `restDeadlineEpochMillis` INTEGER)",
         "fields": [
           {
             "fieldPath": "workout",
@@ -34,6 +34,11 @@
           {
             "fieldPath": "unfinishedSlot",
             "columnName": "unfinishedSlot",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "restDeadlineEpochMillis",
+            "columnName": "restDeadlineEpochMillis",
             "affinity": "INTEGER"
           }
         ],
@@ -174,7 +179,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6e21d409e66d7015e4dc4a5eb8f63753')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6f7fe3369bcaf9b1377ef5149e89d4c3')"
     ]
   }
 }

@@ -8,9 +8,17 @@ internal data class ActiveWorkoutUiState(
     val hasLoadError: Boolean = false,
     val isSaving: Boolean = false,
     val hasSaveError: Boolean = false,
+    val isCompletingSet: Boolean = false,
+    val hasSetSaveError: Boolean = false,
+    val selectedExercisePosition: Int = 0,
+    val restTimer: RestTimerUiState = RestTimerUiState(),
     /** Navigation is requested only after the identified session is read back as completed. */
     val requestedCompletedWorkoutId: Long? = null,
 ) {
     val canFinish: Boolean
-        get() = !isLoading && !isSaving && unfinishedWorkout != null && requestedCompletedWorkoutId == null
+        get() = canCompleteSet
+
+    val canCompleteSet: Boolean
+        get() = !isLoading && !hasLoadError && !isSaving && !isCompletingSet &&
+            unfinishedWorkout != null && requestedCompletedWorkoutId == null
 }

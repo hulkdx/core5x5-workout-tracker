@@ -259,6 +259,13 @@ internal class WorkoutCompleteViewModelTest {
         override suspend fun finalizeWorkout(workoutId: Long): Boolean = error("Summary must never save again")
         override suspend fun setSetCompleted(exercisePosition: Int, setPosition: Int, isCompleted: Boolean): Boolean =
             error("Summary cannot edit logged sets")
+
+        override suspend fun completeSetAndStartRest(
+            workoutId: Long,
+            exercisePosition: Int,
+            setPosition: Int,
+            restDurationMillis: Long,
+        ): UnfinishedWorkout? = error("Summary cannot edit sets or start rest")
     }
 
     companion object {

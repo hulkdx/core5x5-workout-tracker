@@ -2,6 +2,8 @@ package com.hulkdx.core5x5.feature.workout.data
 
 import com.hulkdx.core5x5.feature.workout.domain.CompletedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.ExercisePrescription
+import com.hulkdx.core5x5.feature.workout.domain.RestTimer
+import com.hulkdx.core5x5.feature.workout.domain.RestTimerRules
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutSet
@@ -63,11 +65,24 @@ internal class RoomWorkoutRepository(
         isCompleted: Boolean,
     ): Boolean = dao.setSetCompleted(exercisePosition, setPosition, isCompleted) == 1
 
+    override suspend fun completeSetAndStartRest(
+        workoutId: Long,
+        exercisePosition: Int,
+        setPosition: Int,
+        restDurationMillis: Long,
+    ): UnfinishedWorkout? {
+        val timer = RestTimerRules(nowEpochMillis).start(restDurationMillis)
+        return dao.completeSetAndStartRest(
+            workoutId, exercisePosition, setPosition, timer.deadlineEpochMillis,
+        )?.toDomain()
+    }
+
     private fun StoredUnfinishedWorkout.toDomain(): UnfinishedWorkout = UnfinishedWorkout(
         workout = session.workout,
         startedAtEpochMillis = session.startedAtEpochMillis,
         exercises = exerciseSnapshots(),
         id = session.id,
+        restTimer = session.restDeadlineEpochMillis?.let(::RestTimer),
     )
 
     private fun StoredUnfinishedWorkout.exerciseSnapshots(): List<UnfinishedWorkoutExercise> =

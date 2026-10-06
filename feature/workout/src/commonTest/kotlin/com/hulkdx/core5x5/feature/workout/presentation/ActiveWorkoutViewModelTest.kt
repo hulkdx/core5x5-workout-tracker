@@ -3,6 +3,8 @@ package com.hulkdx.core5x5.feature.workout.presentation
 import androidx.lifecycle.ViewModelStore
 import com.hulkdx.core5x5.feature.workout.domain.CompletedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
+import com.hulkdx.core5x5.feature.workout.domain.RestTimer
+import com.hulkdx.core5x5.feature.workout.domain.RestTimerRules
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.Workout
@@ -252,8 +254,253 @@ internal class ActiveWorkoutViewModelTest {
         assertEquals(0, repository.saveCount)
     }
 
+    @Test
+    fun completingASetPublishesSavedProgressAndRestOnlyAfterTheSaveReturns() = runTest(dispatcher) {
+        val original = session(Workout.A)
+        val repository = FakeWorkoutRepository(original)
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        repository.setSaveGate = CompletableDeferred()
+
+        viewModel.completeNextSet()
+        viewModel.completeNextSet()
+        viewModel.completeSet(0, 0)
+        viewModel.finishWorkout()
+        dispatcher.scheduler.runCurrent()
+
+        assertTrue(viewModel.uiState.value.isCompletingSet)
+        assertFalse(viewModel.uiState.value.canFinish)
+        assertSame(original, viewModel.uiState.value.unfinishedWorkout)
+        assertFalse(viewModel.uiState.value.restTimer.isVisible)
+        assertEquals(listOf(Triple(original.id, 0, 0)), repository.completedSetRequests)
+        assertTrue(repository.finalizedIds.isEmpty())
+
+        repository.setSaveGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+
+        val saved = requireNotNull(viewModel.uiState.value.unfinishedWorkout)
+        assertTrue(saved.exercises[0].setStates[0].isCompleted)
+        assertFalse(saved.exercises[0].setStates[1].isCompleted)
+        assertEquals(RestTimer(181_000), saved.restTimer)
+        assertEquals("03:00", viewModel.uiState.value.restTimer.countdown)
+        assertEquals(0, viewModel.uiState.value.selectedExercisePosition)
+        assertTrue(viewModel.uiState.value.canFinish)
+
+        repository.now += 15_000
+        viewModel.completeSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(1, repository.completedSetRequests.size)
+        assertEquals(saved.restTimer, viewModel.uiState.value.unfinishedWorkout?.restTimer)
+    }
+
+    @Test
+    fun setSaveFailureLeavesBothProgressAndExistingDeadlineAvailableForRetry() = runTest(dispatcher) {
+        val original = session(Workout.B).copy(restTimer = RestTimer(91_000))
+        val repository = FakeWorkoutRepository(original)
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        repository.setSaveError = IllegalStateException("Disk unavailable")
+
+        viewModel.completeSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+
+        assertTrue(viewModel.uiState.value.hasSetSaveError)
+        assertSame(original, viewModel.uiState.value.unfinishedWorkout)
+        assertEquals("01:30", viewModel.uiState.value.restTimer.countdown)
+        assertTrue(viewModel.uiState.value.canCompleteSet)
+
+        repository.setSaveError = null
+        repository.now = 31_000
+        viewModel.completeSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+
+        assertFalse(viewModel.uiState.value.hasSetSaveError)
+        assertEquals(RestTimer(211_000), viewModel.uiState.value.unfinishedWorkout?.restTimer)
+        assertEquals("03:00", viewModel.uiState.value.restTimer.countdown)
+    }
+
+    @Test
+    fun retryAfterALostSetAcknowledgementRecoversWithoutReplacingRest() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A))
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        repository.afterSetSaveError = IllegalStateException("Acknowledgement lost")
+
+        viewModel.completeSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.hasSetSaveError)
+        assertFalse(viewModel.uiState.value.restTimer.isVisible)
+        val deadline = repository.savedWorkout?.restTimer
+
+        repository.afterSetSaveError = null
+        repository.now += 20_000
+        viewModel.completeSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+
+        assertFalse(viewModel.uiState.value.hasSetSaveError)
+        assertEquals(deadline, viewModel.uiState.value.unfinishedWorkout?.restTimer)
+        assertEquals("02:40", viewModel.uiState.value.restTimer.countdown)
+    }
+
+    @Test
+    fun resumeAndRecreationRecoverRunningExpiredAndClockAdjustedRest() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.B).copy(restTimer = RestTimer(181_000)))
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.onResume()
+        dispatcher.scheduler.runCurrent()
+
+        repository.now = 61_000
+        dispatcher.scheduler.advanceTimeBy(1_000)
+        dispatcher.scheduler.runCurrent()
+        assertEquals("02:00", viewModel.uiState.value.restTimer.countdown)
+
+        viewModel.onPause()
+        repository.now = 181_000
+        dispatcher.scheduler.advanceTimeBy(10_000)
+        dispatcher.scheduler.runCurrent()
+        assertEquals("02:00", viewModel.uiState.value.restTimer.countdown)
+        viewModel.onResume()
+        dispatcher.scheduler.runCurrent()
+        assertEquals("00:00", viewModel.uiState.value.restTimer.countdown)
+        assertTrue(viewModel.uiState.value.restTimer.isExpired)
+        assertTrue(viewModel.uiState.value.canCompleteSet)
+
+        repository.now = 161_000
+        dispatcher.scheduler.advanceTimeBy(1_000)
+        dispatcher.scheduler.runCurrent()
+        assertEquals("00:20", viewModel.uiState.value.restTimer.countdown)
+        assertFalse(viewModel.uiState.value.restTimer.isExpired)
+        viewModel.onPause()
+        store.clear()
+
+        repository.now = 300_000
+        val recreated = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(recreated.uiState.value.restTimer.isExpired)
+        assertEquals(RestTimer(181_000), recreated.uiState.value.unfinishedWorkout?.restTimer)
+        assertTrue(recreated.uiState.value.canFinish)
+    }
+
+    @Test
+    fun completedExerciseAdvancesAndDeadliftUsesItsSingleSavedSet() = runTest(dispatcher) {
+        val original = session(Workout.B).let { workout ->
+            workout.copy(exercises = workout.exercises.mapIndexed { position, exercise ->
+                if (position < 2) exercise.copy(setStates = exercise.setStates.map { it.copy(isCompleted = true) })
+                else exercise
+            })
+        }
+        val repository = FakeWorkoutRepository(original)
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(2, viewModel.uiState.value.selectedExercisePosition)
+        assertEquals(1, original.exercises[2].setStates.size)
+
+        viewModel.completeNextSet()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(listOf(Triple(original.id, 2, 0)), repository.completedSetRequests)
+        assertTrue(requireNotNull(viewModel.uiState.value.unfinishedWorkout).exercises.all { exercise ->
+            exercise.setStates.all { it.isCompleted }
+        })
+        viewModel.completeNextSet()
+        assertEquals(1, repository.completedSetRequests.size)
+        assertTrue(viewModel.uiState.value.canFinish)
+    }
+
+    @Test
+    fun theLastSetSelectsTheNextIncompleteExerciseAndRowsCanSelectSavedExercises() = runTest(dispatcher) {
+        val original = session(Workout.A).let { workout ->
+            workout.copy(exercises = workout.exercises.mapIndexed { position, exercise ->
+                if (position == 0) exercise.copy(setStates = exercise.setStates.map { it.copy(isCompleted = it.position < 4) })
+                else exercise
+            })
+        }
+        val repository = FakeWorkoutRepository(original)
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.completeNextSet()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(1, viewModel.uiState.value.selectedExercisePosition)
+        viewModel.selectExercise(2)
+        assertEquals(2, viewModel.uiState.value.selectedExercisePosition)
+        viewModel.selectExercise(-1)
+        viewModel.selectExercise(3)
+        assertEquals(2, viewModel.uiState.value.selectedExercisePosition)
+    }
+
+    @Test
+    fun aStaleSessionOrInvalidSetCannotChangeALaterWorkoutOrItsRest() = runTest(dispatcher) {
+        val original = session(Workout.A)
+        val later = session(Workout.B, id = 2).copy(restTimer = RestTimer(31_000))
+        val repository = FakeWorkoutRepository(original)
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.completeSet(-1, 0)
+        viewModel.completeSet(0, 99)
+        assertTrue(repository.completedSetRequests.isEmpty())
+        repository.savedWorkout = later
+
+        viewModel.completeSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.hasSetSaveError)
+        assertSame(later, repository.savedWorkout)
+        assertSame(original, viewModel.uiState.value.unfinishedWorkout)
+        assertFalse(viewModel.uiState.value.restTimer.isVisible)
+    }
+
+    @Test
+    fun finishingClearsDisplayedRestOnlyWhenTheSaveCommits() = runTest(dispatcher) {
+        val original = session(Workout.A).copy(restTimer = RestTimer(181_000))
+        val repository = FakeWorkoutRepository(original)
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        repository.saveError = IllegalStateException("Save failed")
+
+        viewModel.finishWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(original.restTimer, viewModel.uiState.value.unfinishedWorkout?.restTimer)
+        assertTrue(viewModel.uiState.value.restTimer.isVisible)
+
+        repository.saveError = null
+        repository.completedReadGate = CompletableDeferred()
+        viewModel.finishWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.isSaving)
+        assertFalse(viewModel.uiState.value.restTimer.isVisible)
+        assertNull(viewModel.uiState.value.unfinishedWorkout?.restTimer)
+        assertNull(viewModel.uiState.value.requestedCompletedWorkoutId)
+
+        repository.completedReadGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(original.id, viewModel.uiState.value.requestedCompletedWorkoutId)
+    }
+
+    @Test
+    fun clearingTheOwnerCancelsSetSavingAndCountdownWork() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A).copy(restTimer = RestTimer(181_000)))
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.onResume()
+        dispatcher.scheduler.runCurrent()
+        repository.setSaveGate = CompletableDeferred()
+        viewModel.completeSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+
+        store.clear()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(repository.setSaveCancelled)
+        assertFalse(viewModel.uiState.value.hasSetSaveError)
+        val lastCountdown = viewModel.uiState.value.restTimer
+        repository.now += 100_000
+        dispatcher.scheduler.advanceTimeBy(10_000)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(lastCountdown, viewModel.uiState.value.restTimer)
+        assertFalse(requireNotNull(repository.savedWorkout).exercises[0].setStates[0].isCompleted)
+    }
+
     private fun createViewModel(repository: FakeWorkoutRepository): ActiveWorkoutViewModel =
-        ActiveWorkoutViewModel(repository).also { store.put("active-workout", it) }
+        ActiveWorkoutViewModel(repository, restTimerRules = RestTimerRules { repository.now })
+            .also { store.put("active-workout", it) }
 
     private class FakeWorkoutRepository(var savedWorkout: UnfinishedWorkout?) : WorkoutRepository {
         var readCount = 0
@@ -266,6 +513,12 @@ internal class ActiveWorkoutViewModelTest {
         var afterSaveError: Exception? = null
         var saveCount = 0
         var saveCancelled = false
+        var now = 1_000L
+        var setSaveGate: CompletableDeferred<Unit>? = null
+        var setSaveError: Exception? = null
+        var afterSetSaveError: Exception? = null
+        var setSaveCancelled = false
+        val completedSetRequests = mutableListOf<Triple<Long, Int, Int>>()
         val finalizedIds = mutableListOf<Long>()
         val completedReadIds = mutableListOf<Long>()
 
@@ -313,6 +566,36 @@ internal class ActiveWorkoutViewModelTest {
             setPosition: Int,
             isCompleted: Boolean,
         ): Boolean = error("Active Workout only loads an existing session")
+
+        override suspend fun completeSetAndStartRest(
+            workoutId: Long,
+            exercisePosition: Int,
+            setPosition: Int,
+            restDurationMillis: Long,
+        ): UnfinishedWorkout? {
+            completedSetRequests += Triple(workoutId, exercisePosition, setPosition)
+            try {
+                setSaveGate?.await()
+            } catch (cancelled: CancellationException) {
+                setSaveCancelled = true
+                throw cancelled
+            }
+            setSaveError?.let { throw it }
+            val active = savedWorkout?.takeIf { it.id == workoutId } ?: return null
+            val set = active.exercises.getOrNull(exercisePosition)?.setStates?.getOrNull(setPosition) ?: return null
+            if (set.isCompleted) return active
+            val saved = active.copy(
+                exercises = active.exercises.mapIndexed { index, exercise ->
+                    if (index != exercisePosition) exercise else exercise.copy(
+                        setStates = exercise.setStates.map { if (it.position == setPosition) it.copy(isCompleted = true) else it },
+                    )
+                },
+                restTimer = RestTimerRules { now }.start(restDurationMillis),
+            )
+            savedWorkout = saved
+            afterSetSaveError?.let { throw it }
+            return saved
+        }
     }
 
     companion object {

@@ -5,6 +5,7 @@ internal data class UnfinishedWorkout(
     val startedAtEpochMillis: Long,
     val exercises: List<UnfinishedWorkoutExercise>,
     val id: Long,
+    val restTimer: RestTimer? = null,
 )
 
 /** Prescriptions copied when the session starts, in training order. */
