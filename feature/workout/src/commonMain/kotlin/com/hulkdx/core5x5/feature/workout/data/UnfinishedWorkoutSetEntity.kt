@@ -15,7 +15,7 @@ import androidx.room3.ForeignKey
     )],
 )
 internal data class UnfinishedWorkoutSetEntity(
-    val workoutId: Int,
+    val workoutId: Long,
     val exercisePosition: Int,
     val position: Int,
     @ColumnInfo(defaultValue = "0") val isCompleted: Boolean = false,

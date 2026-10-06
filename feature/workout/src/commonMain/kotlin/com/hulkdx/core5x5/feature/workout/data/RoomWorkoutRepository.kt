@@ -29,6 +29,9 @@ internal class RoomWorkoutRepository(
         return dao.insertSessionIfAbsent(session, exercises).toDomain()
     }
 
+    override suspend fun finalizeWorkout(workoutId: Long): Boolean =
+        dao.finalizeWorkout(workoutId, nowEpochMillis()) == 1
+
     override suspend fun setSetCompleted(
         exercisePosition: Int,
         setPosition: Int,
@@ -49,5 +52,6 @@ internal class RoomWorkoutRepository(
                 },
             )
         },
+        id = session.id,
     )
 }

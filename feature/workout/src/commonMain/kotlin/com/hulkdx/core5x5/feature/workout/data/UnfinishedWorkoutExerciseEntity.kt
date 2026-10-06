@@ -15,7 +15,7 @@ import com.hulkdx.core5x5.feature.workout.domain.Exercise
     )],
 )
 internal data class UnfinishedWorkoutExerciseEntity(
-    val workoutId: Int,
+    val workoutId: Long,
     val position: Int,
     val exercise: Exercise,
     val sets: Int,

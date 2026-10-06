@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "c039aa8c168c9f06456508fb25e5667b",
+    "identityHash": "6e21d409e66d7015e4dc4a5eb8f63753",
     "entities": [
       {
         "tableName": "unfinished_workout",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`workout` TEXT NOT NULL, `startedAtEpochMillis` INTEGER NOT NULL, `id` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`workout` TEXT NOT NULL, `startedAtEpochMillis` INTEGER NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `completedAtEpochMillis` INTEGER, `unfinishedSlot` INTEGER)",
         "fields": [
           {
             "fieldPath": "workout",
@@ -25,14 +25,35 @@
             "columnName": "id",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "completedAtEpochMillis",
+            "columnName": "completedAtEpochMillis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "unfinishedSlot",
+            "columnName": "unfinishedSlot",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
-          "autoGenerate": false,
+          "autoGenerate": true,
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "index_unfinished_workout_unfinishedSlot",
+            "unique": true,
+            "columnNames": [
+              "unfinishedSlot"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_unfinished_workout_unfinishedSlot` ON `${TABLE_NAME}` (`unfinishedSlot`)"
+          }
+        ]
       },
       {
         "tableName": "unfinished_workout_exercise",
@@ -153,7 +174,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c039aa8c168c9f06456508fb25e5667b')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6e21d409e66d7015e4dc4a5eb8f63753')"
     ]
   }
 }

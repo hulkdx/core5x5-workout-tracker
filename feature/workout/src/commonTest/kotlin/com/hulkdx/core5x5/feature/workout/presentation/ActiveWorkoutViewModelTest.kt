@@ -46,6 +46,7 @@ internal class ActiveWorkoutViewModelTest {
                 UnfinishedWorkoutExercise(Exercise.OVERHEAD_PRESS, sets = 5, reps = 5, weightKg = 20.0),
                 UnfinishedWorkoutExercise(Exercise.DEADLIFT, sets = 1, reps = 5, weightKg = 25.0),
             ),
+            id = 1L,
         )
         val repository = FakeWorkoutRepository(savedWorkout)
         val viewModel = ActiveWorkoutViewModel(repository).also { store.put("active-workout", it) }
@@ -79,6 +80,9 @@ internal class ActiveWorkoutViewModelTest {
         }
 
         override suspend fun startWorkout(workout: Workout): UnfinishedWorkout =
+            error("Active Workout only loads an existing session")
+
+        override suspend fun finalizeWorkout(workoutId: Long): Boolean =
             error("Active Workout only loads an existing session")
 
         override suspend fun setSetCompleted(

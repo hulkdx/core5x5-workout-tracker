@@ -8,6 +8,12 @@ internal interface WorkoutRepository {
     suspend fun startWorkout(workout: Workout): UnfinishedWorkout
 
     /**
+     * Completes the identified unfinished session, preserving its logged sets.
+     * Returns false if it does not exist or was already completed, leaving all sessions unchanged.
+     */
+    suspend fun finalizeWorkout(workoutId: Long): Boolean
+
+    /**
      * Sets completion for one set in the current session using zero-based exercise/set positions.
      * Returns false if no matching set exists. Repeating the same value is safe.
      */

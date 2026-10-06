@@ -284,6 +284,9 @@ internal class TodayViewModelTest {
             setPosition: Int,
             isCompleted: Boolean,
         ): Boolean = error("Today does not change set completion")
+
+        override suspend fun finalizeWorkout(workoutId: Long): Boolean =
+            error("Today does not finalize workouts")
     }
 
     companion object {
@@ -293,6 +296,7 @@ internal class TodayViewModelTest {
             exercises = workout.exercises.map {
                 UnfinishedWorkoutExercise(it, it.sets, it.reps, it.startingWeightKg)
             },
+            id = 1L,
         )
     }
 }

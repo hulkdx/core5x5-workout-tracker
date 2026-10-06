@@ -31,6 +31,7 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
                 val expected = UnfinishedWorkoutEntity(
                     workout = workout,
                     startedAtEpochMillis = 1_790_000_000_123L,
+                    id = 1L,
                 )
                 val database = openDatabase(name)
                 try {
@@ -39,7 +40,7 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
                     dao.insert(expected)
                     assertEquals(expected, dao.getUnfinishedWorkout())
                     assertFails {
-                        dao.insert(expected.copy(startedAtEpochMillis = 42L))
+                        dao.insert(expected.copy(id = 2L, startedAtEpochMillis = 42L))
                     }
                     assertEquals(expected, dao.getUnfinishedWorkout())
                 } finally {
@@ -96,7 +97,7 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
             try {
                 val dao = reopened.unfinishedWorkoutDao()
                 assertEquals(original, RoomWorkoutRepository(dao) { 300L }.startWorkout(Workout.B))
-                assertEquals(3, dao.getExercises().size)
+                assertEquals(3, dao.getExercises(original.id).size)
             } finally {
                 reopened.close()
             }
@@ -122,7 +123,7 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
                 ).awaitAll()
                 assertEquals(results.first(), results.last())
                 assertProgram(results.first().workout, results.first())
-                assertEquals(3, database.unfinishedWorkoutDao().getExercises().size)
+                assertEquals(3, database.unfinishedWorkoutDao().getExercises(results.first().id).size)
             } finally {
                 second.close()
             }
@@ -136,11 +137,14 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
             assertFails {
                 dao.insertSessionIfAbsent(
                     UnfinishedWorkoutEntity(Workout.A, 100L),
-                    listOf(UnfinishedWorkoutExerciseEntity(2, 0, Exercise.SQUAT, 5, 5, 20.0)),
+                    listOf(
+                        UnfinishedWorkoutExerciseEntity(0, 0, Exercise.SQUAT, 5, 5, 20.0),
+                        UnfinishedWorkoutExerciseEntity(0, 0, Exercise.BENCH_PRESS, 5, 5, 20.0),
+                    ),
                 )
             }
             assertNull(dao.getSession())
-            assertEquals(emptyList(), dao.getExercises())
+            assertEquals(emptyList(), dao.getExercises(1L))
         }
     }
 
@@ -152,7 +156,7 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
             assertNull(repository.getUnfinishedWorkout())
             assertNull(repository.getUnfinishedWorkout())
             assertNull(dao.getUnfinishedWorkout())
-            assertEquals(emptyList(), dao.getExercises())
+            assertEquals(emptyList(), dao.getExercises(1L))
         }
     }
 
@@ -213,6 +217,7 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
                         UnfinishedWorkoutExercise(Exercise.OVERHEAD_PRESS, 5, 3, 25.0),
                         UnfinishedWorkoutExercise(Exercise.DEADLIFT, 1, 4, 60.0),
                     ),
+                    id = 1L,
                 ),
                 loaded,
             )
@@ -290,7 +295,7 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
                     assertEquals(saved, repository.getUnfinishedWorkout())
                     val otherWorkout = if (workout == Workout.A) Workout.B else Workout.A
                     assertEquals(saved, repository.startWorkout(otherWorkout))
-                    assertEquals(saved.exercises.sumOf { it.sets }, reopened.unfinishedWorkoutDao().getSets().size)
+                    assertEquals(saved.exercises.sumOf { it.sets }, reopened.unfinishedWorkoutDao().getSets(saved.id).size)
                 } finally {
                     reopened.close()
                 }
@@ -354,6 +359,185 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
             } finally {
                 second.close()
             }
+        }
+    }
+
+    @Test
+    fun finalizingActiveWorkoutPersistsItsCompletionTimestamp() = runTest {
+        for (workout in Workout.entries) {
+            withDatabase("finalize-${workout.name}.db") { database ->
+                val dao = database.unfinishedWorkoutDao()
+                val active = RoomWorkoutRepository(dao) { 1234L }.startWorkout(workout)
+                val before = requireNotNull(dao.getWorkout(active.id))
+                assertNull(before.completedAtEpochMillis)
+                assertEquals(1, before.unfinishedSlot)
+
+                assertTrue(RoomWorkoutRepository(dao) { 5678L }.finalizeWorkout(active.id))
+
+                assertEquals(
+                    before.copy(completedAtEpochMillis = 5678L, unfinishedSlot = null),
+                    dao.getWorkout(active.id),
+                )
+            }
+        }
+    }
+
+    @Test
+    fun completedWorkoutIsNoLongerActiveEvenAfterDatabaseReopen() = runTest {
+        val name = "finalize-reopen.db"
+        deleteDatabase(name)
+        try {
+            val database = openDatabase(name)
+            val workoutId = try {
+                val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1234L }
+                val active = repository.startWorkout(Workout.A)
+                assertTrue(repository.finalizeWorkout(active.id))
+                assertNull(repository.getUnfinishedWorkout())
+                assertNull(database.unfinishedWorkoutDao().getSession())
+                active.id
+            } finally {
+                database.close()
+            }
+            val reopened = openDatabase(name)
+            try {
+                val dao = reopened.unfinishedWorkoutDao()
+                val repository = RoomWorkoutRepository(dao) { error("Loading must not read the clock") }
+                assertNull(repository.getUnfinishedWorkout())
+                assertNull(dao.getUnfinishedWorkout())
+                assertEquals(1234L, requireNotNull(dao.getWorkout(workoutId)).completedAtEpochMillis)
+            } finally {
+                reopened.close()
+            }
+        } finally {
+            deleteDatabase(name)
+        }
+    }
+
+    @Test
+    fun finalizationPreservesLoggedSetsAndSavedPrescriptionsAfterReopen() = runTest {
+        val name = "finalize-sets.db"
+        deleteDatabase(name)
+        try {
+            val database = openDatabase(name)
+            val expected = try {
+                val dao = database.unfinishedWorkoutDao()
+                dao.insertSessionIfAbsent(
+                    UnfinishedWorkoutEntity(Workout.B, 1234L),
+                    listOf(
+                        UnfinishedWorkoutExerciseEntity(0, 2, Exercise.DEADLIFT, 1, 4, 60.0),
+                        UnfinishedWorkoutExerciseEntity(0, 0, Exercise.SQUAT, 3, 5, 40.0),
+                        UnfinishedWorkoutExerciseEntity(0, 1, Exercise.OVERHEAD_PRESS, 5, 3, 25.0),
+                    ),
+                )
+                val repository = RoomWorkoutRepository(dao) { 5678L }
+                assertTrue(repository.setSetCompleted(0, 0, true))
+                assertTrue(repository.setSetCompleted(1, 2, true))
+                assertTrue(repository.setSetCompleted(1, 2, false))
+                assertTrue(repository.setSetCompleted(2, 0, true))
+                val before = requireNotNull(dao.getSession())
+                assertEquals(listOf(true, false, false), before.sets.filter { it.exercisePosition == 0 }.map { it.isCompleted })
+                assertEquals(List(5) { false }, before.sets.filter { it.exercisePosition == 1 }.map { it.isCompleted })
+                assertTrue(before.sets.last().isCompleted)
+
+                assertTrue(repository.finalizeWorkout(before.session.id))
+
+                val completed = before.copy(
+                    session = before.session.copy(completedAtEpochMillis = 5678L, unfinishedSlot = null),
+                )
+                assertEquals(completed, dao.getSession(before.session.id))
+                assertFalse(repository.setSetCompleted(0, 0, false))
+                assertEquals(completed, dao.getSession(before.session.id))
+                completed
+            } finally {
+                database.close()
+            }
+            val reopened = openDatabase(name)
+            try {
+                assertEquals(expected, reopened.unfinishedWorkoutDao().getSession(expected.session.id))
+            } finally {
+                reopened.close()
+            }
+        } finally {
+            deleteDatabase(name)
+        }
+    }
+
+    @Test
+    fun repeatedFinalizationDoesNotChangeCompletionOrFinalizeALaterWorkout() = runTest {
+        withDatabase("repeat-finalize.db") { database ->
+            val dao = database.unfinishedWorkoutDao()
+            val repository = RoomWorkoutRepository(dao) { 1234L }
+            val original = repository.startWorkout(Workout.A)
+            assertTrue(repository.setSetCompleted(0, 0, true))
+            assertTrue(RoomWorkoutRepository(dao) { 5678L }.finalizeWorkout(original.id))
+            val completed = requireNotNull(dao.getSession(original.id))
+
+            assertFalse(RoomWorkoutRepository(dao) { 9000L }.finalizeWorkout(original.id))
+            assertEquals(completed, dao.getSession(original.id))
+            assertNull(repository.getUnfinishedWorkout())
+
+            val second = openDatabase("repeat-finalize.db")
+            try {
+                val secondRepository = RoomWorkoutRepository(second.unfinishedWorkoutDao()) { 10000L }
+                assertFalse(secondRepository.finalizeWorkout(original.id))
+                assertEquals(completed, second.unfinishedWorkoutDao().getSession(original.id))
+                val next = secondRepository.startWorkout(Workout.A)
+                assertTrue(next.id != original.id)
+                assertProgram(Workout.A, next)
+
+                assertFalse(secondRepository.finalizeWorkout(original.id))
+                assertEquals(next, secondRepository.getUnfinishedWorkout())
+                assertTrue(secondRepository.setSetCompleted(1, 0, true))
+                assertEquals(completed, dao.getSession(original.id))
+                assertTrue(secondRepository.finalizeWorkout(next.id))
+                assertEquals(completed, dao.getSession(original.id))
+                assertEquals(10000L, requireNotNull(dao.getWorkout(next.id)).completedAtEpochMillis)
+                assertNull(secondRepository.getUnfinishedWorkout())
+            } finally {
+                second.close()
+            }
+        }
+    }
+
+    @Test
+    fun concurrentFinalizationAcrossDatabaseInstancesCompletesOnlyOnce() = runTest {
+        withDatabase("concurrent-finalize.db") { database ->
+            val dao = database.unfinishedWorkoutDao()
+            val repository = RoomWorkoutRepository(dao) { 1234L }
+            val active = repository.startWorkout(Workout.B)
+            assertTrue(repository.setSetCompleted(2, 0, true))
+            val before = requireNotNull(dao.getSession())
+            val second = openDatabase("concurrent-finalize.db")
+            try {
+                val results = listOf(
+                    async(Dispatchers.Default) { RoomWorkoutRepository(dao) { 5678L }.finalizeWorkout(active.id) },
+                    async(Dispatchers.Default) {
+                        RoomWorkoutRepository(second.unfinishedWorkoutDao()) { 9000L }.finalizeWorkout(active.id)
+                    },
+                ).awaitAll()
+
+                assertEquals(1, results.count { it })
+                val timestamp = if (results.first()) 5678L else 9000L
+                assertEquals(
+                    before.copy(session = before.session.copy(completedAtEpochMillis = timestamp, unfinishedSlot = null)),
+                    dao.getSession(active.id),
+                )
+                assertNull(repository.getUnfinishedWorkout())
+            } finally {
+                second.close()
+            }
+        }
+    }
+
+    @Test
+    fun missingWorkoutCannotBeFinalizedAndLeavesTheActiveSessionUnchanged() = runTest {
+        withDatabase("missing-finalize.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1234L }
+            assertFalse(repository.finalizeWorkout(1L))
+            assertNull(repository.getUnfinishedWorkout())
+            val active = repository.startWorkout(Workout.A)
+            assertFalse(repository.finalizeWorkout(Long.MAX_VALUE))
+            assertEquals(active, repository.getUnfinishedWorkout())
         }
     }
 
