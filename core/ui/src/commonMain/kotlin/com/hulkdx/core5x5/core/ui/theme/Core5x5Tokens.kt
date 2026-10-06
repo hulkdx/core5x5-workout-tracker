@@ -71,4 +71,11 @@ object Core5x5Dimensions {
     val CompleteGap = 18.dp // layout.completeGap
     val CompleteExtraTop = 16.dp // layout.completeExtraTop, after real safe insets
     val CompletePaddingBottom = 24.dp // layout.completePaddingBottom
+    val NavigationHeight = 74.dp // component.navigation.height
+    val NavigationPaddingHorizontal = 28.dp // component.navigation.paddingHorizontal
+    val NavigationPaddingVertical = 8.dp // component.navigation.paddingVertical
+    val NavigationItemWidth = 86.dp // component.navigation.itemWidth
+    val NavigationItemHeight = 58.dp // component.navigation.itemHeight
+    val NavigationIconSize = 22.dp // component.navigation.iconSize
+    val NavigationLabelGap = 2.dp // component.navigation.labelGap
 }

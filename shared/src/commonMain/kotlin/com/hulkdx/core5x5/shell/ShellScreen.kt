@@ -5,22 +5,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
+import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
+import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
+import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
 
 @Composable
 internal fun ShellScreen(
@@ -30,10 +27,11 @@ internal fun ShellScreen(
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
-        color = ShellBackground,
-        contentColor = ShellText,
+        color = Core5x5Colors.Background,
+        contentColor = Core5x5Colors.PrimaryText,
     ) {
-        Column(modifier = Modifier.fillMaxSize().safeContentPadding()) {
+        // AppNavigation owns safe insets and reserves the anchored navigation bar.
+        Column(modifier = Modifier.fillMaxSize()) {
             Text(
                 text = buildAnnotatedString {
                     val accentIndex = uiState.title.indexOf("5x5")
@@ -41,18 +39,19 @@ internal fun ShellScreen(
                         append(uiState.title)
                     } else {
                         append(uiState.title.substring(0, accentIndex))
-                        withStyle(SpanStyle(color = ShellAccent)) {
+                        withStyle(SpanStyle(color = Core5x5Colors.Action)) {
                             append(uiState.title.substring(accentIndex))
                         }
                     }
                 },
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    color = ShellText,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    lineHeight = 30.sp,
+                style = Core5x5Typography.Title,
+                color = Core5x5Colors.PrimaryText,
+                modifier = Modifier.padding(
+                    start = Core5x5Dimensions.ScreenInset,
+                    top = Core5x5Dimensions.ContentPaddingVertical,
+                    end = Core5x5Dimensions.ScreenInset,
+                    bottom = Core5x5Dimensions.ContentGap,
                 ),
-                modifier = Modifier.padding(start = 20.dp, top = 18.dp, end = 20.dp, bottom = 14.dp),
             )
             Box(
                 modifier = Modifier.fillMaxWidth().weight(1f),
@@ -73,7 +72,3 @@ private fun ShellScreenPreview() {
         }
     }
 }
-
-private val ShellBackground = Color(0xFF0C1114)
-private val ShellAccent = Color(0xFF67E38B)
-private val ShellText = Color(0xFFF5F8F7)
