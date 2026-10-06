@@ -14,6 +14,9 @@ internal class RoomWorkoutRepository(
     override suspend fun getUnfinishedWorkout(): UnfinishedWorkout? =
         dao.getSession()?.toDomain()
 
+    override suspend fun getNextWorkout(): Workout =
+        dao.getLastCompletedWorkout()?.nextWorkout() ?: Workout.A
+
     override suspend fun startWorkout(workout: Workout): UnfinishedWorkout {
         val session = UnfinishedWorkoutEntity(workout, nowEpochMillis())
         val exercises = workout.exercises.mapIndexed { position, exercise ->

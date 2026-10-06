@@ -67,12 +67,51 @@ internal class TodayViewModelTest {
         assertNull(state.requestedWorkout)
         assertEquals(emptyList(), repository.startedWorkouts)
         assertEquals(1, repository.readCount)
+        assertEquals(1, repository.nextWorkoutReadCount)
+    }
+
+    @Test
+    fun loadAndRecreationUseThePersistedNextWorkout() = runTest(dispatcher) {
+        repository.nextWorkout = Workout.B
+        val first = createViewModel()
+        dispatcher.scheduler.runCurrent()
+
+        assertEquals(Workout.B, first.uiState.value.nextWorkout)
+        assertTrue(first.uiState.value.canStart)
+        assertNull(first.uiState.value.requestedWorkout)
+
+        stores.single().clear()
+        val recreated = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.B, recreated.uiState.value.nextWorkout)
+        assertTrue(recreated.uiState.value.canStart)
+        assertNull(recreated.uiState.value.requestedWorkout)
+        assertEquals(emptyList(), repository.startedWorkouts)
+    }
+
+    @Test
+    fun refreshUsesUpdatedSelectionAfterEachCompletion() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.A, viewModel.uiState.value.nextWorkout)
+
+        for (nextWorkout in listOf(Workout.B, Workout.A)) {
+            repository.nextWorkout = nextWorkout
+            viewModel.loadWorkout()
+            dispatcher.scheduler.runCurrent()
+            assertEquals(nextWorkout, viewModel.uiState.value.nextWorkout)
+            assertTrue(viewModel.uiState.value.canStart)
+            assertNull(viewModel.uiState.value.requestedWorkout)
+        }
+        assertEquals(3, repository.nextWorkoutReadCount)
+        assertEquals(emptyList(), repository.startedWorkouts)
     }
 
     @Test
     fun activeWorkoutIsResumableWithoutAutomaticallyRequestingIt() = runTest(dispatcher) {
         val active = session(Workout.B)
         repository.active = active
+        repository.nextWorkoutError = IllegalStateException("Active sessions do not need next-workout selection")
         val viewModel = createViewModel()
         dispatcher.scheduler.runCurrent()
 
@@ -81,13 +120,15 @@ internal class TodayViewModelTest {
         assertFalse(viewModel.uiState.value.canStart)
         assertNull(viewModel.uiState.value.nextWorkout)
         assertNull(viewModel.uiState.value.requestedWorkout)
+        assertEquals(0, repository.nextWorkoutReadCount)
         viewModel.startWorkout()
         assertEquals(emptyList(), repository.startedWorkouts)
     }
 
     @Test
     fun startUsesDisplayedWorkoutAndPublishesReturnedSession() = runTest(dispatcher) {
-        val viewModel = createViewModel(Workout.B)
+        repository.nextWorkout = Workout.B
+        val viewModel = createViewModel()
         dispatcher.scheduler.runCurrent()
         repository.startGate = CompletableDeferred()
         viewModel.startWorkout()
@@ -147,9 +188,11 @@ internal class TodayViewModelTest {
         val viewModel = createViewModel()
         dispatcher.scheduler.runCurrent()
         repository.active = null
+        repository.nextWorkout = Workout.B
         viewModel.requestResume()
         dispatcher.scheduler.runCurrent()
         assertTrue(viewModel.uiState.value.canStart)
+        assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
         assertNull(viewModel.uiState.value.unfinishedWorkout)
         assertNull(viewModel.uiState.value.requestedWorkout)
         assertEquals(emptyList(), repository.startedWorkouts)
@@ -168,6 +211,56 @@ internal class TodayViewModelTest {
         dispatcher.scheduler.runCurrent()
         assertTrue(viewModel.uiState.value.canStart)
         assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun nextWorkoutLoadFailureDoesNotFallBackToAAndCanBeRetried() = runTest(dispatcher) {
+        repository.nextWorkout = Workout.B
+        repository.nextWorkoutError = IllegalStateException("Cannot select next workout")
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+
+        assertEquals(TodayError.LOAD, viewModel.uiState.value.error)
+        assertNull(viewModel.uiState.value.nextWorkout)
+        assertFalse(viewModel.uiState.value.canStart)
+        assertFalse(viewModel.uiState.value.canResume)
+        viewModel.startWorkout()
+        assertEquals(emptyList(), repository.startedWorkouts)
+
+        repository.nextWorkoutError = null
+        viewModel.loadWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
+        assertTrue(viewModel.uiState.value.canStart)
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun resumeAfterCompletionCanRetryNextWorkoutSelectionFailure() = runTest(dispatcher) {
+        repository.active = session(Workout.A)
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        val displayed = viewModel.uiState.value.unfinishedWorkout
+        repository.active = null
+        repository.nextWorkout = Workout.B
+        repository.nextWorkoutError = IllegalStateException("Cannot select next workout")
+
+        viewModel.requestResume()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(TodayError.RESUME, viewModel.uiState.value.error)
+        assertSame(displayed, viewModel.uiState.value.unfinishedWorkout)
+        assertNull(viewModel.uiState.value.nextWorkout)
+        assertNull(viewModel.uiState.value.requestedWorkout)
+
+        repository.nextWorkoutError = null
+        viewModel.requestResume()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
+        assertTrue(viewModel.uiState.value.canStart)
+        assertNull(viewModel.uiState.value.unfinishedWorkout)
+        assertNull(viewModel.uiState.value.error)
+        assertNull(viewModel.uiState.value.requestedWorkout)
+        assertEquals(emptyList(), repository.startedWorkouts)
     }
 
     @Test
@@ -220,6 +313,22 @@ internal class TodayViewModelTest {
         assertNull(viewModel.uiState.value.requestedWorkout)
     }
 
+    @Test
+    fun ownerClearingCancelsNextWorkoutSelection() = runTest(dispatcher) {
+        repository.nextWorkoutGate = CompletableDeferred()
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.isLoading)
+        assertEquals(1, repository.nextWorkoutReadCount)
+
+        stores.single().clear()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(repository.nextWorkoutReadCancelled)
+        assertNull(viewModel.uiState.value.error)
+        assertNull(viewModel.uiState.value.requestedWorkout)
+        assertFalse(viewModel.uiState.value.canStart)
+    }
+
     @OptIn(KoinInternalApi::class)
     @Test
     fun featureGraphResolvesOwnerScopedTodayViewModels() = runTest(dispatcher) {
@@ -247,17 +356,22 @@ internal class TodayViewModelTest {
 
     private fun newStore(): ViewModelStore = ViewModelStore().also(stores::add)
 
-    private fun createViewModel(nextWorkout: Workout = Workout.A): TodayViewModel =
-        TodayViewModel(repository, nextWorkout).also { newStore().put("today", it) }
+    private fun createViewModel(): TodayViewModel =
+        TodayViewModel(repository).also { newStore().put("today", it) }
 
     private class FakeWorkoutRepository : WorkoutRepository {
         var active: UnfinishedWorkout? = null
+        var nextWorkout = Workout.A
         var readCount = 0
+        var nextWorkoutReadCount = 0
         var readError: Exception? = null
+        var nextWorkoutError: Exception? = null
         var startError: Exception? = null
         var readGate: CompletableDeferred<Unit>? = null
+        var nextWorkoutGate: CompletableDeferred<Unit>? = null
         var startGate: CompletableDeferred<Unit>? = null
         var readCancelled = false
+        var nextWorkoutReadCancelled = false
         val startedWorkouts = mutableListOf<Workout>()
 
         override suspend fun getUnfinishedWorkout(): UnfinishedWorkout? {
@@ -270,6 +384,18 @@ internal class TodayViewModelTest {
             }
             readError?.let { throw it }
             return active
+        }
+
+        override suspend fun getNextWorkout(): Workout {
+            nextWorkoutReadCount++
+            try {
+                nextWorkoutGate?.await()
+            } catch (cancelled: CancellationException) {
+                nextWorkoutReadCancelled = true
+                throw cancelled
+            }
+            nextWorkoutError?.let { throw it }
+            return nextWorkout
         }
 
         override suspend fun startWorkout(workout: Workout): UnfinishedWorkout {

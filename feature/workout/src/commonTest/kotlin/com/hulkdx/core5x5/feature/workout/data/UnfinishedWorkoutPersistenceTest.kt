@@ -523,6 +523,8 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
                     dao.getSession(active.id),
                 )
                 assertNull(repository.getUnfinishedWorkout())
+                assertEquals(Workout.A, repository.getNextWorkout())
+                assertEquals(Workout.A, RoomWorkoutRepository(second.unfinishedWorkoutDao()).getNextWorkout())
             } finally {
                 second.close()
             }
@@ -538,6 +540,133 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
             val active = repository.startWorkout(Workout.A)
             assertFalse(repository.finalizeWorkout(Long.MAX_VALUE))
             assertEquals(active, repository.getUnfinishedWorkout())
+        }
+    }
+
+    @Test
+    fun nextWorkoutStartsWithAWithoutWritingOrReadingTheClock() = runTest {
+        withDatabase("next-empty.db") { database ->
+            val dao = database.unfinishedWorkoutDao()
+            val repository = RoomWorkoutRepository(dao) { error("Selection must not read the clock") }
+            assertEquals(Workout.A, repository.getNextWorkout())
+            assertEquals(Workout.A, repository.getNextWorkout())
+            assertNull(dao.getLastCompletedWorkout())
+            assertNull(dao.getUnfinishedWorkout())
+            assertNull(dao.getWorkout(1L))
+        }
+    }
+
+    @Test
+    fun completingSuccessiveSessionsAlternatesTheNextProgram() = runTest {
+        withDatabase("alternating-sessions.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1234L }
+            for (expected in listOf(Workout.A, Workout.B, Workout.A, Workout.B)) {
+                val selected = repository.getNextWorkout()
+                assertEquals(expected, selected)
+                val active = repository.startWorkout(selected)
+                assertProgram(expected, active)
+                assertEquals(expected, repository.getNextWorkout())
+                assertTrue(repository.finalizeWorkout(active.id))
+                assertEquals(expected.nextWorkout(), repository.getNextWorkout())
+                assertEquals(expected.nextWorkout(), repository.getNextWorkout())
+                assertNull(repository.getUnfinishedWorkout())
+            }
+        }
+    }
+
+    @Test
+    fun startingAndCompletingSetsDoNotAdvanceNextWorkout() = runTest {
+        withDatabase("next-unfinished.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1234L }
+            // Selection follows completed history, not the chosen program or the number of starts.
+            val active = repository.startWorkout(Workout.B)
+            assertEquals(Workout.A, repository.getNextWorkout())
+            assertEquals(active, repository.startWorkout(Workout.A))
+            for ((exercisePosition, exercise) in active.exercises.withIndex()) {
+                for (setPosition in 0 until exercise.sets) {
+                    assertTrue(repository.setSetCompleted(exercisePosition, setPosition, true))
+                }
+            }
+            assertEquals(Workout.A, repository.getNextWorkout())
+            assertEquals(Workout.B, repository.getUnfinishedWorkout()?.workout)
+        }
+    }
+
+    @Test
+    fun nextWorkoutAfterEitherCompletedProgramSurvivesDatabaseReopen() = runTest {
+        for (completed in Workout.entries) {
+            val name = "next-reopen-${completed.name}.db"
+            deleteDatabase(name)
+            try {
+                val database = openDatabase(name)
+                try {
+                    val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1234L }
+                    val active = repository.startWorkout(completed)
+                    assertTrue(repository.setSetCompleted(0, 0, true))
+                    assertTrue(repository.finalizeWorkout(active.id))
+                    assertEquals(completed.nextWorkout(), repository.getNextWorkout())
+                } finally {
+                    database.close()
+                }
+                val reopened = openDatabase(name)
+                try {
+                    val repository = RoomWorkoutRepository(reopened.unfinishedWorkoutDao()) {
+                        error("Selection must not read the clock")
+                    }
+                    assertEquals(completed.nextWorkout(), repository.getNextWorkout())
+                    assertNull(repository.getUnfinishedWorkout())
+                } finally {
+                    reopened.close()
+                }
+            } finally {
+                deleteDatabase(name)
+            }
+        }
+    }
+
+    @Test
+    fun selectionUsesSessionOrderWhenCompletionTimesRepeatOrMoveBackwards() = runTest {
+        withDatabase("next-clock-change.db") { database ->
+            var now = 5000L
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { now }
+            val first = repository.startWorkout(Workout.A)
+            assertTrue(repository.finalizeWorkout(first.id))
+            assertEquals(Workout.B, repository.getNextWorkout())
+
+            val second = repository.startWorkout(Workout.B)
+            assertTrue(repository.finalizeWorkout(second.id))
+            assertEquals(Workout.A, repository.getNextWorkout())
+
+            now = 1000L
+            val third = repository.startWorkout(Workout.A)
+            assertTrue(repository.finalizeWorkout(third.id))
+            assertEquals(Workout.B, repository.getNextWorkout())
+        }
+    }
+
+    @Test
+    fun repeatedAndMissingFinalizationDoNotAdvanceSelectionAgain() = runTest {
+        withDatabase("next-finalize-retries.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1234L }
+            assertFalse(repository.finalizeWorkout(Long.MAX_VALUE))
+            assertEquals(Workout.A, repository.getNextWorkout())
+            val first = repository.startWorkout(Workout.A)
+            assertFalse(repository.finalizeWorkout(Long.MAX_VALUE))
+            assertEquals(Workout.A, repository.getNextWorkout())
+            assertTrue(repository.finalizeWorkout(first.id))
+            assertEquals(Workout.B, repository.getNextWorkout())
+            assertFalse(repository.finalizeWorkout(first.id))
+            assertEquals(Workout.B, repository.getNextWorkout())
+
+            val second = repository.startWorkout(repository.getNextWorkout())
+            assertFalse(repository.finalizeWorkout(first.id))
+            assertEquals(second, repository.getUnfinishedWorkout())
+            assertEquals(Workout.B, repository.getNextWorkout())
+            assertTrue(repository.finalizeWorkout(second.id))
+            assertEquals(Workout.A, repository.getNextWorkout())
+            assertFalse(repository.finalizeWorkout(first.id))
+            assertFalse(repository.finalizeWorkout(second.id))
+            assertEquals(Workout.A, repository.getNextWorkout())
         }
     }
 

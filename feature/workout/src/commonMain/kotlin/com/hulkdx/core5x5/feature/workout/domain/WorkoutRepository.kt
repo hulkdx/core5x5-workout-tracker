@@ -4,6 +4,12 @@ internal interface WorkoutRepository {
     /** Returns the persisted session as stored, or null when no workout is active. */
     suspend fun getUnfinishedWorkout(): UnfinishedWorkout?
 
+    /**
+     * Returns the program after the latest completed session, or A before any completion.
+     * Unfinished sessions and set completion do not advance this selection.
+     */
+    suspend fun getNextWorkout(): Workout
+
     /** Starts the selected program, or returns the existing session without changing it. */
     suspend fun startWorkout(workout: Workout): UnfinishedWorkout
 

@@ -5,6 +5,7 @@ import androidx.room3.Insert
 import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
 import androidx.room3.Transaction
+import com.hulkdx.core5x5.feature.workout.domain.Workout
 
 @Dao
 internal interface UnfinishedWorkoutDao {
@@ -14,6 +15,13 @@ internal interface UnfinishedWorkoutDao {
 
     @Query("SELECT * FROM unfinished_workout WHERE unfinishedSlot = 1 AND completedAtEpochMillis IS NULL")
     suspend fun getUnfinishedWorkout(): UnfinishedWorkoutEntity?
+
+    // Only one session can be unfinished, so generated IDs preserve training order even if the clock changes.
+    @Query("""
+        SELECT workout FROM unfinished_workout WHERE completedAtEpochMillis IS NOT NULL
+        ORDER BY id DESC LIMIT 1
+    """)
+    suspend fun getLastCompletedWorkout(): Workout?
 
     @Query("SELECT * FROM unfinished_workout WHERE id = :workoutId")
     suspend fun getWorkout(workoutId: Long): UnfinishedWorkoutEntity?

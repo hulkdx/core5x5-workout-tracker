@@ -5,6 +5,16 @@ import kotlin.test.assertEquals
 
 class WorkoutProgramTest {
     @Test
+    fun completingWorkoutASelectsWorkoutB() {
+        assertEquals(Workout.B, Workout.A.nextWorkout())
+    }
+
+    @Test
+    fun completingWorkoutBSelectsWorkoutA() {
+        assertEquals(Workout.A, Workout.B.nextWorkout())
+    }
+
+    @Test
     fun workoutAContainsItsThreeExercisesInTrainingOrder() {
         assertEquals(
             listOf(Exercise.SQUAT, Exercise.BENCH_PRESS, Exercise.BARBELL_ROW),

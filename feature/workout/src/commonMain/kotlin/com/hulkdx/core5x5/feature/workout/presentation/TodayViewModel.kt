@@ -3,7 +3,6 @@ package com.hulkdx.core5x5.feature.workout.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
-import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,8 +12,6 @@ import kotlinx.coroutines.launch
 
 internal class TodayViewModel(
     private val repository: WorkoutRepository,
-    // Initial-program fallback until workout completion can supply the next A/B selection.
-    private val nextWorkout: Workout = Workout.A,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(TodayUiState())
     val uiState: StateFlow<TodayUiState> = _uiState.asStateFlow()
@@ -52,9 +49,10 @@ internal class TodayViewModel(
         _uiState.value = uiState.value.copy(requestedWorkout = null)
     }
 
-    private fun showWorkout(workout: UnfinishedWorkout?, requested: Boolean = false) {
+    private suspend fun showWorkout(workout: UnfinishedWorkout?, requested: Boolean = false) {
+        val nextWorkout = if (workout == null) repository.getNextWorkout() else null
         _uiState.value = uiState.value.copy(
-            nextWorkout = if (workout == null) nextWorkout else null,
+            nextWorkout = nextWorkout,
             unfinishedWorkout = workout,
             requestedWorkout = if (requested) workout else null,
             error = null,

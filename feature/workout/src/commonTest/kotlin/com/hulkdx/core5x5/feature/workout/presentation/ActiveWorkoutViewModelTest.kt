@@ -82,6 +82,9 @@ internal class ActiveWorkoutViewModelTest {
         override suspend fun startWorkout(workout: Workout): UnfinishedWorkout =
             error("Active Workout only loads an existing session")
 
+        override suspend fun getNextWorkout(): Workout =
+            error("Active Workout only loads an existing session")
+
         override suspend fun finalizeWorkout(workoutId: Long): Boolean =
             error("Active Workout only loads an existing session")
 
