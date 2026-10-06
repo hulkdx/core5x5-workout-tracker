@@ -3,6 +3,7 @@ package com.hulkdx.core5x5.feature.workout.presentation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import org.koin.compose.viewmodel.koinViewModel
@@ -18,6 +19,11 @@ fun ActiveWorkoutRoute(
     val viewModel: ActiveWorkoutViewModel = koinViewModel(parameters = { parametersOf(workoutId) })
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    LifecycleResumeEffect(viewModel) {
+        viewModel.onResume()
+        onPauseOrDispose { viewModel.onPause() }
+    }
+
     LaunchedEffect(uiState.requestedCompletedWorkoutId) {
         uiState.requestedCompletedWorkoutId?.let { workoutId ->
             viewModel.onCompletionRequestHandled()
@@ -31,5 +37,8 @@ fun ActiveWorkoutRoute(
         onBack = onBack,
         onFinishWorkout = viewModel::finishWorkout,
         onRetryLoad = viewModel::loadWorkout,
+        onCompleteSet = viewModel::completeSet,
+        onCompleteNextSet = viewModel::completeNextSet,
+        onSelectExercise = viewModel::selectExercise,
     )
 }

@@ -57,9 +57,44 @@ internal interface UnfinishedWorkoutDao {
     """)
     suspend fun setSetCompleted(exercisePosition: Int, setPosition: Int, isCompleted: Boolean): Int
 
+    @Query("""
+        UPDATE unfinished_workout_set SET isCompleted = 1
+        WHERE workoutId = :workoutId AND exercisePosition = :exercisePosition AND position = :setPosition
+        AND isCompleted = 0 AND workoutId IN (
+            SELECT id FROM unfinished_workout WHERE unfinishedSlot = 1 AND completedAtEpochMillis IS NULL
+        )
+    """)
+    suspend fun completeNewSet(workoutId: Long, exercisePosition: Int, setPosition: Int): Int
+
+    @Query("""
+        UPDATE unfinished_workout SET restDeadlineEpochMillis = :deadlineEpochMillis
+        WHERE id = :workoutId AND unfinishedSlot = 1 AND completedAtEpochMillis IS NULL
+    """)
+    suspend fun replaceRestDeadline(workoutId: Long, deadlineEpochMillis: Long): Int
+
+    /** The set and rest share one commit; duplicate completion never replaces the deadline. */
+    @Transaction
+    suspend fun completeSetAndStartRest(
+        workoutId: Long,
+        exercisePosition: Int,
+        setPosition: Int,
+        deadlineEpochMillis: Long,
+    ): StoredUnfinishedWorkout? {
+        val stored = getSession(workoutId) ?: return null
+        if (stored.session.completedAtEpochMillis != null || stored.session.unfinishedSlot != 1) return null
+        val set = stored.sets.firstOrNull {
+            it.exercisePosition == exercisePosition && it.position == setPosition
+        } ?: return null
+        if (set.isCompleted) return stored
+        check(completeNewSet(workoutId, exercisePosition, setPosition) == 1)
+        check(replaceRestDeadline(workoutId, deadlineEpochMillis) == 1)
+        return getSession(workoutId)
+    }
+
     /** A conditional update makes completion atomic and safe to retry across database instances. */
     @Query("""
-        UPDATE unfinished_workout SET completedAtEpochMillis = :completedAtEpochMillis, unfinishedSlot = NULL
+        UPDATE unfinished_workout SET completedAtEpochMillis = :completedAtEpochMillis,
+        unfinishedSlot = NULL, restDeadlineEpochMillis = NULL
         WHERE id = :workoutId AND unfinishedSlot = 1 AND completedAtEpochMillis IS NULL
     """)
     suspend fun finalizeWorkout(workoutId: Long, completedAtEpochMillis: Long): Int

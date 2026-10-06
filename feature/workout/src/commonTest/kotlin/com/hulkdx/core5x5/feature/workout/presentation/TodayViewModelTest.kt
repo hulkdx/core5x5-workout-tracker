@@ -448,6 +448,13 @@ internal class TodayViewModelTest {
 
         override suspend fun finalizeWorkout(workoutId: Long): Boolean =
             error("Today does not finalize workouts")
+
+        override suspend fun completeSetAndStartRest(
+            workoutId: Long,
+            exercisePosition: Int,
+            setPosition: Int,
+            restDurationMillis: Long,
+        ): UnfinishedWorkout? = error("Today does not complete sets or start rest")
     }
 
     companion object {

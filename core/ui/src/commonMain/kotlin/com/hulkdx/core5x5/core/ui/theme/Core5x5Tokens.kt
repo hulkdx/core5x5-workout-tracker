@@ -20,6 +20,7 @@ object Core5x5Colors {
     val DisabledText = Color(0xFF59656C)
     val Action = Color(0xFF67E38B)
     val ActionPressed = Color(0xFF4FCF76)
+    val ActionTint = Color(0xFF183823)
     val Border = Color(0xFF273137)
     val Destructive = Color(0xFFF06C6C)
 }
@@ -31,6 +32,7 @@ object Core5x5Typography {
     val Body = style(size = 16, lineHeight = 23, weight = FontWeight.Normal)
     val Label = style(size = 15, lineHeight = 20, weight = FontWeight.Medium)
     val Caption = style(size = 13, lineHeight = 18, weight = FontWeight.Normal)
+    val Numeric = style(size = 28, lineHeight = 32, weight = FontWeight.SemiBold)
 
     private fun style(size: Int, lineHeight: Int, weight: FontWeight) = TextStyle(
         fontFamily = FontFamily.SansSerif,
@@ -42,6 +44,7 @@ object Core5x5Typography {
 }
 
 object Core5x5Dimensions {
+    val ReferenceWidth = 390.dp // reference.width
     val ReferenceSystemTopReserve = 38.dp // reference.systemTopReserve; reference previews only
     val ScreenInset = 20.dp // layout.screenInset
     val TextGap = 2.dp // spacing.s2
@@ -53,6 +56,18 @@ object Core5x5Dimensions {
     val BorderStroke = 1.dp // component.border.stroke
     val ButtonHeight = 56.dp // component.button.height
     val ButtonPadding = 0.dp // component.button.contentPadding
+    val TopBarHeight = 44.dp // component.topBar.visualHeight
+    val ExerciseHeaderHeight = 58.dp // component.exerciseHeader.height
+    val SetDiameter = 48.dp // component.set.diameter
+    val SetActiveStroke = 1.5.dp // component.set.activeStroke
+    val ActiveVisualHeight = 176.dp // component.visual.activeHeight
+    val RestVisualHeight = 126.dp // component.visual.restHeight
+    val RestImageWidth = 195.dp // component.visual.restImageWidth
+    val TimerHeight = 122.dp // component.timer.height
+    val TimerPinnedMinHeight = 66.dp // component.timer.pinnedMinHeight: 14 + 38 + 14
+    val TimerPadding = 14.dp // component.timer.padding
+    val TimerTopHeight = 38.dp // component.timer.topHeight
+    val TimerLabelGap = 10.dp // component.timer.labelGap
     val IndicatorSize = 34.dp // component.indicator.size
     val CardPadding = 14.dp // component.workoutCard.padding
     val CardGap = 10.dp // component.workoutCard.gap

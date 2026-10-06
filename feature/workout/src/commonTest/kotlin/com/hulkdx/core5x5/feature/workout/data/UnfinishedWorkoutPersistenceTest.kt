@@ -1,5 +1,10 @@
 package com.hulkdx.core5x5.feature.workout.data
 
+import androidx.room3.executeSQL
+import androidx.room3.useWriterConnection
+import com.hulkdx.core5x5.feature.workout.domain.RestTimer
+import com.hulkdx.core5x5.feature.workout.domain.RestTimerRules
+import com.hulkdx.core5x5.feature.workout.domain.RestTimerState
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
 import com.hulkdx.core5x5.feature.workout.domain.CompletedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
@@ -846,6 +851,199 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
             assertFalse(repository.finalizeWorkout(first.id))
             assertFalse(repository.finalizeWorkout(second.id))
             assertEquals(Workout.A, repository.getNextWorkout())
+        }
+    }
+
+
+    @Test
+    fun setAndRestSurviveReopeningWithRunningAndExpiredDeadlineRecovery() = runTest {
+        val name = "rest-recovery.db"
+        deleteDatabase(name)
+        try {
+            val database = openDatabase(name)
+            val saved = try {
+                val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+                val started = repository.startWorkout(Workout.B)
+                assertNull(started.restTimer)
+                requireNotNull(repository.completeSetAndStartRest(started.id, 0, 0, 180_000))
+            } finally {
+                database.close()
+            }
+            assertEquals(RestTimer(181_000), saved.restTimer)
+            assertTrue(saved.exercises[0].setStates[0].isCompleted)
+            val reopened = openDatabase(name)
+            try {
+                val repository = RoomWorkoutRepository(reopened.unfinishedWorkoutDao()) {
+                    error("Recovery must not change the deadline or read the repository clock")
+                }
+                val restored = requireNotNull(repository.getUnfinishedWorkout())
+                assertEquals(saved, restored)
+                assertEquals(RestTimerState.Running(60_000), RestTimerRules { 121_000 }.state(restored.restTimer))
+                assertEquals(RestTimerState.Expired, RestTimerRules { 181_000 }.state(restored.restTimer))
+                assertEquals(RestTimerState.Expired, RestTimerRules { 300_000 }.state(restored.restTimer))
+                assertEquals(RestTimerState.Running(90_000), RestTimerRules { 91_000 }.state(restored.restTimer))
+                assertEquals(saved, RoomWorkoutRepository(reopened.unfinishedWorkoutDao()) { 91_000L }.startWorkout(Workout.A))
+            } finally {
+                reopened.close()
+            }
+        } finally {
+            deleteDatabase(name)
+        }
+    }
+
+    @Test
+    fun onlyNewSetCompletionReplacesRunningOrExpiredRest() = runTest {
+        withDatabase("rest-replace.db") { database ->
+            var now = 1_000L
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { now }
+            val started = repository.startWorkout(Workout.A)
+            val first = requireNotNull(repository.completeSetAndStartRest(started.id, 0, 0, 180_000))
+            now = 61_000
+            assertEquals(first, repository.completeSetAndStartRest(started.id, 0, 0, 30_000))
+            val second = requireNotNull(repository.completeSetAndStartRest(started.id, 0, 1, 180_000))
+            assertEquals(RestTimer(241_000), second.restTimer)
+            assertTrue(second.exercises[0].setStates.take(2).all { it.isCompleted })
+            assertEquals(first.exercises[1], second.exercises[1])
+            now = 300_000
+            assertEquals(second, repository.completeSetAndStartRest(started.id, 0, 1, 180_000))
+            val third = requireNotNull(repository.completeSetAndStartRest(started.id, 0, 2, 180_000))
+            assertEquals(RestTimer(480_000), third.restTimer)
+        }
+    }
+
+    @Test
+    fun missingSetsInvalidDurationsAndStaleSessionIdsLeaveRestUnchanged() = runTest {
+        withDatabase("rest-invalid.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+            assertNull(repository.completeSetAndStartRest(1, 0, 0, 180_000))
+            val started = repository.startWorkout(Workout.B)
+            val saved = requireNotNull(repository.completeSetAndStartRest(started.id, 0, 0, 180_000))
+            assertNull(repository.completeSetAndStartRest(started.id, -1, 0, 180_000))
+            assertNull(repository.completeSetAndStartRest(started.id, 0, 5, 180_000))
+            assertNull(repository.completeSetAndStartRest(started.id, 2, 1, 180_000))
+            assertNull(repository.completeSetAndStartRest(Long.MAX_VALUE, 0, 0, 180_000))
+            assertFails { repository.completeSetAndStartRest(started.id, 0, 1, 0) }
+            assertFails { repository.completeSetAndStartRest(started.id, 0, 1, Long.MAX_VALUE) }
+            assertEquals(saved, repository.getUnfinishedWorkout())
+
+            assertTrue(repository.finalizeWorkout(started.id))
+            assertNull(database.unfinishedWorkoutDao().getWorkout(started.id)?.restDeadlineEpochMillis)
+            val later = repository.startWorkout(Workout.A)
+            assertNull(repository.completeSetAndStartRest(started.id, 0, 1, 180_000))
+            assertEquals(later, repository.getUnfinishedWorkout())
+            assertNull(later.restTimer)
+        }
+    }
+
+    @Test
+    fun aFailedRestWriteRollsBackTheSetAndPreservesTheOldDeadline() = runTest {
+        withDatabase("rest-rollback.db") { database ->
+            var now = 1_000L
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { now }
+            val started = repository.startWorkout(Workout.A)
+            val saved = requireNotNull(repository.completeSetAndStartRest(started.id, 0, 0, 180_000))
+            database.useWriterConnection { connection ->
+                connection.executeSQL("""
+                    CREATE TRIGGER reject_rest BEFORE UPDATE OF restDeadlineEpochMillis ON unfinished_workout
+                    WHEN NEW.restDeadlineEpochMillis IS NOT NULL
+                    BEGIN SELECT RAISE(ABORT, 'Rest write failed'); END
+                """.trimIndent())
+            }
+            now = 61_000
+            assertFails { repository.completeSetAndStartRest(started.id, 0, 1, 180_000) }
+            assertEquals(saved, repository.getUnfinishedWorkout())
+            database.useWriterConnection { it.executeSQL("DROP TRIGGER reject_rest") }
+            val retried = requireNotNull(repository.completeSetAndStartRest(started.id, 0, 1, 180_000))
+            assertTrue(retried.exercises[0].setStates[1].isCompleted)
+            assertEquals(RestTimer(241_000), retried.restTimer)
+        }
+    }
+
+    @Test
+    fun concurrentDuplicateSetTapsAcrossDatabaseInstancesRetainOneDeadline() = runTest {
+        withDatabase("rest-duplicate.db") { database ->
+            val started = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }.startWorkout(Workout.A)
+            val second = openDatabase("rest-duplicate.db")
+            try {
+                val results = listOf(
+                    async(Dispatchers.Default) {
+                        RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+                            .completeSetAndStartRest(started.id, 0, 0, 180_000)
+                    },
+                    async(Dispatchers.Default) {
+                        RoomWorkoutRepository(second.unfinishedWorkoutDao()) { 2_000L }
+                            .completeSetAndStartRest(started.id, 0, 0, 180_000)
+                    },
+                ).awaitAll()
+                assertEquals(results.first(), results.last())
+                val saved = requireNotNull(results.first())
+                assertTrue(saved.restTimer in listOf(RestTimer(181_000), RestTimer(182_000)))
+                assertEquals(1, saved.exercises.sumOf { exercise -> exercise.setStates.count { it.isCompleted } })
+                assertEquals(saved, RoomWorkoutRepository(database.unfinishedWorkoutDao()).getUnfinishedWorkout())
+            } finally {
+                second.close()
+            }
+        }
+    }
+
+    @Test
+    fun concurrentDifferentSetsPreserveBothCompletionsAndTheLastCommittedRest() = runTest {
+        withDatabase("rest-concurrent.db") { database ->
+            val started = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }.startWorkout(Workout.B)
+            val second = openDatabase("rest-concurrent.db")
+            try {
+                listOf(
+                    async(Dispatchers.Default) {
+                        RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+                            .completeSetAndStartRest(started.id, 0, 0, 180_000)
+                    },
+                    async(Dispatchers.Default) {
+                        RoomWorkoutRepository(second.unfinishedWorkoutDao()) { 2_000L }
+                            .completeSetAndStartRest(started.id, 2, 0, 180_000)
+                    },
+                ).awaitAll()
+                val saved = requireNotNull(RoomWorkoutRepository(database.unfinishedWorkoutDao()).getUnfinishedWorkout())
+                assertTrue(saved.exercises[0].setStates[0].isCompleted)
+                assertTrue(saved.exercises[2].setStates[0].isCompleted)
+                assertTrue(saved.restTimer in listOf(RestTimer(181_000), RestTimer(182_000)))
+                assertEquals(1, saved.exercises[2].setStates.size)
+            } finally {
+                second.close()
+            }
+        }
+    }
+
+    @Test
+    fun finalizationClearsSavedRestAndKeepsLoggedSetsAfterReopen() = runTest {
+        val name = "rest-finish.db"
+        deleteDatabase(name)
+        try {
+            val database = openDatabase(name)
+            val saved = try {
+                val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+                val started = repository.startWorkout(Workout.A)
+                val logged = requireNotNull(repository.completeSetAndStartRest(started.id, 0, 0, 180_000))
+                assertTrue(repository.finalizeWorkout(started.id))
+                logged
+            } finally {
+                database.close()
+            }
+            val reopened = openDatabase(name)
+            try {
+                val dao = reopened.unfinishedWorkoutDao()
+                val repository = RoomWorkoutRepository(dao) { 300_000L }
+                assertNull(repository.getUnfinishedWorkout())
+                assertNull(dao.getWorkout(saved.id)?.restDeadlineEpochMillis)
+                assertEquals(saved.exercises, repository.getCompletedWorkout(saved.id)?.exercises)
+                val later = repository.startWorkout(Workout.B)
+                assertNull(later.restTimer)
+                assertFalse(repository.finalizeWorkout(saved.id))
+                assertEquals(later, repository.getUnfinishedWorkout())
+            } finally {
+                reopened.close()
+            }
+        } finally {
+            deleteDatabase(name)
         }
     }
 

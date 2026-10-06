@@ -34,4 +34,17 @@ internal interface WorkoutRepository {
         setPosition: Int,
         isCompleted: Boolean,
     ): Boolean
+
+    /**
+     * Atomically completes a set as prescribed and replaces the identified session's rest deadline.
+     * Returns its saved snapshot. An already completed set returns the unchanged snapshot;
+     * a missing set or an inactive/stale session returns null without changing any session.
+     * A failed write rolls back both changes. Durations must be positive.
+     */
+    suspend fun completeSetAndStartRest(
+        workoutId: Long,
+        exercisePosition: Int,
+        setPosition: Int,
+        restDurationMillis: Long,
+    ): UnfinishedWorkout?
 }
