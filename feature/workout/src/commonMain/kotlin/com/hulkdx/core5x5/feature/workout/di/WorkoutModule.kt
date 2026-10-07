@@ -18,7 +18,12 @@ val workoutModule = module {
     single<WorkoutRepository> { get<RoomWorkoutRepository>() }
     single<CompletedWorkoutSource> { get<RoomWorkoutRepository>() }
     viewModel { parameters ->
-        ActiveWorkoutViewModel(repository = get(), workoutId = parameters.getOrNull(), restTimerRules = get())
+        ActiveWorkoutViewModel(
+            repository = get(),
+            preferences = get(),
+            workoutId = parameters.getOrNull(),
+            restTimerRules = get(),
+        )
     }
     viewModel { TodayViewModel(get()) }
     viewModel { parameters -> WorkoutCompleteViewModel(workoutId = parameters.get(), repository = get()) }

@@ -2,7 +2,7 @@ package com.hulkdx.core5x5.feature.workout.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.hulkdx.core5x5.feature.workout.domain.DEFAULT_REST_DURATION_MILLIS
+import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
 import com.hulkdx.core5x5.feature.workout.domain.RestTimerRules
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutRepository
@@ -18,9 +18,9 @@ import kotlin.time.Clock
 
 internal class ActiveWorkoutViewModel(
     private val repository: WorkoutRepository,
+    private val preferences: TrainingPreferencesRepository,
     private val workoutId: Long? = null,
     private val restTimerRules: RestTimerRules = RestTimerRules { Clock.System.now().toEpochMilliseconds() },
-    private val restDurationMillis: Long = DEFAULT_REST_DURATION_MILLIS,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ActiveWorkoutUiState())
     val uiState: StateFlow<ActiveWorkoutUiState> = _uiState.asStateFlow()
@@ -105,6 +105,7 @@ internal class ActiveWorkoutViewModel(
         _uiState.value = state.copy(isCompletingSet = true, hasSetSaveError = false)
         viewModelScope.launch {
             try {
+                val restDurationMillis = preferences.getPreferences().restDurationMillis
                 val saved = repository.completeSetAndStartRest(
                     workout.id, exercisePosition, setPosition, restDurationMillis,
                 )

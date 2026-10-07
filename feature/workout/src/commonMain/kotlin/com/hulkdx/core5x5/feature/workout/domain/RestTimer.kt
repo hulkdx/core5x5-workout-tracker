@@ -3,9 +3,6 @@ package com.hulkdx.core5x5.feature.workout.domain
 /** A rest deadline independent of countdown updates, presentation, and storage. */
 internal data class RestTimer(val deadlineEpochMillis: Long)
 
-/** v1 default; a future duration preference will supply the value for new timers. */
-internal const val DEFAULT_REST_DURATION_MILLIS = 3 * 60 * 1_000L
-
 internal sealed interface RestTimerState {
     data object Idle : RestTimerState
 

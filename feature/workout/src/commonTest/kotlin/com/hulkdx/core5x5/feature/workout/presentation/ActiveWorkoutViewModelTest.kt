@@ -1,6 +1,9 @@
 package com.hulkdx.core5x5.feature.workout.presentation
 
 import androidx.lifecycle.ViewModelStore
+import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
+import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
+import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.feature.workout.domain.CompletedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
 import com.hulkdx.core5x5.feature.workout.domain.RestTimer
@@ -14,6 +17,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -56,7 +60,10 @@ internal class ActiveWorkoutViewModelTest {
             id = 1L,
         )
         val repository = FakeWorkoutRepository(savedWorkout)
-        val viewModel = ActiveWorkoutViewModel(repository).also { store.put("active-workout", it) }
+        val viewModel = ActiveWorkoutViewModel(
+            repository = repository,
+            preferences = FakeTrainingPreferencesRepository(),
+        ).also { store.put("active-workout", it) }
         assertTrue(viewModel.uiState.value.isLoading)
 
         dispatcher.scheduler.runCurrent()
@@ -203,7 +210,11 @@ internal class ActiveWorkoutViewModelTest {
         val repository = FakeWorkoutRepository(later).apply {
             completed = original.completed()
         }
-        val viewModel = ActiveWorkoutViewModel(repository, workoutId = original.id)
+        val viewModel = ActiveWorkoutViewModel(
+            repository = repository,
+            preferences = FakeTrainingPreferencesRepository(),
+            workoutId = original.id,
+        )
             .also { store.put("active-workout", it) }
         dispatcher.scheduler.runCurrent()
 
@@ -291,6 +302,43 @@ internal class ActiveWorkoutViewModelTest {
         dispatcher.scheduler.runCurrent()
         assertEquals(1, repository.completedSetRequests.size)
         assertEquals(saved.restTimer, viewModel.uiState.value.unfinishedWorkout?.restTimer)
+    }
+
+    @Test
+    fun completingASetUsesTheCurrentSavedRestDuration() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A))
+        val preferences = FakeTrainingPreferencesRepository(TrainingPreferences(restDurationSeconds = 45))
+        val viewModel = createViewModel(repository, preferences)
+        dispatcher.scheduler.runCurrent()
+
+        viewModel.completeSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+
+        assertEquals(RestTimer(46_000), viewModel.uiState.value.unfinishedWorkout?.restTimer)
+        preferences.value = TrainingPreferences(restDurationSeconds = 91)
+        viewModel.completeSet(0, 1)
+        dispatcher.scheduler.runCurrent()
+
+        assertEquals(RestTimer(92_000), viewModel.uiState.value.unfinishedWorkout?.restTimer)
+    }
+
+    @Test
+    fun restDurationReadFailureLeavesSetAndExistingRestUnchanged() = runTest(dispatcher) {
+        val original = session(Workout.B).copy(restTimer = RestTimer(91_000))
+        val repository = FakeWorkoutRepository(original)
+        val preferences = FakeTrainingPreferencesRepository().apply {
+            readError = IllegalStateException("Preferences unavailable")
+        }
+        val viewModel = createViewModel(repository, preferences)
+        dispatcher.scheduler.runCurrent()
+
+        viewModel.completeSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+
+        assertTrue(viewModel.uiState.value.hasSetSaveError)
+        assertTrue(repository.completedSetRequests.isEmpty())
+        assertSame(original, viewModel.uiState.value.unfinishedWorkout)
+        assertEquals("01:30", viewModel.uiState.value.restTimer.countdown)
     }
 
     @Test
@@ -498,9 +546,39 @@ internal class ActiveWorkoutViewModelTest {
         assertFalse(requireNotNull(repository.savedWorkout).exercises[0].setStates[0].isCompleted)
     }
 
-    private fun createViewModel(repository: FakeWorkoutRepository): ActiveWorkoutViewModel =
-        ActiveWorkoutViewModel(repository, restTimerRules = RestTimerRules { repository.now })
+    private fun createViewModel(
+        repository: FakeWorkoutRepository,
+        preferences: FakeTrainingPreferencesRepository = FakeTrainingPreferencesRepository(),
+    ): ActiveWorkoutViewModel = ActiveWorkoutViewModel(
+        repository = repository,
+        preferences = preferences,
+        restTimerRules = RestTimerRules { repository.now },
+    )
             .also { store.put("active-workout", it) }
+
+    private class FakeTrainingPreferencesRepository(
+        var value: TrainingPreferences = TrainingPreferences(),
+    ) : TrainingPreferencesRepository {
+        val values = MutableStateFlow(value)
+        var readError: Exception? = null
+
+        override val preferences = values
+
+        override suspend fun getPreferences(): TrainingPreferences {
+            readError?.let { throw it }
+            return value
+        }
+
+        override suspend fun setWeightUnit(unit: WeightUnit) {
+            value = value.copy(weightUnit = unit)
+            values.value = value
+        }
+
+        override suspend fun setRestDurationSeconds(seconds: Long) {
+            value = value.copy(restDurationSeconds = seconds)
+            values.value = value
+        }
+    }
 
     private class FakeWorkoutRepository(var savedWorkout: UnfinishedWorkout?) : WorkoutRepository {
         var readCount = 0
