@@ -21,6 +21,7 @@ import androidx.compose.ui.semantics.semantics
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
+import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -29,6 +30,7 @@ fun Core5x5RestTimer(
     isExpired: Boolean,
     modifier: Modifier = Modifier,
     compact: Boolean = false,
+    neutral: Boolean = false,
 ) {
     val label = if (isExpired) "Rest complete" else "Rest"
     Surface(
@@ -40,7 +42,11 @@ fun Core5x5RestTimer(
             if (isExpired) liveRegion = LiveRegionMode.Polite
         },
         shape = RoundedCornerShape(Core5x5Dimensions.RadiusLarge),
-        color = if (isExpired) Core5x5Colors.ActionTint else Core5x5Colors.Elevated,
+        color = when {
+            isExpired -> Core5x5Colors.ActionTint
+            neutral -> Core5x5HomeTokens.Card
+            else -> Core5x5Colors.Elevated
+        },
     ) {
         Column(modifier = Modifier.padding(Core5x5Dimensions.TimerPadding)) {
             FlowRow(

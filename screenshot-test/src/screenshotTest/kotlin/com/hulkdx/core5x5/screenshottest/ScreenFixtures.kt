@@ -11,6 +11,7 @@ import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutSet
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
+import com.hulkdx.core5x5.feature.workout.presentation.ActiveWorkoutUiState
 import com.hulkdx.core5x5.feature.workout.presentation.WorkoutCompleteUiState
 
 internal fun unfinishedWorkout(workout: Workout) = UnfinishedWorkout(
@@ -86,3 +87,16 @@ private fun Workout.exerciseSnapshots(completedSets: Int): List<UnfinishedWorkou
         )
     }
 }
+
+internal fun activeWorkoutReference(workout: Workout): ActiveWorkoutUiState =
+    ActiveWorkoutUiState(
+        isLoading = false,
+        unfinishedWorkout = unfinishedWorkout(workout).let { session ->
+            session.copy(exercises = session.exercises.mapIndexed { index, exercise ->
+                exercise.copy(
+                    weightKg = listOf(80.0, 37.5, 60.0)[index],
+                    setStates = exercise.setStates.map { it.copy(isCompleted = index == 0 && it.position == 0) },
+                )
+            })
+        },
+    )

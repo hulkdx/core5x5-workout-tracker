@@ -13,6 +13,7 @@ internal fun RestTimerScreen(
     uiState: RestTimerUiState,
     modifier: Modifier = Modifier,
     compact: Boolean = false,
+    neutral: Boolean = false,
 ) {
     if (uiState.isVisible) {
         Core5x5RestTimer(
@@ -20,6 +21,7 @@ internal fun RestTimerScreen(
             isExpired = uiState.isExpired,
             modifier = modifier,
             compact = compact,
+            neutral = neutral,
         )
     }
 }

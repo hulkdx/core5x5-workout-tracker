@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
@@ -53,11 +54,28 @@ class ScreenScreenshotTest {
     fun TodayResume() = TodaySnapshot(TodayUiState(isLoading = false, unfinishedWorkout = unfinishedWorkout(Workout.A)))
 
     @PreviewTest
-    @ReferenceScreen
+    @HomeReferenceScreen
     @Composable
-    fun ActiveWorkout() = ActiveWorkoutSnapshot(
-        ActiveWorkoutUiState(isLoading = false, unfinishedWorkout = unfinishedWorkout(Workout.A)),
-    )
+    fun ActiveWorkout() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutB() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.B))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutRest() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
+        restTimer = RestTimerUiState(isVisible = true, countdown = "02:30"),
+    ))
+
+    @PreviewTest
+    @Preview(name = "Narrow large text", widthDp = 320, heightDp = 640, fontScale = 2f)
+    @Composable
+    fun ActiveWorkoutNarrow() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
+        restTimer = RestTimerUiState(isVisible = true, isExpired = true, countdown = "00:00"),
+    ))
 
     @PreviewTest
     @ReferenceScreen
@@ -117,15 +135,14 @@ private fun TodaySnapshot(state: TodayUiState) = ScreenFrame(navigationItem = Co
 }
 
 @Composable
-private fun ActiveWorkoutSnapshot(state: ActiveWorkoutUiState) = ScreenFrame {
+private fun ActiveWorkoutSnapshot(state: ActiveWorkoutUiState) = Core5x5Theme {
     ActiveWorkoutScreen(
         uiState = state,
         onBack = {},
         onFinishWorkout = {},
         onRetryLoad = {},
         onCompleteSet = { _, _ -> },
-        onCompleteNextSet = {},
-        onSelectExercise = {},
+        windowInsets = WindowInsets(top = Core5x5HomeTokens.SystemTopReserve, bottom = Core5x5HomeTokens.SystemBottomReserve),
     )
 }
 

@@ -38,7 +38,5 @@ fun ActiveWorkoutRoute(
         onFinishWorkout = viewModel::finishWorkout,
         onRetryLoad = viewModel::loadWorkout,
         onCompleteSet = viewModel::completeSet,
-        onCompleteNextSet = viewModel::completeNextSet,
-        onSelectExercise = viewModel::selectExercise,
     )
 }

@@ -7,13 +7,13 @@ import androidx.compose.ui.unit.sp
 
 /** home.* raster estimates from 01. HomeScreen.png; see design/specs/today.md. */
 object Core5x5HomeTokens {
-    val Background = Color(0xFF091013)
-    val Card = Color(0xFF0C1317)
+    val Background = Color(0xFF0E1011)
+    val Card = Color(0xFF141617)
     val Primary = Color(0xFFF5F8F7)
     val Secondary = Color(0xFFA7B5C9)
     val Action = Color(0xFF35E575)
     val ActionPressed = Color(0xFF2FCC67)
-    val Border = Color(0xFF1C2931)
+    val Border = Color(0xFF282C2E)
     val SystemTopReserve = 44.dp
     val SystemBottomReserve = 20.dp
     val Inset = 16.dp
