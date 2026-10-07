@@ -25,7 +25,7 @@ internal class HistoryFormattingTest {
         )
 
         assertEquals("1 h 1 min", workout.durationLabel())
-        assertEquals("01:01:01", workout.durationClockLabel())
+        assertEquals("1:01:01", workout.durationClockLabel())
     }
 
     private fun record(

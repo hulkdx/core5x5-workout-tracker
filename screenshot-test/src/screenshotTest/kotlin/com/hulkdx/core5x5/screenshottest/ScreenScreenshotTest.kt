@@ -51,7 +51,7 @@ class ScreenScreenshotTest {
     @ReferenceScreen
     @Composable
     fun RestTimerScaffold() = ScreenFrame {
-        RestTimerScreen(uiState = RestTimerUiState, modifier = Modifier.fillMaxSize())
+        RestTimerScreen(uiState = RestTimerUiState(), modifier = Modifier.fillMaxSize())
     }
 
     @PreviewTest
@@ -106,7 +106,15 @@ private fun TodaySnapshot(state: TodayUiState) = ScreenFrame(navigationItem = Co
 
 @Composable
 private fun ActiveWorkoutSnapshot(state: ActiveWorkoutUiState) = ScreenFrame {
-    ActiveWorkoutScreen(uiState = state, onBack = {}, onFinishWorkout = {}, onRetryLoad = {})
+    ActiveWorkoutScreen(
+        uiState = state,
+        onBack = {},
+        onFinishWorkout = {},
+        onRetryLoad = {},
+        onCompleteSet = { _, _ -> },
+        onCompleteNextSet = {},
+        onSelectExercise = {},
+    )
 }
 
 @Composable
