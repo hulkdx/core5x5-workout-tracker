@@ -59,7 +59,11 @@ internal class AppBackStackTest {
     @Test
     fun focusedWorkoutDestinationsHideNavigationAndIgnoreDelayedTabCallbacks() {
         val id = Int.MAX_VALUE.toLong() + 42L
-        listOf(AppDestination.ActiveWorkout(id), AppDestination.WorkoutComplete(id)).forEach { destination ->
+        listOf(
+            AppDestination.ActiveWorkout(id),
+            AppDestination.WorkoutComplete(id),
+            AppDestination.WorkoutDetail(id),
+        ).forEach { destination ->
             val backStack = mutableStateListOf<AppDestination>(AppDestination.Today, destination)
 
             assertNull(destination.navigationItem)
@@ -99,5 +103,22 @@ internal class AppBackStackTest {
         assertTrue(restored.none { it is AppDestination.ActiveWorkout })
         restored.removeLastOrNull()
         assertEquals(AppDestination.Today, restored.single())
+    }
+
+    @Test
+    fun workoutDetailRestoresItsStableIdAndReturnsToHistory() {
+        val id = Int.MAX_VALUE.toLong() + 42L
+        val original = mutableStateListOf<AppDestination>(
+            AppDestination.Today,
+            AppDestination.History,
+            AppDestination.WorkoutDetail(id),
+        )
+        val serialized = with(AppBackStackSaver) { SaverScope { it is String }.save(original) }
+        val restored = requireNotNull(AppBackStackSaver.restore(requireNotNull(serialized)))
+
+        assertEquals(original.toList(), restored.toList())
+        assertNull(restored.last().navigationItem)
+        assertEquals(AppDestination.WorkoutDetail(id), restored.removeLastOrNull())
+        assertEquals(AppDestination.History, restored.last())
     }
 }

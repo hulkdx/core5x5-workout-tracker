@@ -24,6 +24,7 @@ import com.hulkdx.core5x5.core.ui.components.Core5x5BottomNavigation
 import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.feature.history.presentation.HistoryRoute
+import com.hulkdx.core5x5.feature.history.presentation.WorkoutDetailRoute
 import com.hulkdx.core5x5.feature.settings.presentation.SettingsRoute
 import com.hulkdx.core5x5.feature.workout.presentation.ActiveWorkoutRoute
 import com.hulkdx.core5x5.feature.workout.presentation.TodayRoute
@@ -73,10 +74,15 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
                     entry<AppDestination.History>(clazzContentKey = { "history" }) {
                         ShellScreen(
                             uiState = uiState.copy(title = "History"),
+                            showTitle = false,
                             onRetryPreferences = viewModel::loadPreferences,
                         ) {
-                            // List/detail behavior remains in the History roadmap tasks.
-                            HistoryRoute(onWorkoutSelected = {})
+                            HistoryRoute(
+                                weightUnit = uiState.weightUnit,
+                                onWorkoutSelected = { workoutId ->
+                                    backStack.add(AppDestination.WorkoutDetail(workoutId))
+                                },
+                            )
                         }
                     }
                     entry<AppDestination.Settings>(clazzContentKey = { "settings" }) {
@@ -108,6 +114,13 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
                             onBackToToday = { backStack.removeLastOrNull() },
                         )
                     }
+                    entry<AppDestination.WorkoutDetail>(clazzContentKey = { "detail:${it.workoutId}" }) { destination ->
+                        WorkoutDetailRoute(
+                            workoutId = destination.workoutId,
+                            weightUnit = uiState.weightUnit,
+                            onBack = { backStack.removeLastOrNull() },
+                        )
+                    }
                 },
             )
         }
@@ -122,7 +135,6 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
             ) {
                 Core5x5BottomNavigation(
                     selectedItem = selectedItem,
-                    historyEnabled = false,
                     onItemSelected = { item ->
                         if (backStack.lastOrNull()?.navigationItem != null) {
                             backStack.selectNavigationItem(item)

@@ -6,6 +6,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val historyModule = module {
-    viewModel { HistoryViewModel() }
-    viewModel { parameters -> WorkoutDetailViewModel(workoutId = parameters.get()) }
+    viewModel { HistoryViewModel(source = get()) }
+    viewModel { parameters -> WorkoutDetailViewModel(source = get(), workoutId = parameters.get()) }
 }

@@ -11,6 +11,7 @@ internal sealed interface AppDestination {
     data object Settings : AppDestination
     data class ActiveWorkout(val workoutId: Long) : AppDestination
     data class WorkoutComplete(val workoutId: Long) : AppDestination
+    data class WorkoutDetail(val workoutId: Long) : AppDestination
 }
 
 internal val AppDestination.navigationItem: Core5x5NavigationItem?
@@ -18,7 +19,9 @@ internal val AppDestination.navigationItem: Core5x5NavigationItem?
         AppDestination.Today -> Core5x5NavigationItem.TODAY
         AppDestination.History -> Core5x5NavigationItem.HISTORY
         AppDestination.Settings -> Core5x5NavigationItem.SETTINGS
-        is AppDestination.ActiveWorkout, is AppDestination.WorkoutComplete -> null
+        is AppDestination.ActiveWorkout -> null
+        is AppDestination.WorkoutComplete -> null
+        is AppDestination.WorkoutDetail -> null
     }
 
 internal fun SnapshotStateList<AppDestination>.selectNavigationItem(item: Core5x5NavigationItem) {
@@ -45,6 +48,7 @@ internal val AppBackStackSaver = listSaver<SnapshotStateList<AppDestination>, St
                 AppDestination.Settings -> "settings"
                 is AppDestination.ActiveWorkout -> "active:${destination.workoutId}"
                 is AppDestination.WorkoutComplete -> "complete:${destination.workoutId}"
+                is AppDestination.WorkoutDetail -> "detail:${destination.workoutId}"
             }
         }
     },
@@ -56,6 +60,7 @@ internal val AppBackStackSaver = listSaver<SnapshotStateList<AppDestination>, St
                 key == "settings" -> AppDestination.Settings
                 key.startsWith("active:") -> AppDestination.ActiveWorkout(key.substringAfter(':').toLong())
                 key.startsWith("complete:") -> AppDestination.WorkoutComplete(key.substringAfter(':').toLong())
+                key.startsWith("detail:") -> AppDestination.WorkoutDetail(key.substringAfter(':').toLong())
                 else -> error("Unknown saved destination: $key")
             }
         }.toMutableStateList()

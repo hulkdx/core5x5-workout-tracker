@@ -64,9 +64,14 @@ class ScreenScreenshotTest {
     @Composable
     fun HistoryScaffold() = ScreenFrame(
         navigationItem = Core5x5NavigationItem.HISTORY,
-        title = "History",
+        showTitle = false,
     ) {
-        HistoryScreen(uiState = HistoryUiState, onWorkoutSelected = {}, modifier = Modifier.fillMaxSize())
+        HistoryScreen(
+            uiState = HistoryUiState(isLoading = false, completedWorkouts = historyRecords()),
+            onWorkoutSelected = {},
+            onRetryLoad = {},
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 
     @PreviewTest
@@ -74,8 +79,14 @@ class ScreenScreenshotTest {
     @Composable
     fun WorkoutDetailScaffold() = ScreenFrame {
         WorkoutDetailScreen(
-            uiState = WorkoutDetailUiState(workoutId = 1L),
+            uiState = WorkoutDetailUiState(
+                workoutId = 1L,
+                isLoading = false,
+                completedWorkout = historyRecords().first(),
+            ),
             onBack = {},
+            onRetryLoad = {},
+            windowInsets = WindowInsets(0, 0, 0, 0),
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -153,7 +164,6 @@ private fun ScreenFrame(
                 Core5x5BottomNavigation(
                     selectedItem = navigationItem,
                     onItemSelected = {},
-                    historyEnabled = false,
                 )
             }
         }

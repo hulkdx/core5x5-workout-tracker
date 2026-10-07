@@ -27,6 +27,7 @@ fun Core5x5WorkoutTopBar(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     backEnabled: Boolean = true,
+    backContentDescription: String = "Back to Today",
 ) {
     Row(
         modifier = modifier.fillMaxWidth().heightIn(min = Core5x5Dimensions.TopBarHeight),
@@ -37,7 +38,7 @@ fun Core5x5WorkoutTopBar(
                 minWidth = Core5x5Dimensions.TouchTargetMin,
                 minHeight = Core5x5Dimensions.TouchTargetMin,
             ).clickable(enabled = backEnabled, role = Role.Button, onClick = onBack)
-                .semantics { contentDescription = "Back to Today" },
+                .semantics { contentDescription = backContentDescription },
             contentAlignment = Alignment.CenterStart,
         ) {
             Text(

@@ -33,6 +33,7 @@ android {
 dependencies {
     screenshotTestImplementation(project(":core:ui"))
     screenshotTestImplementation(project(":core:preferences"))
+    screenshotTestImplementation(project(":core:training"))
     screenshotTestImplementation(project(":feature:workout"))
     screenshotTestImplementation(project(":feature:history"))
     screenshotTestImplementation(project(":feature:settings"))

@@ -6,6 +6,7 @@ import com.hulkdx.core5x5.feature.workout.domain.WorkoutRepository
 import com.hulkdx.core5x5.feature.workout.presentation.ActiveWorkoutViewModel
 import com.hulkdx.core5x5.feature.workout.presentation.TodayViewModel
 import com.hulkdx.core5x5.feature.workout.presentation.WorkoutCompleteViewModel
+import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSource
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -13,7 +14,9 @@ import org.koin.dsl.module
 val workoutModule = module {
     includes(workoutPlatformModule, restTimerModule)
     single { get<WorkoutDatabase>().unfinishedWorkoutDao() }
-    single<WorkoutRepository> { RoomWorkoutRepository(get()) }
+    single { RoomWorkoutRepository(get()) }
+    single<WorkoutRepository> { get<RoomWorkoutRepository>() }
+    single<CompletedWorkoutSource> { get<RoomWorkoutRepository>() }
     viewModel { parameters ->
         ActiveWorkoutViewModel(repository = get(), workoutId = parameters.getOrNull(), restTimerRules = get())
     }
