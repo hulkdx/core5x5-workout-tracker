@@ -29,6 +29,7 @@ import com.hulkdx.core5x5.core.ui.components.Core5x5BottomNavigation
 import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Motion
+import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
 import com.hulkdx.core5x5.feature.history.presentation.HistoryRoute
 import com.hulkdx.core5x5.feature.history.presentation.WorkoutDetailRoute
 import com.hulkdx.core5x5.feature.settings.presentation.SettingsRoute
@@ -69,7 +70,12 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
         entryProvider = entryProvider {
             entry<AppDestination.Today>(clazzContentKey = { "today" }) {
                 TopLevelDestination(Core5x5NavigationItem.TODAY, onItemSelected) {
-                    ShellScreen(uiState = uiState, onRetryPreferences = viewModel::loadPreferences) {
+                    ShellScreen(
+                        uiState = uiState,
+                        showTitle = false,
+                        backgroundColor = Core5x5HomeTokens.Background,
+                        onRetryPreferences = viewModel::loadPreferences,
+                    ) {
                         TodayRoute(
                             weightUnit = uiState.weightUnit,
                             onWorkoutRequested = { workoutId ->
@@ -148,7 +154,8 @@ private fun TopLevelDestination(
     onItemSelected: (Core5x5NavigationItem) -> Unit,
     content: @Composable () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxSize().background(Core5x5Colors.Background)) {
+    val isToday = selectedItem == Core5x5NavigationItem.TODAY
+    Column(modifier = Modifier.fillMaxSize().background(if (isToday) Core5x5HomeTokens.Background else Core5x5Colors.Background)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -162,7 +169,7 @@ private fun TopLevelDestination(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Core5x5Colors.Elevated)
+                .background(if (isToday) Core5x5HomeTokens.Card else Core5x5Colors.Elevated)
                 .windowInsetsPadding(
                     WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal),
                 ),

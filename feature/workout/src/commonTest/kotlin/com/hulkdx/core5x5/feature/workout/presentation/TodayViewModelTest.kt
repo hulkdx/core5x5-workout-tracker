@@ -386,6 +386,94 @@ internal class TodayViewModelTest {
         assertNull(viewModel.uiState.value.requestedWorkout)
     }
 
+    @Test
+    fun switchLoadsSelectedWeightsAndStartUsesTheDisplayedProgram() = runTest(dispatcher) {
+        val selected = WorkoutPrescription(Workout.B).let { prescription ->
+            prescription.copy(exercises = prescription.exercises.map { it.copy(weightKg = 42.5) })
+        }
+        repository.selectedPrescriptions[Workout.B] = selected
+        val viewModel = createViewModel()
+        viewModel.switchWorkout() // Loading cannot switch.
+        dispatcher.scheduler.runCurrent()
+        viewModel.switchWorkout()
+        viewModel.switchWorkout() // A duplicate must not switch back while reading.
+        viewModel.startWorkout()
+        assertFalse(viewModel.uiState.value.canStart)
+        dispatcher.scheduler.runCurrent()
+
+        assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
+        assertSame(selected, viewModel.uiState.value.nextWorkoutPrescription)
+        assertEquals(listOf(5, 5, 1), selected.exercises.map { it.sets })
+        assertNull(repository.active)
+        assertEquals(emptyList(), repository.startedWorkouts)
+        viewModel.startWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(listOf(Workout.B), repository.startedWorkouts)
+        assertEquals(Workout.B, viewModel.uiState.value.requestedWorkout?.workout)
+    }
+
+    @Test
+    fun switchRoundTripAndRefreshRetainWeightsButRecreationUsesAutomaticSelection() = runTest(dispatcher) {
+        val selectedA = WorkoutPrescription(Workout.A).let { it.copy(exercises = it.exercises.map { lift -> lift.copy(weightKg = 37.5) }) }
+        repository.selectedPrescriptions[Workout.A] = selectedA
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        viewModel.switchWorkout()
+        dispatcher.scheduler.runCurrent()
+        viewModel.loadWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
+        val recreated = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.A, recreated.uiState.value.nextWorkout)
+        viewModel.switchWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertSame(selectedA, viewModel.uiState.value.nextWorkoutPrescription)
+        assertNull(repository.active)
+    }
+
+    @Test
+    fun failedSwitchKeepsThePreviousPrescriptionAndCanBeRetried() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        val previous = viewModel.uiState.value.nextWorkoutPrescription
+        repository.nextWorkoutError = IllegalStateException("Failed read")
+        viewModel.switchWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(TodayError.SWITCH, viewModel.uiState.value.error)
+        assertSame(previous, viewModel.uiState.value.nextWorkoutPrescription)
+        assertTrue(viewModel.uiState.value.canStart)
+        repository.nextWorkoutError = null
+        viewModel.loadWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.A, viewModel.uiState.value.nextWorkout)
+        viewModel.switchWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun unfinishedSessionOverridesManualChoiceAndCannotBeSwitched() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        viewModel.switchWorkout()
+        dispatcher.scheduler.runCurrent()
+        val active = session(Workout.A)
+        repository.active = active
+        viewModel.loadWorkout()
+        dispatcher.scheduler.runCurrent()
+        val reads = repository.nextWorkoutReadCount
+        viewModel.switchWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertSame(active, viewModel.uiState.value.unfinishedWorkout)
+        assertEquals(reads, repository.nextWorkoutReadCount)
+        repository.active = null
+        viewModel.loadWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.A, viewModel.uiState.value.nextWorkout)
+    }
+
     private fun newStore(): ViewModelStore = ViewModelStore().also(stores::add)
 
     private fun createViewModel(): TodayViewModel =
@@ -395,6 +483,7 @@ internal class TodayViewModelTest {
         var active: UnfinishedWorkout? = null
         var nextWorkout = Workout.A
         var nextPrescription: WorkoutPrescription? = null
+        val selectedPrescriptions = mutableMapOf<Workout, WorkoutPrescription>()
         var readCount = 0
         var nextWorkoutReadCount = 0
         var readError: Exception? = null
@@ -431,9 +520,10 @@ internal class TodayViewModelTest {
             return nextWorkout
         }
 
-        override suspend fun getNextWorkoutPrescription(): WorkoutPrescription {
-            val selected = getNextWorkout()
-            return nextPrescription ?: WorkoutPrescription(selected)
+        override suspend fun getNextWorkoutPrescription(workoutOverride: Workout?): WorkoutPrescription {
+            val automatic = getNextWorkout()
+            val selected = workoutOverride ?: automatic
+            return selectedPrescriptions[selected] ?: nextPrescription?.takeIf { it.workout == selected } ?: WorkoutPrescription(selected)
         }
 
         override suspend fun getCompletedWorkout(workoutId: Long): CompletedWorkout? =

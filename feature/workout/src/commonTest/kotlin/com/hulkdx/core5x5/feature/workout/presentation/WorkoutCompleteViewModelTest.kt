@@ -247,7 +247,7 @@ internal class WorkoutCompleteViewModelTest {
             return completed[workoutId]
         }
 
-        override suspend fun getNextWorkoutPrescription(): WorkoutPrescription {
+        override suspend fun getNextWorkoutPrescription(workoutOverride: Workout?): WorkoutPrescription {
             prescriptionReads++
             prescriptionError?.let { throw it }
             return prescription

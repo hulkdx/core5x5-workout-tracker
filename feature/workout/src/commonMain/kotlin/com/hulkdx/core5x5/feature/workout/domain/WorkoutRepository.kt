@@ -13,8 +13,8 @@ internal interface WorkoutRepository {
      */
     suspend fun getNextWorkout(): Workout
 
-    /** The next canonical program, repeating each lift's latest saved weight without progression. */
-    suspend fun getNextWorkoutPrescription(): WorkoutPrescription
+    /** The next program (or explicit selection), repeating each lift's latest saved weight. */
+    suspend fun getNextWorkoutPrescription(workoutOverride: Workout? = null): WorkoutPrescription
 
     /** Starts the selected program, or returns the existing session without changing it. */
     suspend fun startWorkout(workout: Workout): UnfinishedWorkout

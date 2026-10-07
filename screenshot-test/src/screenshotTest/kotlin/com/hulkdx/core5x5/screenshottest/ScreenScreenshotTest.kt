@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.ui.components.Core5x5BottomNavigation
 import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
+import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
 import com.hulkdx.core5x5.feature.history.presentation.HistoryScreen
 import com.hulkdx.core5x5.feature.history.presentation.HistoryUiState
@@ -36,9 +38,19 @@ import com.hulkdx.core5x5.shell.ShellUiState
 
 class ScreenScreenshotTest {
     @PreviewTest
-    @ReferenceScreen
+    @HomeReferenceScreen
     @Composable
     fun Today() = TodaySnapshot(TodayUiState(isLoading = false, nextWorkout = Workout.A))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun TodayB() = TodaySnapshot(TodayUiState(isLoading = false, nextWorkout = Workout.B))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun TodayResume() = TodaySnapshot(TodayUiState(isLoading = false, unfinishedWorkout = unfinishedWorkout(Workout.A)))
 
     @PreviewTest
     @ReferenceScreen
@@ -100,7 +112,7 @@ class ScreenScreenshotTest {
 }
 
 @Composable
-private fun TodaySnapshot(state: TodayUiState) = ScreenFrame(navigationItem = Core5x5NavigationItem.TODAY) {
+private fun TodaySnapshot(state: TodayUiState) = ScreenFrame(navigationItem = Core5x5NavigationItem.TODAY, showTitle = false) {
     TodayScreen(uiState = state, onStartWorkout = {}, onResumeWorkout = {}, onRetryLoad = {})
 }
 
@@ -155,24 +167,29 @@ private fun ScreenFrame(
     showTitle: Boolean = true,
     content: @Composable () -> Unit,
 ) {
+    val isToday = navigationItem == Core5x5NavigationItem.TODAY
+    val background = if (isToday) Core5x5HomeTokens.Background else Core5x5Colors.Background
     Core5x5Theme {
-        Column(modifier = Modifier.fillMaxSize().background(Core5x5Colors.Background)) {
+        Column(modifier = Modifier.fillMaxSize().background(background)) {
             Box(
                 modifier = Modifier.fillMaxWidth().weight(1f).windowInsetsPadding(
-                    WindowInsets(top = Core5x5Dimensions.ReferenceSystemTopReserve),
+                    WindowInsets(top = if (isToday) Core5x5HomeTokens.SystemTopReserve else Core5x5Dimensions.ReferenceSystemTopReserve),
                 ),
             ) {
                 if (navigationItem != null) {
-                    ShellScreen(uiState = ShellUiState(title = title), showTitle = showTitle, content = content)
+                    ShellScreen(uiState = ShellUiState(title = title), showTitle = showTitle, backgroundColor = background, content = content)
                 } else {
                     content()
                 }
             }
             if (navigationItem != null) {
-                Core5x5BottomNavigation(
-                    selectedItem = navigationItem,
-                    onItemSelected = {},
-                )
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                        .background(if (isToday) Core5x5HomeTokens.Card else Core5x5Colors.Elevated)
+                        .windowInsetsPadding(WindowInsets(bottom = if (isToday) Core5x5HomeTokens.SystemBottomReserve else 0.dp)),
+                ) {
+                    Core5x5BottomNavigation(selectedItem = navigationItem, onItemSelected = {})
+                }
             }
         }
     }

@@ -698,7 +698,7 @@ internal class ActiveWorkoutViewModelTest {
         override suspend fun getNextWorkout(): Workout =
             error("Active Workout only loads an existing session")
 
-        override suspend fun getNextWorkoutPrescription(): WorkoutPrescription =
+        override suspend fun getNextWorkoutPrescription(workoutOverride: Workout?): WorkoutPrescription =
             error("Active Workout does not select the next program")
 
         override suspend fun finalizeWorkout(workoutId: Long): Boolean {

@@ -8,3 +8,9 @@ import androidx.compose.ui.tooling.preview.Preview
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
 internal annotation class ReferenceScreen
+
+// The revised Home PNG has no wrapper and normalizes to approximately 390 × 874.
+@Preview(name = "Home reference", widthDp = 390, heightDp = 874, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.BINARY)
+internal annotation class HomeReferenceScreen

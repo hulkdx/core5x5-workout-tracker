@@ -1,39 +1,40 @@
 package com.hulkdx.core5x5.feature.workout.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.preferences.domain.formatWeight
+import com.hulkdx.core5x5.core.ui.components.Core5x5HomeExerciseRow
+import com.hulkdx.core5x5.core.ui.components.Core5x5HomeStartButton
+import com.hulkdx.core5x5.core.ui.components.Core5x5WorkoutSwitch
+import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
-import com.hulkdx.core5x5.feature.workout.domain.Exercise
+import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens as Home
 import com.hulkdx.core5x5.feature.workout.domain.ExercisePrescription
-import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.Workout
+import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
 
 @Composable
 internal fun TodayScreen(
@@ -42,49 +43,56 @@ internal fun TodayScreen(
     onStartWorkout: () -> Unit,
     onResumeWorkout: () -> Unit,
     onRetryLoad: () -> Unit,
+    onSwitchWorkout: () -> Unit = {},
     weightUnit: WeightUnit = WeightUnit.KG,
 ) {
-    Surface(modifier = modifier.fillMaxSize(), color = Background) {
+    Surface(modifier = modifier.fillMaxSize(), color = Home.Background) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 2.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+                .padding(top = Home.TopGap, bottom = Home.BrandGap),
+            verticalArrangement = Arrangement.spacedBy(Home.BrandGap),
         ) {
-            when {
-                uiState.isLoading && uiState.nextWorkout == null && uiState.unfinishedWorkout == null -> {
-                    LoadingContent()
-                }
-
-                uiState.unfinishedWorkout != null -> {
-                    val workout = uiState.unfinishedWorkout
-                    WorkoutSummaryCard(
+            Text(
+                text = "Core5x5",
+                style = Home.Brand,
+                color = Home.Primary,
+                modifier = Modifier.padding(horizontal = Home.BrandInset),
+            )
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = Home.Inset)) {
+                val active = uiState.unfinishedWorkout
+                val next = uiState.nextWorkout
+                when {
+                    uiState.isLoading && active == null && next == null -> {
+                        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Home.Action)
+                        }
+                    }
+                    active != null -> WorkoutSummaryCard(
                         eyebrow = "WORKOUT IN PROGRESS",
-                        workout = workout.workout,
-                        exercises = workout.exercises.map { it.toSummary(weightUnit) },
-                        buttonLabel = if (uiState.isWorking) "Resuming…" else "Resume Workout",
+                        workout = active.workout,
+                        exercises = active.exercises.map { ExercisePrescription(it.exercise, it.sets, it.reps, it.weightKg) },
+                        buttonLabel = "Resume Workout",
                         buttonEnabled = uiState.canResume,
-                        errorMessage = uiState.error?.message(),
+                        error = uiState.error,
                         onAction = onResumeWorkout,
+                        weightUnit = weightUnit,
                     )
-                }
-
-                uiState.nextWorkout != null -> {
-                    val workout = uiState.nextWorkout
-                    WorkoutSummaryCard(
+                    next != null -> WorkoutSummaryCard(
                         eyebrow = "NEXT WORKOUT",
-                        workout = workout,
-                        exercises = uiState.nextWorkoutPrescription?.exercises?.map { it.toSummary(weightUnit) }
-                            ?: workout.exercises.map { it.toSummary(weightUnit) },
-                        buttonLabel = if (uiState.isWorking) "Starting…" else "Start Workout",
+                        workout = next,
+                        exercises = uiState.nextWorkoutPrescription?.exercises ?: WorkoutPrescription(next).exercises,
+                        buttonLabel = if (uiState.isWorking && uiState.error == null) "Please wait…" else "Start Workout",
                         buttonEnabled = uiState.canStart,
-                        errorMessage = uiState.error?.message(),
+                        error = uiState.error,
                         onAction = onStartWorkout,
+                        onSwitch = onSwitchWorkout,
+                        weightUnit = weightUnit,
                     )
+                    else -> Column(verticalArrangement = Arrangement.spacedBy(Home.BrandGap)) {
+                        Text(text = "Unable to load your workout.", color = Home.Secondary, style = Home.Prescription)
+                        Core5x5HomeStartButton(label = "Try Again", onClick = onRetryLoad, enabled = !uiState.isLoading)
+                    }
                 }
-
-                else -> LoadError(onRetry = onRetryLoad)
             }
         }
     }
@@ -94,214 +102,87 @@ internal fun TodayScreen(
 private fun WorkoutSummaryCard(
     eyebrow: String,
     workout: Workout,
-    exercises: List<ExerciseSummary>,
+    exercises: List<ExercisePrescription>,
     buttonLabel: String,
     buttonEnabled: Boolean,
-    errorMessage: String?,
+    error: TodayError?,
     onAction: () -> Unit,
+    weightUnit: WeightUnit,
+    onSwitch: (() -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = CardSurface,
+        shape = RoundedCornerShape(Home.CardRadius),
+        color = Home.Card,
+        border = BorderStroke(Home.BorderStroke, Home.Border),
     ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                    Text(
-                        text = eyebrow,
-                        color = MutedText,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp,
-                    )
-                    Text(
-                        text = "Workout ${workout.name}",
-                        color = PrimaryText,
-                        fontSize = 20.sp,
-                        lineHeight = 26.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = Accent,
-                ) {
-                    Box(
-                        modifier = Modifier.size(34.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = workout.name,
-                            color = Background,
-                            fontSize = 15.sp,
-                            lineHeight = 20.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
-                }
-            }
-
-            exercises.forEach { exercise -> ExerciseRow(exercise) }
-
-            if (errorMessage != null) {
-                Text(
-                    text = errorMessage,
-                    color = ErrorText,
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp,
+        Column(modifier = Modifier.padding(Home.CardPadding)) {
+            WorkoutHeading(eyebrow, workout, onSwitch, buttonEnabled)
+            Spacer(Modifier.height(Home.HeadingGap))
+            Divider()
+            exercises.forEachIndexed { index, exercise ->
+                Core5x5HomeExerciseRow(
+                    name = exercise.exercise.displayName(),
+                    prescription = "${exercise.sets} × ${exercise.reps} · ${formatWeight(exercise.weightKg, weightUnit)}",
                 )
+                if (index != exercises.lastIndex) Divider()
             }
+            Spacer(Modifier.height(Home.ButtonGap))
+            if (error != null) {
+                Text(text = error.message(), color = Core5x5Colors.Destructive, style = Home.Eyebrow)
+                Spacer(Modifier.height(Home.ButtonGap))
+            }
+            Core5x5HomeStartButton(label = buttonLabel, onClick = onAction, enabled = buttonEnabled)
+        }
+    }
+}
 
-            Button(
-                onClick = onAction,
-                enabled = buttonEnabled,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Accent,
-                    contentColor = Background,
-                    disabledContainerColor = DisabledButton,
-                    disabledContentColor = MutedText,
-                ),
-            ) {
-                if (!buttonEnabled && buttonLabel.endsWith("…")) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        color = Background,
-                        strokeWidth = 2.dp,
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                }
-                Text(
-                    text = buttonLabel,
-                    fontSize = 15.sp,
-                    lineHeight = 20.sp,
-                    fontWeight = FontWeight.Medium,
-                )
+@Composable
+private fun WorkoutHeading(eyebrow: String, workout: Workout, onSwitch: (() -> Unit)?, enabled: Boolean) {
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(horizontal = Home.TextInset)) {
+        // Keep both controls readable when the window narrows or the user enlarges text.
+        val stacked = maxWidth < 300.dp || LocalDensity.current.fontScale > 1.2f
+        if (stacked) {
+            Column(verticalArrangement = Arrangement.spacedBy(Home.SwitchGap)) {
+                HeadingText(eyebrow, workout)
+                if (onSwitch != null) Core5x5WorkoutSwitch("Switch to ${workout.nextWorkout().name}", onSwitch, enabled)
+            }
+        } else {
+            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(Home.SwitchGap)) {
+                HeadingText(eyebrow, workout, Modifier.weight(1f))
+                if (onSwitch != null) Core5x5WorkoutSwitch("Switch to ${workout.nextWorkout().name}", onSwitch, enabled)
             }
         }
     }
 }
 
 @Composable
-private fun ExerciseRow(exercise: ExerciseSummary) {
-    Surface(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp),
-        shape = RoundedCornerShape(12.dp),
-        color = RowSurface,
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                text = exercise.name,
-                color = PrimaryText,
-                fontSize = 15.sp,
-                lineHeight = 20.sp,
-                fontWeight = FontWeight.Medium,
-            )
-            Text(
-                text = "${exercise.sets} × ${exercise.reps} · ${exercise.weightLabel}",
-                color = SecondaryText,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-            )
-        }
+private fun HeadingText(eyebrow: String, workout: Workout, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Home.TextGap)) {
+        Text(text = eyebrow, style = Home.Eyebrow, color = Home.Secondary)
+        Text(text = "Workout ${workout.name}", style = Home.Title, color = Home.Primary)
     }
 }
 
 @Composable
-private fun LoadingContent() {
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        CircularProgressIndicator(color = Accent)
-    }
-}
-
-@Composable
-private fun LoadError(onRetry: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = "Unable to load your workout.",
-            color = SecondaryText,
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        Button(
-            onClick = onRetry,
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Accent, contentColor = Background),
-        ) {
-            Text(text = "Try Again")
-        }
-    }
-}
-
-private data class ExerciseSummary(
-    val name: String,
-    val sets: Int,
-    val reps: Int,
-    val weightLabel: String,
-)
-
-private fun Exercise.toSummary(unit: WeightUnit) = ExerciseSummary(
-    name = displayName(),
-    sets = sets,
-    reps = reps,
-    weightLabel = formatWeight(startingWeightKg, unit),
-)
-
-private fun UnfinishedWorkoutExercise.toSummary(unit: WeightUnit) = ExerciseSummary(
-    name = exercise.displayName(),
-    sets = sets,
-    reps = reps,
-    weightLabel = formatWeight(weightKg, unit),
-)
-
-private fun ExercisePrescription.toSummary(unit: WeightUnit) = ExerciseSummary(
-    name = exercise.displayName(),
-    sets = sets,
-    reps = reps,
-    weightLabel = formatWeight(weightKg, unit),
+private fun Divider() = HorizontalDivider(
+    modifier = Modifier.padding(horizontal = Home.TextInset),
+    thickness = Home.BorderStroke,
+    color = Home.Border,
 )
 
 private fun TodayError.message() = when (this) {
     TodayError.LOAD -> "Unable to refresh your workout. Try again."
     TodayError.START -> "Unable to start your workout. Try again."
+    TodayError.SWITCH -> "Unable to switch workouts. Try again."
 }
 
-@Preview
+@Preview(name = "Today A", widthDp = 390, heightDp = 740)
+@Preview(name = "Today narrow", widthDp = 320, heightDp = 540)
+@Preview(name = "Today large text", widthDp = 320, heightDp = 540, fontScale = 2f)
 @Composable
 private fun TodayScreenPreview() {
     Core5x5Theme {
-        TodayScreen(
-            uiState = TodayUiState(isLoading = false, nextWorkout = Workout.A),
-            onStartWorkout = {},
-            onResumeWorkout = {},
-            onRetryLoad = {},
-        )
+        TodayScreen(TodayUiState(isLoading = false, nextWorkout = Workout.A), onStartWorkout = {}, onResumeWorkout = {}, onRetryLoad = {})
     }
 }
-
-private val Background = Color(0xFF0C1114)
-private val CardSurface = Color(0xFF151B20)
-private val RowSurface = Color(0xFF11171B)
-private val Accent = Color(0xFF67E38B)
-private val PrimaryText = Color(0xFFF5F8F7)
-private val SecondaryText = Color(0xFF9BA7AD)
-private val MutedText = Color(0xFF68747A)
-private val DisabledButton = Color(0xFF31463A)
-private val ErrorText = Color(0xFFFF9C91)

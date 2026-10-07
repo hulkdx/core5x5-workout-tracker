@@ -3,6 +3,7 @@ package com.hulkdx.core5x5.feature.workout.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
+import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,7 @@ internal class TodayViewModel(
     private val _uiState = MutableStateFlow(TodayUiState())
     val uiState: StateFlow<TodayUiState> = _uiState.asStateFlow()
     private var operationInProgress = false
+    private var selectedWorkout: Workout? = null
 
     init {
         loadWorkout()
@@ -24,6 +26,21 @@ internal class TodayViewModel(
     fun loadWorkout() {
         runOperation(TodayError.LOAD, loading = true) {
             showWorkout(repository.getUnfinishedWorkout())
+        }
+    }
+
+    fun switchWorkout() {
+        val state = uiState.value
+        if (!state.canStart || state.unfinishedWorkout != null) return
+        val selected = state.nextWorkout?.nextWorkout() ?: return
+        runOperation(TodayError.SWITCH) {
+            val prescription = repository.getNextWorkoutPrescription(selected)
+            selectedWorkout = prescription.workout
+            _uiState.value = uiState.value.copy(
+                nextWorkout = prescription.workout,
+                nextWorkoutPrescription = prescription,
+                error = null,
+            )
         }
     }
 
@@ -48,7 +65,8 @@ internal class TodayViewModel(
     }
 
     private suspend fun showWorkout(workout: UnfinishedWorkout?, requested: Boolean = false) {
-        val nextWorkout = if (workout == null) repository.getNextWorkoutPrescription() else null
+        if (workout != null || uiState.value.unfinishedWorkout != null) selectedWorkout = null
+        val nextWorkout = if (workout == null) repository.getNextWorkoutPrescription(selectedWorkout) else null
         _uiState.value = uiState.value.copy(
             nextWorkout = nextWorkout?.workout,
             nextWorkoutPrescription = nextWorkout,

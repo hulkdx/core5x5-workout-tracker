@@ -48,9 +48,9 @@ internal class RoomWorkoutRepository(
     override suspend fun getNextWorkout(): Workout =
         dao.getLastCompletedWorkout()?.nextWorkout() ?: Workout.A
 
-    override suspend fun getNextWorkoutPrescription(): WorkoutPrescription {
+    override suspend fun getNextWorkoutPrescription(workoutOverride: Workout?): WorkoutPrescription {
         val history = dao.getPrescriptionHistory()
-        val nextWorkout = history.lastCompletedWorkout?.nextWorkout() ?: Workout.A
+        val nextWorkout = workoutOverride ?: history.lastCompletedWorkout?.nextWorkout() ?: Workout.A
         val savedWeights = history.exercises.associate { it.exercise to it.weightKg }
         return WorkoutPrescription(
             workout = nextWorkout,

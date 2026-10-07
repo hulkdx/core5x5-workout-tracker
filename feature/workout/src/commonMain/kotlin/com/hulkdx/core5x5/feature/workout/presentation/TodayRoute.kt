@@ -31,5 +31,6 @@ fun TodayRoute(weightUnit: WeightUnit = WeightUnit.KG, onWorkoutRequested: (Long
         onStartWorkout = viewModel::startWorkout,
         onResumeWorkout = viewModel::requestResume,
         onRetryLoad = viewModel::loadWorkout,
+        onSwitchWorkout = viewModel::switchWorkout,
     )
 }

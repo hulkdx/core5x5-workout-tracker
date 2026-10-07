@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
@@ -26,11 +27,12 @@ internal fun ShellScreen(
     modifier: Modifier = Modifier,
     showTitle: Boolean = true,
     onRetryPreferences: () -> Unit = {},
+    backgroundColor: Color = Core5x5Colors.Background,
     content: @Composable () -> Unit,
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
-        color = Core5x5Colors.Background,
+        color = backgroundColor,
         contentColor = Core5x5Colors.PrimaryText,
     ) {
         // AppNavigation owns safe insets and reserves the anchored navigation bar.
