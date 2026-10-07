@@ -4,12 +4,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
@@ -59,7 +61,9 @@ internal fun ActiveWorkoutScreen(
     val restVisible = uiState.restTimer.isVisible
     val gap = if (restVisible) Core5x5Dimensions.RestGap else Core5x5Dimensions.ContentGap
     Surface(modifier = modifier.fillMaxSize(), color = Core5x5Colors.Background) {
-        BoxWithConstraints(modifier = Modifier.fillMaxSize().safeContentPadding()) {
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
+        ) {
             val remainingRows = (workout?.exercises?.size?.minus(1) ?: 0).coerceAtLeast(0)
             // Sum the measured sections, their gaps, and Finish; no device-specific breakpoint.
             val minimumRestHeight = maxOf(Core5x5Dimensions.TopBarHeight, Core5x5Dimensions.TouchTargetMin) +

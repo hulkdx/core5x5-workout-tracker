@@ -54,8 +54,9 @@ internal fun WorkoutDetailScreen(
                 .windowInsetsPadding(windowInsets)
                 .verticalScroll(rememberScrollState())
                 .padding(
-                    horizontal = Core5x5Dimensions.ScreenInset,
+                    start = Core5x5Dimensions.ScreenInset,
                     top = Core5x5Dimensions.ContentGap,
+                    end = Core5x5Dimensions.ScreenInset,
                     bottom = Core5x5Dimensions.ContentPaddingVertical,
                 ),
             verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.ContentGap),

@@ -1,6 +1,7 @@
 package com.hulkdx.core5x5.feature.workout.data
 
 import com.hulkdx.core5x5.feature.workout.domain.CompletedWorkout
+import com.hulkdx.core5x5.feature.workout.domain.Exercise
 import com.hulkdx.core5x5.feature.workout.domain.ExercisePrescription
 import com.hulkdx.core5x5.feature.workout.domain.RestTimer
 import com.hulkdx.core5x5.feature.workout.domain.RestTimerRules

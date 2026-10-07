@@ -40,7 +40,7 @@ fun Core5x5RestTimer(
             if (isExpired) liveRegion = LiveRegionMode.Polite
         },
         shape = RoundedCornerShape(Core5x5Dimensions.RadiusLarge),
-        color = Core5x5Colors.Elevated,
+        color = if (isExpired) Core5x5Colors.ActionTint else Core5x5Colors.Elevated,
     ) {
         Column(modifier = Modifier.padding(Core5x5Dimensions.TimerPadding)) {
             FlowRow(
@@ -52,7 +52,7 @@ fun Core5x5RestTimer(
                     text = label,
                     modifier = Modifier.align(Alignment.CenterVertically).clearAndSetSemantics {},
                     style = Core5x5Typography.Caption,
-                    color = Core5x5Colors.SecondaryText,
+                    color = if (isExpired) Core5x5Colors.Action else Core5x5Colors.SecondaryText,
                 )
                 Text(
                     text = countdown,
