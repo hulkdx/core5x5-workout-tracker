@@ -84,6 +84,83 @@ internal class ActiveWorkoutViewModelTest {
     }
 
     @Test
+    fun firstResumeDoesNotRepeatAnAlreadyFinishedConstructorLoad() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A))
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+
+        viewModel.onResume()
+        dispatcher.scheduler.runCurrent()
+
+        assertEquals(1, repository.readCount)
+        assertSame(repository.savedWorkout, viewModel.uiState.value.unfinishedWorkout)
+    }
+
+    @Test
+    fun firstResumeDoesNotRepeatAnInFlightConstructorLoad() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.B)).apply {
+            readGate = CompletableDeferred()
+        }
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.onResume()
+        dispatcher.scheduler.runCurrent()
+
+        assertEquals(1, repository.readCount)
+        assertTrue(viewModel.uiState.value.isLoading)
+        repository.readGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(1, repository.readCount)
+        assertSame(repository.savedWorkout, viewModel.uiState.value.unfinishedWorkout)
+    }
+
+    @Test
+    fun pauseThenResumeReloadsSavedProgressAndRecoversExpiredRest() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A))
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.onResume()
+        viewModel.onPause()
+        val updated = requireNotNull(repository.savedWorkout).copy(
+            restTimer = RestTimer(2_000),
+            exercises = requireNotNull(repository.savedWorkout).exercises.map { it.copy(weightKg = 32.5) },
+        )
+        repository.savedWorkout = updated
+        repository.now = 3_000
+
+        viewModel.onResume()
+        dispatcher.scheduler.runCurrent()
+
+        assertEquals(2, repository.readCount)
+        assertSame(updated, viewModel.uiState.value.unfinishedWorkout)
+        assertTrue(viewModel.uiState.value.restTimer.isExpired)
+        assertEquals("00:00", viewModel.uiState.value.restTimer.countdown)
+        assertTrue(viewModel.uiState.value.canCompleteSet)
+    }
+
+    @Test
+    fun requestedMissingIdNeverLoadsOrModifiesANewerActiveSession() = runTest(dispatcher) {
+        val later = session(Workout.B, id = 2L)
+        val repository = FakeWorkoutRepository(later)
+        val viewModel = ActiveWorkoutViewModel(
+            repository = repository,
+            preferences = FakeTrainingPreferencesRepository(),
+            workoutId = 1L,
+        ).also { store.put("active-workout", it) }
+        dispatcher.scheduler.runCurrent()
+
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertNull(viewModel.uiState.value.unfinishedWorkout)
+        assertNull(viewModel.uiState.value.requestedCompletedWorkoutId)
+        assertFalse(viewModel.uiState.value.canCompleteSet)
+        viewModel.completeNextSet()
+        viewModel.finishWorkout()
+        assertEquals(emptyList(), repository.completedSetRequests)
+        assertEquals(emptyList(), repository.finalizedIds)
+        assertSame(later, repository.savedWorkout)
+    }
+
+    @Test
     fun finishWaitsForThePersistedCompletedReadBeforeRequestingNavigation() = runTest(dispatcher) {
         val repository = FakeWorkoutRepository(session(Workout.B, id = 42L))
         val viewModel = createViewModel(repository)
@@ -582,6 +659,7 @@ internal class ActiveWorkoutViewModelTest {
 
     private class FakeWorkoutRepository(var savedWorkout: UnfinishedWorkout?) : WorkoutRepository {
         var readCount = 0
+        var readGate: CompletableDeferred<Unit>? = null
         var readError: Exception? = null
         var completed: CompletedWorkout? = null
         var completedReadGate: CompletableDeferred<Unit>? = null
@@ -602,6 +680,7 @@ internal class ActiveWorkoutViewModelTest {
 
         override suspend fun getUnfinishedWorkout(): UnfinishedWorkout? {
             readCount++
+            readGate?.await()
             readError?.let { throw it }
             return savedWorkout
         }

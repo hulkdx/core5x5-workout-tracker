@@ -37,12 +37,10 @@ internal class TodayViewModel(
     }
 
     fun requestResume() {
-        if (!uiState.value.canResume) return
-        runOperation(TodayError.RESUME) {
-            // Reload the saved snapshot rather than treating the displayed state as authoritative.
-            val workout = repository.getUnfinishedWorkout()
-            showWorkout(workout, requested = workout != null)
-        }
+        val state = uiState.value
+        if (!state.canResume) return
+        // Active Workout validates this identity and reloads durable progress after navigation.
+        _uiState.value = state.copy(requestedWorkout = state.unfinishedWorkout, error = null)
     }
 
     fun onWorkoutRequestHandled() {
@@ -65,7 +63,7 @@ internal class TodayViewModel(
         loading: Boolean = false,
         block: suspend () -> Unit,
     ) {
-        if (operationInProgress) return
+        if (operationInProgress || uiState.value.requestedWorkout != null) return
         operationInProgress = true
         _uiState.value = uiState.value.copy(
             isLoading = loading,

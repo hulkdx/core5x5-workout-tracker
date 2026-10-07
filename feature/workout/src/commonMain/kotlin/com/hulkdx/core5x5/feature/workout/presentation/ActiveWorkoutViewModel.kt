@@ -27,6 +27,7 @@ internal class ActiveWorkoutViewModel(
     private var operationInProgress = false
     private var countdownActive = false
     private var countdownJob: Job? = null
+    private var reloadOnResume = false
 
     init {
         loadWorkout()
@@ -67,14 +68,18 @@ internal class ActiveWorkoutViewModel(
         }
     }
 
-    /** Reload durable progress on return; an immediate clock read also recovers elapsed rest. */
+    /** Construction loads once; a later return reloads durable progress and elapsed rest. */
     fun onResume() {
         countdownActive = true
         updateCountdown()
-        loadWorkout()
+        if (reloadOnResume) {
+            reloadOnResume = false
+            loadWorkout()
+        }
     }
 
     fun onPause() {
+        reloadOnResume = true
         countdownActive = false
         countdownJob?.cancel()
         countdownJob = null

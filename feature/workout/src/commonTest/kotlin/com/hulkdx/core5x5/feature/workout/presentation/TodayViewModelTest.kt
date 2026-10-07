@@ -165,33 +165,39 @@ internal class TodayViewModelTest {
     }
 
     @Test
-    fun resumeReloadsSavedSessionAndNeverStartsWorkout() = runTest(dispatcher) {
-        repository.active = session(Workout.B)
+    fun resumeRequestsTheDisplayedIdImmediatelyWithoutReadingOrStarting() = runTest(dispatcher) {
+        val displayed = session(Workout.B).copy(id = Int.MAX_VALUE.toLong() + 42)
+        repository.active = displayed
         val viewModel = createViewModel()
         dispatcher.scheduler.runCurrent()
-        val updated = session(Workout.B).copy(startedAtEpochMillis = 456L)
-        repository.active = updated
+        repository.active = session(Workout.A).copy(id = displayed.id + 1)
         repository.readGate = CompletableDeferred()
         viewModel.requestResume()
+        assertSame(displayed, viewModel.uiState.value.requestedWorkout)
+        assertFalse(viewModel.uiState.value.isWorking)
+        assertFalse(viewModel.uiState.value.canResume)
         viewModel.requestResume()
         dispatcher.scheduler.runCurrent()
-        assertEquals(2, repository.readCount)
-        assertTrue(viewModel.uiState.value.isWorking)
-        repository.readGate?.complete(Unit)
-        dispatcher.scheduler.runCurrent()
-        assertSame(updated, viewModel.uiState.value.requestedWorkout)
-        assertSame(updated, viewModel.uiState.value.unfinishedWorkout)
+        assertEquals(1, repository.readCount)
+        assertSame(displayed, viewModel.uiState.value.requestedWorkout)
+        assertSame(displayed, viewModel.uiState.value.unfinishedWorkout)
         assertEquals(emptyList(), repository.startedWorkouts)
     }
 
     @Test
-    fun resumeWithNoLongerExistingSessionReturnsToReady() = runTest(dispatcher) {
-        repository.active = session(Workout.A)
+    fun staleResumeKeepsTheOriginalIdAndTodayRefreshesOnReturn() = runTest(dispatcher) {
+        val displayed = session(Workout.A)
+        repository.active = displayed
         val viewModel = createViewModel()
         dispatcher.scheduler.runCurrent()
         repository.active = null
         repository.nextWorkout = Workout.B
         viewModel.requestResume()
+        assertSame(displayed, viewModel.uiState.value.requestedWorkout)
+        assertEquals(1, repository.readCount)
+
+        viewModel.onWorkoutRequestHandled()
+        viewModel.loadWorkout()
         dispatcher.scheduler.runCurrent()
         assertTrue(viewModel.uiState.value.canStart)
         assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
@@ -238,7 +244,7 @@ internal class TodayViewModelTest {
     }
 
     @Test
-    fun resumeAfterCompletionCanRetryNextWorkoutSelectionFailure() = runTest(dispatcher) {
+    fun refreshAfterCompletionCanRetryNextWorkoutSelectionFailure() = runTest(dispatcher) {
         repository.active = session(Workout.A)
         val viewModel = createViewModel()
         dispatcher.scheduler.runCurrent()
@@ -247,15 +253,15 @@ internal class TodayViewModelTest {
         repository.nextWorkout = Workout.B
         repository.nextWorkoutError = IllegalStateException("Cannot select next workout")
 
-        viewModel.requestResume()
+        viewModel.loadWorkout()
         dispatcher.scheduler.runCurrent()
-        assertEquals(TodayError.RESUME, viewModel.uiState.value.error)
+        assertEquals(TodayError.LOAD, viewModel.uiState.value.error)
         assertSame(displayed, viewModel.uiState.value.unfinishedWorkout)
         assertNull(viewModel.uiState.value.nextWorkout)
         assertNull(viewModel.uiState.value.requestedWorkout)
 
         repository.nextWorkoutError = null
-        viewModel.requestResume()
+        viewModel.loadWorkout()
         dispatcher.scheduler.runCurrent()
         assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
         assertTrue(viewModel.uiState.value.canStart)
@@ -284,21 +290,21 @@ internal class TodayViewModelTest {
     }
 
     @Test
-    fun resumeFailurePreservesActiveSessionAndAllowsRetry() = runTest(dispatcher) {
+    fun refreshCannotClearAPendingResumeAndDatabaseErrorsDoNotDelayIt() = runTest(dispatcher) {
         repository.active = session(Workout.B)
         val viewModel = createViewModel()
         dispatcher.scheduler.runCurrent()
         repository.readError = IllegalStateException("Cannot load")
         viewModel.requestResume()
+        viewModel.loadWorkout()
+        viewModel.startWorkout()
         dispatcher.scheduler.runCurrent()
-        assertEquals(TodayError.RESUME, viewModel.uiState.value.error)
-        assertTrue(viewModel.uiState.value.canResume)
+        assertNull(viewModel.uiState.value.error)
+        assertFalse(viewModel.uiState.value.canResume)
         assertSame(repository.active, viewModel.uiState.value.unfinishedWorkout)
-        assertNull(viewModel.uiState.value.requestedWorkout)
-        repository.readError = null
-        viewModel.requestResume()
-        dispatcher.scheduler.runCurrent()
         assertSame(repository.active, viewModel.uiState.value.requestedWorkout)
+        assertEquals(1, repository.readCount)
+        assertEquals(emptyList(), repository.startedWorkouts)
     }
 
     @Test

@@ -21,4 +21,4 @@ internal data class TodayUiState(
         get() = !isLoading && !isWorking && unfinishedWorkout != null && requestedWorkout == null
 }
 
-internal enum class TodayError { LOAD, START, RESUME }
+internal enum class TodayError { LOAD, START }

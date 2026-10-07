@@ -281,7 +281,6 @@ private fun ExercisePrescription.toSummary(unit: WeightUnit) = ExerciseSummary(
 private fun TodayError.message() = when (this) {
     TodayError.LOAD -> "Unable to refresh your workout. Try again."
     TodayError.START -> "Unable to start your workout. Try again."
-    TodayError.RESUME -> "Unable to resume your workout. Try again."
 }
 
 @Preview
