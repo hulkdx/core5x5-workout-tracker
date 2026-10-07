@@ -71,6 +71,51 @@ class ScreenScreenshotTest {
     ))
 
     @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutRestB() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.B).copy(
+        restTimer = RestTimerUiState(isVisible = true, countdown = "02:30"),
+    ))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutRestExpired() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
+        restTimer = RestTimerUiState(isVisible = true, isExpired = true),
+    ))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutRestNextExercise() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).let { state ->
+        state.copy(
+            selectedExercisePosition = 1,
+            unfinishedWorkout = state.unfinishedWorkout?.let { session ->
+                session.copy(exercises = session.exercises.mapIndexed { index, exercise ->
+                    if (index == 0) exercise.copy(setStates = exercise.setStates.map { it.copy(isCompleted = true) })
+                    else exercise
+                })
+            },
+            restTimer = RestTimerUiState(isVisible = true, countdown = "03:00"),
+        )
+    })
+
+    @PreviewTest
+    @Preview(name = "Narrow running rest", widthDp = 320, heightDp = 640, fontScale = 2f)
+    @Composable
+    fun ActiveWorkoutRestNarrow() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
+        restTimer = RestTimerUiState(isVisible = true, countdown = "02:30"),
+    ))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutRestSaveError() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
+        hasSetSaveError = true,
+        restTimer = RestTimerUiState(isVisible = true, countdown = "02:30"),
+    ))
+
+    @PreviewTest
     @Preview(name = "Narrow large text", widthDp = 320, heightDp = 640, fontScale = 2f)
     @Composable
     fun ActiveWorkoutNarrow() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(

@@ -34,6 +34,7 @@ import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens as Home
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
+import com.hulkdx.core5x5.core.ui.theme.Core5x5RestTokens as Rest
 
 enum class Core5x5SetState { Default, Active, Completed, Disabled }
 
@@ -51,6 +52,7 @@ fun Core5x5SetControls(
     modifier: Modifier = Modifier,
     refined: Boolean = false,
     enabled: Boolean = true,
+    resting: Boolean = false,
 ) {
     FlowRow(
         modifier = modifier.fillMaxWidth(),
@@ -59,7 +61,7 @@ fun Core5x5SetControls(
     ) {
         sets.forEach { set ->
             if (refined) {
-                RefinedSetControl(set, enabled, onComplete)
+                RefinedSetControl(set, enabled, resting, onComplete)
                 return@forEach
             }
             val active = set.state == Core5x5SetState.Active
@@ -110,13 +112,17 @@ fun Core5x5SetControls(
     }
 }
 
-/** The visible circle is smaller than its non-overlapping 48dp interaction target. */
+/** Active's smaller circles and Rest's larger circles share non-overlapping minimum 48dp targets. */
 @Composable
-private fun RefinedSetControl(set: Core5x5SetControl, enabled: Boolean, onComplete: (Int) -> Unit) {
+private fun RefinedSetControl(set: Core5x5SetControl, enabled: Boolean, resting: Boolean, onComplete: (Int) -> Unit) {
     val completed = set.state == Core5x5SetState.Completed
     val current = set.state == Core5x5SetState.Active
     val disabled = set.state == Core5x5SetState.Disabled || !enabled
-    val visibleSize = maxOf(Active.SetDiameter, with(LocalDensity.current) { Active.SetLabel.lineHeight.toDp() })
+    val labelStyle = if (resting) Rest.SetLabel else Active.SetLabel
+    val visibleSize = maxOf(
+        if (resting) Rest.SetDiameter else Active.SetDiameter,
+        with(LocalDensity.current) { labelStyle.lineHeight.toDp() },
+    )
     val targetSize = maxOf(Core5x5Dimensions.TouchTargetMin, visibleSize)
     Box(
         modifier = Modifier.size(targetSize)
@@ -155,7 +161,7 @@ private fun RefinedSetControl(set: Core5x5SetControl, enabled: Boolean, onComple
                 ) else Text(
                     text = (set.position + 1).toString(),
                     modifier = Modifier.clearAndSetSemantics {},
-                    style = Active.SetLabel,
+                    style = labelStyle,
                     color = when {
                         completed -> Home.Background
                         current -> Home.Primary

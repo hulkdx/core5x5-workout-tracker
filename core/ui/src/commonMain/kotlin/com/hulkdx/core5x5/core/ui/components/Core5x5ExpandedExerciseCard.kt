@@ -17,12 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import com.hulkdx.core5x5.core.ui.theme.Core5x5ActiveTokens as Active
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens as Home
+import com.hulkdx.core5x5.core.ui.theme.Core5x5RestTokens as Rest
 
 @Composable
 fun Core5x5ExpandedExerciseCard(
     name: String,
     prescription: String,
     modifier: Modifier = Modifier,
+    resting: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
@@ -31,15 +33,20 @@ fun Core5x5ExpandedExerciseCard(
         color = Home.Card,
         border = BorderStroke(Home.BorderStroke, Home.Border),
     ) {
-        Column(modifier = Modifier.padding(horizontal = Active.CardPaddingHorizontal, vertical = Active.CardPaddingVertical)) {
+        val exerciseStyle = if (resting) Rest.Exercise else Active.Exercise
+        val metadataStyle = if (resting) Rest.Metadata else Active.Metadata
+        Column(modifier = Modifier.padding(
+            horizontal = Active.CardPaddingHorizontal,
+            vertical = if (resting) Rest.CardPaddingVertical else Active.CardPaddingVertical,
+        )) {
             val headerHeight = with(LocalDensity.current) {
-                Active.Exercise.lineHeight.toDp() + Active.Metadata.lineHeight.toDp()
+                exerciseStyle.lineHeight.toDp() + metadataStyle.lineHeight.toDp()
             } + Home.TextGap
             Column(modifier = Modifier.heightIn(min = headerHeight), verticalArrangement = Arrangement.spacedBy(Home.TextGap)) {
-                Text(text = name, style = Active.Exercise, color = Home.Primary)
-                Text(text = prescription, style = Active.Metadata, color = Home.Secondary)
+                Text(text = name, style = exerciseStyle, color = Home.Primary)
+                Text(text = prescription, style = metadataStyle, color = Home.Secondary)
             }
-            Spacer(Modifier.height(Active.SetGap))
+            Spacer(Modifier.height(if (resting) Rest.SetGap else Active.SetGap))
             content()
         }
     }

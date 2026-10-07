@@ -29,6 +29,7 @@ import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.preferences.domain.formatWeight
 import com.hulkdx.core5x5.core.ui.components.Core5x5ExpandedExerciseCard
 import com.hulkdx.core5x5.core.ui.components.Core5x5HomeStartButton
+import com.hulkdx.core5x5.core.ui.components.Core5x5RestFinishButton
 import com.hulkdx.core5x5.core.ui.components.Core5x5SetControl
 import com.hulkdx.core5x5.core.ui.components.Core5x5SetControls
 import com.hulkdx.core5x5.core.ui.components.Core5x5SetState
@@ -37,6 +38,7 @@ import com.hulkdx.core5x5.core.ui.theme.Core5x5ActiveTokens as Active
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens as Home
+import com.hulkdx.core5x5.core.ui.theme.Core5x5RestTokens as Rest
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
 import com.hulkdx.core5x5.feature.workout.domain.RestTimer
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
@@ -55,15 +57,20 @@ internal fun ActiveWorkoutScreen(
     windowInsets: WindowInsets = WindowInsets.safeDrawing,
 ) {
     val workout = uiState.unfinishedWorkout
+    val resting = uiState.restTimer.isVisible
     Surface(modifier = modifier.fillMaxSize(), color = Home.Background) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize().windowInsetsPadding(windowInsets)) {
-            val cardHeight = Active.CardPaddingVertical * 2 + Active.SetGap + Home.TextGap +
-                Active.SetDiameter.coerceAtLeast(Core5x5Dimensions.TouchTargetMin) +
-                with(LocalDensity.current) { Active.Exercise.lineHeight.toDp() + Active.Metadata.lineHeight.toDp() }
+            val cardHeight = (if (resting) Rest.CardPaddingVertical else Active.CardPaddingVertical) * 2 +
+                (if (resting) Rest.SetGap else Active.SetGap) + Home.TextGap +
+                (if (resting) Rest.SetDiameter else Active.SetDiameter).coerceAtLeast(Core5x5Dimensions.TouchTargetMin) +
+                with(LocalDensity.current) {
+                    if (resting) Rest.Exercise.lineHeight.toDp() + Rest.Metadata.lineHeight.toDp()
+                    else Active.Exercise.lineHeight.toDp() + Active.Metadata.lineHeight.toDp()
+                }
             val count = workout?.exercises?.size ?: 0
             val inlineHeight = Active.TopGap + Active.TopBarHeight + cardHeight * count.toFloat() +
-                Home.BrandGap * (count + 3).toFloat() + Home.ButtonHeight + Core5x5Dimensions.TimerHeight
-            val pinTimer = uiState.restTimer.isVisible && (
+                Home.BrandGap * (count + 3).toFloat() + Home.ButtonHeight + Rest.TimerHeight
+            val pinTimer = resting && (
                 maxHeight < inlineHeight || maxWidth < Core5x5Dimensions.ReferenceWidth ||
                     LocalDensity.current.fontScale > 1f || uiState.hasLoadError ||
                     uiState.hasSetSaveError || uiState.hasSaveError
@@ -92,6 +99,7 @@ internal fun ActiveWorkoutScreen(
                                     Core5x5ExpandedExerciseCard(
                                         name = exercise.exercise.displayName(),
                                         prescription = exercise.prescription(weightUnit),
+                                        resting = resting,
                                     ) {
                                         val nextSet = exercise.setStates.firstOrNull { !it.isCompleted }
                                         Core5x5SetControls(
@@ -109,14 +117,23 @@ internal fun ActiveWorkoutScreen(
                                             onComplete = { setPosition -> onCompleteSet(exercisePosition, setPosition) },
                                             refined = true,
                                             enabled = uiState.canCompleteSet,
+                                            resting = resting,
                                         )
+                                    }
+                                    // Selection is already restored/advanced by the ViewModel.
+                                    if (resting && !pinTimer && exercisePosition == uiState.selectedExercisePosition) {
+                                        RestTimerScreen(uiState.restTimer)
                                     }
                                 }
                                 if (uiState.hasSetSaveError) WorkoutError("Unable to save the set. Tap it again to retry.")
-                                if (uiState.restTimer.isVisible && !pinTimer) RestTimerScreen(uiState.restTimer, neutral = true)
                                 if (uiState.hasSaveError) WorkoutError("Unable to confirm the workout was saved. Try finishing again.")
-                                Core5x5HomeStartButton(
-                                    label = if (uiState.isSaving) "Saving…" else "Finish Workout",
+                                val finishLabel = if (uiState.isSaving) "Saving…" else "Finish Workout"
+                                if (resting) Core5x5RestFinishButton(
+                                    label = finishLabel,
+                                    onClick = onFinishWorkout,
+                                    enabled = uiState.canFinish,
+                                ) else Core5x5HomeStartButton(
+                                    label = finishLabel,
                                     onClick = onFinishWorkout,
                                     enabled = uiState.canFinish,
                                 )
@@ -134,7 +151,6 @@ internal fun ActiveWorkoutScreen(
                     RestTimerScreen(
                         uiState = uiState.restTimer,
                         compact = true,
-                        neutral = true,
                         modifier = Modifier.padding(start = Active.Inset, end = Active.Inset,
                             top = Home.BrandGap, bottom = Home.BrandGap),
                     )

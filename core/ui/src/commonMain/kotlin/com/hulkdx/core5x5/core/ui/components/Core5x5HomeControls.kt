@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens as Home
+import com.hulkdx.core5x5.core.ui.theme.Core5x5RestTokens as Rest
 
 @Composable
 fun Core5x5WorkoutSwitch(label: String, onClick: () -> Unit, enabled: Boolean, modifier: Modifier = Modifier) {
@@ -88,6 +89,31 @@ fun Core5x5HomeStartButton(label: String, onClick: () -> Unit, enabled: Boolean)
         ),
     ) {
         Text(text = label, style = Home.Button, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+    }
+}
+
+@Composable
+fun Core5x5RestFinishButton(label: String, onClick: () -> Unit, enabled: Boolean) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.fillMaxWidth().heightIn(min = Home.ButtonHeight),
+        shape = RoundedCornerShape(Home.ControlRadius),
+        border = BorderStroke(Home.BorderStroke, Home.Border),
+        contentPadding = PaddingValues(horizontal = Home.SwitchPadding),
+        elevation = null,
+        interactionSource = interactionSource,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (pressed) Core5x5Colors.Pressed else Home.Card,
+            contentColor = Home.Primary,
+            disabledContainerColor = Core5x5Colors.Disabled,
+            disabledContentColor = Core5x5Colors.DisabledText,
+        ),
+    ) {
+        Text(text = label, style = Rest.FinishLabel,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
 }
 
