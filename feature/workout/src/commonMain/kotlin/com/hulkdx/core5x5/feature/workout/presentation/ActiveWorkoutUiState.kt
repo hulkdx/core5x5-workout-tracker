@@ -12,6 +12,8 @@ internal data class ActiveWorkoutUiState(
     val hasSetSaveError: Boolean = false,
     val selectedExercisePosition: Int = 0,
     val restTimer: RestTimerUiState = RestTimerUiState(),
+    val exerciseEdit: ExerciseEditUiState? = null,
+    val hasEditLoadError: Boolean = false,
     /** Navigation is requested only after the identified session is read back as completed. */
     val requestedCompletedWorkoutId: Long? = null,
 ) {
@@ -20,5 +22,5 @@ internal data class ActiveWorkoutUiState(
 
     val canCompleteSet: Boolean
         get() = !isLoading && !hasLoadError && !isSaving && !isCompletingSet &&
-            unfinishedWorkout != null && requestedCompletedWorkoutId == null
+            unfinishedWorkout != null && requestedCompletedWorkoutId == null && exerciseEdit == null
 }

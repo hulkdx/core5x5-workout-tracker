@@ -28,6 +28,10 @@ import com.hulkdx.core5x5.feature.settings.presentation.SettingsUiState
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.presentation.ActiveWorkoutScreen
 import com.hulkdx.core5x5.feature.workout.presentation.ActiveWorkoutUiState
+import com.hulkdx.core5x5.feature.workout.presentation.ExerciseEditScreen
+import com.hulkdx.core5x5.feature.workout.presentation.ExerciseEditUiState
+import com.hulkdx.core5x5.feature.workout.presentation.CustomRestContent
+import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.feature.workout.presentation.RestTimerScreen
 import com.hulkdx.core5x5.feature.workout.presentation.RestTimerUiState
 import com.hulkdx.core5x5.feature.workout.presentation.TodayScreen
@@ -123,6 +127,25 @@ class ScreenScreenshotTest {
     ))
 
     @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutEdit() = ExerciseEditSnapshot()
+
+    @PreviewTest
+    @Preview(name = "Narrow edit, large text", widthDp = 320, heightDp = 640, fontScale = 2f)
+    @Composable
+    fun ActiveWorkoutEditNarrow() = ExerciseEditSnapshot()
+
+    @PreviewTest
+    @Preview(name = "Custom rest sheet", widthDp = 390, heightDp = 410)
+    @Composable
+    fun ActiveWorkoutEditRest() = Core5x5Theme {
+        androidx.compose.material3.Surface(color = com.hulkdx.core5x5.core.ui.theme.Core5x5EditTokens.Sheet) {
+            CustomRestContent(150, {}, {}, {})
+        }
+    }
+
+    @PreviewTest
     @ReferenceScreen
     @Composable
     fun RestTimerScaffold() = ScreenFrame {
@@ -187,6 +210,7 @@ private fun ActiveWorkoutSnapshot(state: ActiveWorkoutUiState) = Core5x5Theme {
         onFinishWorkout = {},
         onRetryLoad = {},
         onCompleteSet = { _, _ -> },
+        onEditExercise = {},
         windowInsets = WindowInsets(top = Core5x5HomeTokens.SystemTopReserve, bottom = Core5x5HomeTokens.SystemBottomReserve),
     )
 }
@@ -255,4 +279,14 @@ private fun ScreenFrame(
             }
         }
     }
+}
+
+@Composable
+private fun ExerciseEditSnapshot() = Core5x5Theme {
+    ExerciseEditScreen(
+        state = ExerciseEditUiState(0, "Squat", "Squat", 80.0, WeightUnit.KG, 5, 1, 5, null, 180_000),
+        onDismiss = {}, onSave = {}, onNameChanged = {}, onWeightChanged = {}, onSetsChanged = {},
+        onRepsChanged = {}, onRestSelected = {}, onOpenCustomRest = {}, onCustomRestChanged = {}, onApplyCustomRest = {},
+        windowInsets = WindowInsets(top = Core5x5HomeTokens.SystemTopReserve, bottom = Core5x5HomeTokens.SystemBottomReserve),
+    )
 }

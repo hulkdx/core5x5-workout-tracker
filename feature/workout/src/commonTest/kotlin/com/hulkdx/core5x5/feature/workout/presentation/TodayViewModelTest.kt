@@ -545,6 +545,11 @@ internal class TodayViewModelTest {
         override suspend fun finalizeWorkout(workoutId: Long): Boolean =
             error("Today does not finalize workouts")
 
+        override suspend fun editExercise(
+            workoutId: Long, exercisePosition: Int,
+            edit: com.hulkdx.core5x5.feature.workout.domain.ExerciseEdit,
+        ): UnfinishedWorkout? = error("Editing is not used by this fixture")
+
         override suspend fun completeSetAndStartRest(
             workoutId: Long,
             exercisePosition: Int,

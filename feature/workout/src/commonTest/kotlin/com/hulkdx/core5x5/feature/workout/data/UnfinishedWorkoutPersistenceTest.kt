@@ -6,6 +6,7 @@ import com.hulkdx.core5x5.feature.workout.domain.RestTimer
 import com.hulkdx.core5x5.feature.workout.domain.RestTimerRules
 import com.hulkdx.core5x5.feature.workout.domain.RestTimerState
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
+import com.hulkdx.core5x5.feature.workout.domain.ExerciseEdit
 import com.hulkdx.core5x5.feature.workout.domain.CompletedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
@@ -1084,6 +1085,83 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
             }
         } finally {
             deleteDatabase(name)
+        }
+    }
+
+    @Test
+    fun editedExerciseSurvivesReopenAndHistoryRetainsSessionDetailsWhileNextProgramStaysCanonical() = runTest {
+        val name = "exercise-edit-reopen.db"
+        deleteDatabase(name)
+        try {
+            val database = openDatabase(name)
+            val saved = try {
+                val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+                val started = repository.startWorkout(Workout.A)
+                val logged = requireNotNull(repository.completeSetAndStartRest(started.id, 0, 0, 180_000))
+                val edit = ExerciseEdit("Front Squat", 82.5, 6, 4, 150_000)
+                val edited = requireNotNull(repository.editExercise(started.id, 0, edit))
+                assertEquals(logged.restTimer, edited.restTimer)
+                assertTrue(edited.exercises[0].setStates[0].isCompleted)
+                assertEquals(6, edited.exercises[0].setStates.size)
+                assertEquals(logged.exercises.drop(1), edited.exercises.drop(1))
+                edited
+            } finally { database.close() }
+            val reopened = openDatabase(name)
+            try {
+                val repository = RoomWorkoutRepository(reopened.unfinishedWorkoutDao()) { 2_000L }
+                assertEquals(saved, repository.getUnfinishedWorkout())
+                assertTrue(repository.finalizeWorkout(saved.id))
+                val record = requireNotNull(repository.getCompletedWorkoutById(saved.id))
+                assertEquals("Front Squat", record.exercises[0].customName)
+                assertEquals(6, record.exercises[0].sets)
+                assertEquals(4, record.exercises[0].reps)
+                val next = repository.startWorkout(Workout.B).exercises[0]
+                assertEquals(Exercise.SQUAT, next.exercise)
+                assertNull(next.customName)
+                assertNull(next.restDurationMillis)
+                assertEquals(5, next.sets)
+                assertEquals(5, next.reps)
+                assertEquals(82.5, next.weightKg)
+                assertNull(repository.editExercise(saved.id, 0, ExerciseEdit("Stale", 10.0, 1, 1, 0)))
+            } finally { reopened.close() }
+        } finally { deleteDatabase(name) }
+    }
+
+    @Test
+    fun editCannotRemoveCompletedTrailingSetsAndOffAppliesToNextNewCompletion() = runTest {
+        withDatabase("exercise-edit-sets.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+            val session = repository.startWorkout(Workout.A)
+            val logged = requireNotNull(repository.completeSetAndStartRest(session.id, 0, 3, 180_000))
+            assertNull(repository.editExercise(session.id, 0, ExerciseEdit("Squat", 20.0, 3, 5, 0)))
+            assertEquals(logged, repository.getUnfinishedWorkout())
+            val edited = requireNotNull(repository.editExercise(session.id, 0, ExerciseEdit("Squat", 20.0, 4, 5, 0)))
+            assertEquals(4, edited.exercises[0].setStates.size)
+            assertEquals(logged.restTimer, edited.restTimer)
+            assertEquals(edited, repository.completeSetAndStartRest(session.id, 0, 3, 180_000))
+            val off = requireNotNull(repository.completeSetAndStartRest(session.id, 0, 0, 180_000))
+            assertNull(off.restTimer)
+            val custom = requireNotNull(repository.editExercise(session.id, 0, ExerciseEdit("Squat", 20.0, 4, 5, 150_000)))
+            assertNull(custom.restTimer)
+            val resting = requireNotNull(repository.completeSetAndStartRest(session.id, 0, 1, 180_000))
+            assertEquals(RestTimer(151_000), resting.restTimer)
+            assertNull(repository.editExercise(session.id, -1, ExerciseEdit("Invalid", 20.0, 5, 5, null)))
+        }
+    }
+
+    @Test
+    fun failedSetResizeRollsBackExerciseDetailsAndPreservesTimer() = runTest {
+        withDatabase("exercise-edit-rollback.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+            val session = repository.startWorkout(Workout.A)
+            val original = requireNotNull(repository.completeSetAndStartRest(session.id, 0, 0, 180_000))
+            database.useWriterConnection { connection ->
+                connection.executeSQL("CREATE TRIGGER reject_extra_set BEFORE INSERT ON unfinished_workout_set WHEN NEW.position = 5 BEGIN SELECT RAISE(ABORT, 'Test failure'); END")
+            }
+            assertFails { repository.editExercise(session.id, 0, ExerciseEdit("Changed", 80.0, 6, 4, 0)) }
+            assertEquals(original, repository.getUnfinishedWorkout())
+            database.useWriterConnection { it.executeSQL("DROP TRIGGER reject_extra_set") }
+            assertEquals(6, repository.editExercise(session.id, 0, ExerciseEdit("Changed", 80.0, 6, 4, 0))?.exercises?.get(0)?.sets)
         }
     }
 

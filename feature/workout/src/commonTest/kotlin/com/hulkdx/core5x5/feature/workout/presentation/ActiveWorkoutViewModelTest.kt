@@ -657,7 +657,139 @@ internal class ActiveWorkoutViewModelTest {
         }
     }
 
+    @Test
+    fun editCancelAndCustomRestCancelNeverPersistDrafts() = runTest(dispatcher) {
+        val original = session(Workout.A)
+        val repository = FakeWorkoutRepository(original)
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.openExerciseEdit(0, WeightUnit.LB)
+        dispatcher.scheduler.runCurrent()
+        viewModel.editName("Front Squat")
+        viewModel.adjustWeight(1)
+        viewModel.openCustomRest()
+        viewModel.editCustomRest(150)
+        viewModel.dismissExerciseEdit()
+        assertEquals(180_000L, viewModel.uiState.value.exerciseEdit?.effectiveRestDurationMillis)
+        viewModel.dismissExerciseEdit()
+        assertNull(viewModel.uiState.value.exerciseEdit)
+        assertEquals(original, repository.savedWorkout)
+        assertEquals(0, repository.editCount)
+    }
+
+    @Test
+    fun editSaveIsAtomicGuardsOtherActionsAndPreservesLbPrecisionAndRunningRest() = runTest(dispatcher) {
+        val original = session(Workout.A).copy(restTimer = RestTimer(123_000))
+        val repository = FakeWorkoutRepository(original)
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.openExerciseEdit(0, WeightUnit.LB)
+        dispatcher.scheduler.runCurrent()
+        viewModel.editName("  Front Squat  ")
+        viewModel.adjustSets(1)
+        viewModel.adjustReps(-1)
+        viewModel.openCustomRest()
+        viewModel.editCustomRest(150)
+        viewModel.applyCustomRest()
+        repository.editGate = CompletableDeferred()
+        viewModel.saveExerciseEdit()
+        viewModel.saveExerciseEdit()
+        viewModel.completeSet(0, 0)
+        viewModel.finishWorkout()
+        viewModel.dismissExerciseEdit()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.exerciseEdit?.isSaving == true)
+        assertEquals(original, viewModel.uiState.value.unfinishedWorkout)
+        assertTrue(repository.completedSetRequests.isEmpty())
+        assertTrue(repository.finalizedIds.isEmpty())
+        repository.editGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        val saved = requireNotNull(viewModel.uiState.value.unfinishedWorkout)
+        assertNull(viewModel.uiState.value.exerciseEdit)
+        assertEquals(1, repository.editCount)
+        assertEquals("Front Squat", saved.exercises[0].customName)
+        assertEquals(20.0, saved.exercises[0].weightKg)
+        assertEquals(6, saved.exercises[0].sets)
+        assertEquals(4, saved.exercises[0].reps)
+        assertEquals(150_000L, saved.exercises[0].restDurationMillis)
+        assertEquals(original.restTimer, saved.restTimer)
+    }
+
+    @Test
+    fun editFailurePreservesDraftAndCanRetryAndLoggedSetsCannotBeRemoved() = runTest(dispatcher) {
+        val original = session(Workout.A).let { workout -> workout.copy(exercises = workout.exercises.mapIndexed { index, exercise ->
+            if (index != 0) exercise else exercise.copy(setStates = exercise.setStates.map { it.copy(isCompleted = it.position == 3) })
+        }) }
+        val repository = FakeWorkoutRepository(original)
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.openExerciseEdit(0, WeightUnit.KG)
+        dispatcher.scheduler.runCurrent()
+        repeat(10) { viewModel.adjustSets(-1) }
+        assertEquals(4, viewModel.uiState.value.exerciseEdit?.sets)
+        viewModel.editName("Tempo Squat")
+        repository.editError = IllegalStateException("Write failed")
+        viewModel.saveExerciseEdit()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.exerciseEdit?.hasSaveError == true)
+        assertEquals("Tempo Squat", viewModel.uiState.value.exerciseEdit?.name)
+        assertEquals(original, viewModel.uiState.value.unfinishedWorkout)
+        repository.editError = null
+        viewModel.saveExerciseEdit()
+        dispatcher.scheduler.runCurrent()
+        assertNull(viewModel.uiState.value.exerciseEdit)
+        assertTrue(repository.savedWorkout!!.exercises[0].setStates[3].isCompleted)
+    }
+
+    @Test
+    fun offAndCustomRestOverridesBypassPreferenceReadAndApplyOnlyToNextSet() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A))
+        val preferences = FakeTrainingPreferencesRepository()
+        val viewModel = createViewModel(repository, preferences = preferences)
+        dispatcher.scheduler.runCurrent()
+        viewModel.openExerciseEdit(0, WeightUnit.KG)
+        dispatcher.scheduler.runCurrent()
+        viewModel.selectRest(0)
+        viewModel.saveExerciseEdit()
+        dispatcher.scheduler.runCurrent()
+        preferences.readError = IllegalStateException("Unavailable")
+        viewModel.completeSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(repository.savedWorkout!!.exercises[0].setStates[0].isCompleted)
+        assertNull(repository.savedWorkout!!.restTimer)
+        viewModel.openExerciseEdit(0, WeightUnit.KG)
+        dispatcher.scheduler.runCurrent()
+        viewModel.openCustomRest()
+        viewModel.editCustomRest(150)
+        viewModel.applyCustomRest()
+        viewModel.saveExerciseEdit()
+        dispatcher.scheduler.runCurrent()
+        viewModel.completeSet(0, 1)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(RestTimer(repository.now + 150_000), repository.savedWorkout!!.restTimer)
+    }
+
+    @Test
+    fun blankNameCannotSaveAndPauseResumePreservesDraft() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A))
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.openExerciseEdit(0, WeightUnit.KG)
+        dispatcher.scheduler.runCurrent()
+        viewModel.editName(" ")
+        viewModel.saveExerciseEdit()
+        assertEquals(0, repository.editCount)
+        viewModel.editName("Paused Squat")
+        viewModel.onPause()
+        viewModel.onResume()
+        dispatcher.scheduler.runCurrent()
+        assertEquals("Paused Squat", viewModel.uiState.value.exerciseEdit?.name)
+    }
+
     private class FakeWorkoutRepository(var savedWorkout: UnfinishedWorkout?) : WorkoutRepository {
+        var editCount = 0
+        var editGate: CompletableDeferred<Unit>? = null
+        var editError: Exception? = null
         var readCount = 0
         var readGate: CompletableDeferred<Unit>? = null
         var readError: Exception? = null
@@ -724,6 +856,26 @@ internal class ActiveWorkoutViewModelTest {
             isCompleted: Boolean,
         ): Boolean = error("Active Workout only loads an existing session")
 
+        override suspend fun editExercise(
+            workoutId: Long, exercisePosition: Int,
+            edit: com.hulkdx.core5x5.feature.workout.domain.ExerciseEdit,
+        ): UnfinishedWorkout? {
+            editCount++
+            editGate?.await()
+            editError?.let { throw it }
+            val active = savedWorkout?.takeIf { it.id == workoutId } ?: return null
+            val exercise = active.exercises.getOrNull(exercisePosition) ?: return null
+            if (exercise.setStates.any { it.isCompleted && it.position >= edit.sets }) return null
+            val saved = active.copy(exercises = active.exercises.mapIndexed { index, item ->
+                if (index != exercisePosition) item else item.copy(customName = edit.name.trim(), weightKg = edit.weightKg,
+                    sets = edit.sets, reps = edit.reps, restDurationMillis = edit.restDurationMillis,
+                    setStates = List(edit.sets) { position -> item.setStates.getOrNull(position)
+                        ?: com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutSet(position) })
+            })
+            savedWorkout = saved
+            return saved
+        }
+
         override suspend fun completeSetAndStartRest(
             workoutId: Long,
             exercisePosition: Int,
@@ -747,7 +899,8 @@ internal class ActiveWorkoutViewModelTest {
                         setStates = exercise.setStates.map { if (it.position == setPosition) it.copy(isCompleted = true) else it },
                     )
                 },
-                restTimer = RestTimerRules { now }.start(restDurationMillis),
+                restTimer = (active.exercises[exercisePosition].restDurationMillis ?: restDurationMillis)
+                    .takeIf { it > 0 }?.let { RestTimerRules { now }.start(it) },
             )
             savedWorkout = saved
             afterSetSaveError?.let { throw it }

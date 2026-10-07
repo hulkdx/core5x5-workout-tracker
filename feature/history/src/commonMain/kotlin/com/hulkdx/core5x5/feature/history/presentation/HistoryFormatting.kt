@@ -31,7 +31,7 @@ internal fun CompletedWorkoutRecord.durationLabel(): String {
 
 internal fun CompletedWorkoutRecord.exerciseSummary(unit: WeightUnit): String =
     exercises.joinToString(separator = " · ") { exercise ->
-        "${exercise.exercise.displayName()} ${formatWeight(exercise.weightKg, unit)}"
+        "${(exercise.customName ?: exercise.exercise.displayName())} ${formatWeight(exercise.weightKg, unit)}"
     }
 
 internal fun CompletedWorkoutRecord.durationClockLabel(): String {

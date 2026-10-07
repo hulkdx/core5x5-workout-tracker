@@ -260,6 +260,11 @@ internal class WorkoutCompleteViewModelTest {
         override suspend fun setSetCompleted(exercisePosition: Int, setPosition: Int, isCompleted: Boolean): Boolean =
             error("Summary cannot edit logged sets")
 
+        override suspend fun editExercise(
+            workoutId: Long, exercisePosition: Int,
+            edit: com.hulkdx.core5x5.feature.workout.domain.ExerciseEdit,
+        ): UnfinishedWorkout? = error("Editing is not used by this fixture")
+
         override suspend fun completeSetAndStartRest(
             workoutId: Long,
             exercisePosition: Int,

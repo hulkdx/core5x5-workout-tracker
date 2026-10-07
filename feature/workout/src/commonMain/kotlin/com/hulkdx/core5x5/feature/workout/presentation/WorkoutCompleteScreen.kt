@@ -106,7 +106,7 @@ internal fun WorkoutCompleteScreen(
                     ) {
                         next.exercises.forEach { exercise ->
                             Core5x5ExerciseRow(
-                                name = exercise.exercise.displayName(),
+                                name = exercise.displayName(),
                                 prescription = "${exercise.sets} × ${exercise.reps} · ${formatWeight(exercise.weightKg, weightUnit)}",
                             )
                         }

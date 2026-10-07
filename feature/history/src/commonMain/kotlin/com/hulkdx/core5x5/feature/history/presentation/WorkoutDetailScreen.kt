@@ -120,7 +120,7 @@ private fun CompletedWorkoutContent(
         ) {
             workout.exercises.forEach { exercise ->
                 Core5x5ExerciseRow(
-                    name = exercise.exercise.displayName(),
+                    name = (exercise.customName ?: exercise.exercise.displayName()),
                     prescription = "${exercise.sets} × ${exercise.reps} · " +
                         "${formatWeight(exercise.weightKg, weightUnit)} · " +
                         "${exercise.completedSets} / ${exercise.sets} sets complete",

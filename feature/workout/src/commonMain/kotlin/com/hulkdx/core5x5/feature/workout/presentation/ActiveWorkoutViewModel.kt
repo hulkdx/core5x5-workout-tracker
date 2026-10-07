@@ -3,6 +3,7 @@ package com.hulkdx.core5x5.feature.workout.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
+import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.feature.workout.domain.RestTimerRules
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutRepository
@@ -56,6 +57,7 @@ internal class ActiveWorkoutViewModel(
                         identified?.nextExercisePosition() ?: 0
                     },
                     requestedCompletedWorkoutId = completed?.id,
+                    exerciseEdit = previous.exerciseEdit?.takeIf { identified?.id == previous.unfinishedWorkout?.id },
                 )
                 updateCountdown()
             } catch (cancelled: CancellationException) {
@@ -110,7 +112,8 @@ internal class ActiveWorkoutViewModel(
         _uiState.value = state.copy(isCompletingSet = true, hasSetSaveError = false)
         viewModelScope.launch {
             try {
-                val restDurationMillis = preferences.getPreferences().restDurationMillis
+                val restOverride = workout.exercises[exercisePosition].restDurationMillis
+                val restDurationMillis = restOverride?.coerceAtLeast(1L) ?: preferences.getPreferences().restDurationMillis
                 val saved = repository.completeSetAndStartRest(
                     workout.id, exercisePosition, setPosition, restDurationMillis,
                 )
@@ -135,6 +138,95 @@ internal class ActiveWorkoutViewModel(
             } finally {
                 operationInProgress = false
                 _uiState.value = uiState.value.copy(isCompletingSet = false)
+            }
+        }
+    }
+
+    fun openExerciseEdit(position: Int, unit: WeightUnit) {
+        val state = uiState.value
+        if (operationInProgress || !state.canCompleteSet) return
+        val exercise = state.unfinishedWorkout?.exercises?.getOrNull(position) ?: return
+        operationInProgress = true
+        viewModelScope.launch {
+            try {
+                val duration = exercise.restDurationMillis ?: preferences.getPreferences().restDurationMillis
+                _uiState.value = uiState.value.copy(hasEditLoadError = false, exerciseEdit = ExerciseEditUiState(
+                    position = position, originalName = exercise.displayName(), name = exercise.displayName(),
+                    weightKg = exercise.weightKg, unit = unit, sets = exercise.sets, reps = exercise.reps,
+                    minimumSets = (exercise.setStates.filter { it.isCompleted }.maxOfOrNull { it.position + 1 } ?: 1),
+                    restDurationMillis = exercise.restDurationMillis, effectiveRestDurationMillis = duration,
+                    customRestSeconds = (duration / 1_000).takeIf { it > 0 } ?: 180,
+                ))
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _uiState.value = uiState.value.copy(hasEditLoadError = true)
+            } finally {
+                operationInProgress = false
+            }
+        }
+    }
+
+    fun dismissExerciseEdit() {
+        val edit = uiState.value.exerciseEdit ?: return
+        if (operationInProgress || edit.isSaving) return
+        _uiState.value = uiState.value.copy(exerciseEdit = if (edit.showCustomRest) edit.copy(showCustomRest = false) else null)
+    }
+
+    private fun updateEdit(transform: (ExerciseEditUiState) -> ExerciseEditUiState) {
+        val edit = uiState.value.exerciseEdit ?: return
+        if (operationInProgress || edit.isSaving) return
+        _uiState.value = uiState.value.copy(exerciseEdit = transform(edit).copy(hasSaveError = false))
+    }
+
+    fun editName(name: String) = updateEdit { it.copy(name = name.take(80)) }
+    fun adjustWeight(direction: Int) = updateEdit {
+        val step = if (it.unit == WeightUnit.KG) 2.5 else 5.0
+        // Keep full kg precision until an explicit adjustment; opening/saving in lb never rounds storage.
+        val value = it.unit.fromKilograms(it.weightKg) + direction.coerceIn(-1, 1) * step
+        it.copy(weightKg = it.unit.toKilograms(value.coerceAtLeast(0.0)).coerceAtMost(1_000_000.0))
+    }
+    fun adjustSets(direction: Int) = updateEdit { it.copy(sets = (it.sets + direction.coerceIn(-1, 1)).coerceIn(it.minimumSets, 100)) }
+    fun adjustReps(direction: Int) = updateEdit { it.copy(reps = (it.reps + direction.coerceIn(-1, 1)).coerceIn(1, 100)) }
+    fun selectRest(durationMillis: Long) {
+        if (durationMillis != 0L && durationMillis != 180_000L) return
+        updateEdit { it.copy(restDurationMillis = durationMillis, effectiveRestDurationMillis = durationMillis) }
+    }
+    fun openCustomRest() = updateEdit { it.copy(showCustomRest = true,
+        customRestSeconds = (it.effectiveRestDurationMillis / 1_000).takeIf { seconds -> seconds > 0 } ?: 180) }
+    fun editCustomRest(seconds: Long) {
+        if (seconds !in 0..Long.MAX_VALUE / 1_000) return
+        updateEdit { if (it.showCustomRest) it.copy(customRestSeconds = seconds) else it }
+    }
+    fun applyCustomRest() = updateEdit {
+        if (!it.showCustomRest || it.customRestSeconds <= 0) it else it.copy(showCustomRest = false,
+            restDurationMillis = it.customRestSeconds * 1_000, effectiveRestDurationMillis = it.customRestSeconds * 1_000)
+    }
+
+    fun saveExerciseEdit() {
+        val state = uiState.value
+        val edit = state.exerciseEdit ?: return
+        val session = state.unfinishedWorkout ?: return
+        if (operationInProgress || !edit.canSave) return
+        operationInProgress = true
+        _uiState.value = state.copy(exerciseEdit = edit.copy(isSaving = true, hasSaveError = false))
+        viewModelScope.launch {
+            try {
+                val saved = repository.editExercise(session.id, edit.position, edit.toEdit())
+                if (saved == null || saved.id != session.id) {
+                    _uiState.value = uiState.value.copy(exerciseEdit = edit.copy(hasSaveError = true))
+                } else {
+                    _uiState.value = uiState.value.copy(unfinishedWorkout = saved, exerciseEdit = null,
+                        selectedExercisePosition = saved.nextExercisePosition())
+                    updateCountdown()
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _uiState.value = uiState.value.copy(exerciseEdit = edit.copy(hasSaveError = true))
+            } finally {
+                operationInProgress = false
+                _uiState.value = uiState.value.copy(exerciseEdit = uiState.value.exerciseEdit?.copy(isSaving = false))
             }
         }
     }

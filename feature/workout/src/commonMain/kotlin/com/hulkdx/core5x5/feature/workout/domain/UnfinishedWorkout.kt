@@ -15,6 +15,9 @@ internal data class UnfinishedWorkoutExercise(
     val reps: Int,
     val weightKg: Double,
     val setStates: List<UnfinishedWorkoutSet> = List(sets) { UnfinishedWorkoutSet(it) },
+    val customName: String? = null,
+    /** Null follows Settings, zero disables rest, positive values override it for this exercise. */
+    val restDurationMillis: Long? = null,
 )
 
 /** An individual set's zero-based position and saved completion state. */
