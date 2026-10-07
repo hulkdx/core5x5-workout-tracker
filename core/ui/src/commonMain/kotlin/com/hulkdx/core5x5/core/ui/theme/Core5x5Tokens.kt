@@ -7,6 +7,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/** Implementation motion correction documented in design/DESIGN_SYSTEM.md. */
+object Core5x5Motion {
+    const val NavigationFadeDurationMillis = 180 // motion.navigation.fadeDurationMillis
+}
+
 /** Measured dark tokens from the workspace's design/tokens.json. */
 object Core5x5Colors {
     val Background = Color(0xFF0C1114)
