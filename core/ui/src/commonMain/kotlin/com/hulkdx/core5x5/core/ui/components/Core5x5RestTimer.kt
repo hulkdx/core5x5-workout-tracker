@@ -20,7 +20,6 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
@@ -44,7 +43,7 @@ fun Core5x5RestTimer(
             if (isExpired) liveRegion = LiveRegionMode.Polite
         },
         shape = RoundedCornerShape(Core5x5HomeTokens.CardRadius),
-        color = if (isExpired) Core5x5Colors.ActionTint else Core5x5HomeTokens.Card,
+        color = Core5x5HomeTokens.Card,
         border = BorderStroke(Core5x5HomeTokens.BorderStroke, Core5x5HomeTokens.Border),
     ) {
         Column(
