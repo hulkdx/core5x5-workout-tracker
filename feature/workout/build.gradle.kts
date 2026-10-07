@@ -32,6 +32,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":core:training"))
             implementation(project(":core:preferences"))
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)

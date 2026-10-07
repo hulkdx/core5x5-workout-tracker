@@ -289,7 +289,6 @@ private fun SettingsPreview(preferences: TrainingPreferences = TrainingPreferenc
             Core5x5BottomNavigation(
                 selectedItem = Core5x5NavigationItem.SETTINGS,
                 onItemSelected = {},
-                historyEnabled = false,
             )
         }
     }

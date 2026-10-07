@@ -82,6 +82,10 @@ object Core5x5Dimensions {
     val MetricPaddingHorizontal = 14.dp // component.metrics.paddingHorizontal
     val MetricPaddingVertical = 12.dp // component.metrics.paddingVertical
     val MetricLabelGap = 10.dp // component.metrics.labelGap
+    val HistoryPadding = 14.dp // component.history.padding
+    val HistoryGap = 10.dp // component.history.gap
+    val HistoryHeadingMinHeight = 40.dp // component.history.headingHeight
+    val HistoryBadgeGap = 10.dp // component.history.badgeGap
     val SuccessSize = 64.dp // component.success.size
     val CompleteGap = 18.dp // layout.completeGap
     val CompleteExtraTop = 16.dp // layout.completeExtraTop, after real safe insets

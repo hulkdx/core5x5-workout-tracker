@@ -26,6 +26,13 @@ internal interface UnfinishedWorkoutDao {
     @Query("SELECT * FROM unfinished_workout WHERE id = :workoutId")
     suspend fun getWorkout(workoutId: Long): UnfinishedWorkoutEntity?
 
+    @Query("""
+        SELECT * FROM unfinished_workout
+        WHERE completedAtEpochMillis IS NOT NULL
+        ORDER BY completedAtEpochMillis DESC, id DESC
+    """)
+    suspend fun getCompletedWorkouts(): List<UnfinishedWorkoutEntity>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertExercises(exercises: List<UnfinishedWorkoutExerciseEntity>)
 
@@ -110,6 +117,12 @@ internal interface UnfinishedWorkoutDao {
         val session = getWorkout(workoutId) ?: return null
         return StoredUnfinishedWorkout(session, getExercises(session.id), getSets(session.id))
     }
+
+    @Transaction
+    suspend fun getCompletedSessions(): List<StoredUnfinishedWorkout> =
+        getCompletedWorkouts().map { session ->
+            StoredUnfinishedWorkout(session, getExercises(session.id), getSets(session.id))
+        }
 
     @Transaction
     suspend fun getPrescriptionHistory(): StoredPrescriptionHistory =

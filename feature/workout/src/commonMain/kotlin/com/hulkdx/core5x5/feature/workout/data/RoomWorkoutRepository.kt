@@ -9,13 +9,19 @@ import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutSet
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
+import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
+import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutExercise
+import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutRecord
+import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSet
+import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSource
+import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutType
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutRepository
 import kotlin.time.Clock
 
 internal class RoomWorkoutRepository(
     private val dao: UnfinishedWorkoutDao,
     private val nowEpochMillis: () -> Long = { Clock.System.now().toEpochMilliseconds() },
-) : WorkoutRepository {
+) : WorkoutRepository, CompletedWorkoutSource {
     override suspend fun getUnfinishedWorkout(): UnfinishedWorkout? =
         dao.getSession()?.toDomain()
 
@@ -30,6 +36,13 @@ internal class RoomWorkoutRepository(
             exercises = stored.exerciseSnapshots(),
         )
     }
+
+    override suspend fun getCompletedWorkouts(): List<CompletedWorkoutRecord> =
+        dao.getCompletedSessions().map { it.toCompletedWorkoutRecord() }
+
+    override suspend fun getCompletedWorkoutById(workoutId: Long): CompletedWorkoutRecord? =
+        dao.getSession(workoutId)?.takeIf { it.session.completedAtEpochMillis != null }
+            ?.toCompletedWorkoutRecord()
 
     override suspend fun getNextWorkout(): Workout =
         dao.getLastCompletedWorkout()?.nextWorkout() ?: Workout.A
@@ -97,4 +110,38 @@ internal class RoomWorkoutRepository(
                 },
             )
         }
+
+    private fun StoredUnfinishedWorkout.toCompletedWorkoutRecord(): CompletedWorkoutRecord {
+        val completedAt = requireNotNull(session.completedAtEpochMillis)
+        return CompletedWorkoutRecord(
+            id = session.id,
+            workout = session.workout.toCompletedWorkoutType(),
+            startedAtEpochMillis = session.startedAtEpochMillis,
+            completedAtEpochMillis = completedAt,
+            exercises = exercises.map { exercise ->
+                CompletedWorkoutExercise(
+                    exercise = exercise.exercise.toCompletedExerciseType(),
+                    sets = exercise.sets,
+                    reps = exercise.reps,
+                    weightKg = exercise.weightKg,
+                    setStates = sets.filter { it.exercisePosition == exercise.position }.map {
+                        CompletedWorkoutSet(it.position, it.isCompleted)
+                    },
+                )
+            },
+        )
+    }
+
+    private fun Workout.toCompletedWorkoutType(): CompletedWorkoutType = when (this) {
+        Workout.A -> CompletedWorkoutType.A
+        Workout.B -> CompletedWorkoutType.B
+    }
+
+    private fun Exercise.toCompletedExerciseType(): CompletedExerciseType = when (this) {
+        Exercise.SQUAT -> CompletedExerciseType.SQUAT
+        Exercise.BENCH_PRESS -> CompletedExerciseType.BENCH_PRESS
+        Exercise.BARBELL_ROW -> CompletedExerciseType.BARBELL_ROW
+        Exercise.OVERHEAD_PRESS -> CompletedExerciseType.OVERHEAD_PRESS
+        Exercise.DEADLIFT -> CompletedExerciseType.DEADLIFT
+    }
 }

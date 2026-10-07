@@ -11,6 +11,8 @@ import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutSet
 import com.hulkdx.core5x5.feature.workout.domain.Workout
+import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSource
+import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -469,6 +471,31 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
             assertEquals(listOf(40.0, 25.0, 60.0), saved.exercises.map { it.weightKg })
             assertEquals(9, saved.prescribedSets)
             assertEquals(1, saved.completedSets)
+        }
+    }
+
+    @Test
+    fun completedHistoryReturnsOnlyCompletedSessionsInSavedDateOrder() = runTest {
+        withDatabase("completed-history.db") { database ->
+            val dao = database.unfinishedWorkoutDao()
+            val first = RoomWorkoutRepository(dao) { 1_000L }.startWorkout(Workout.A)
+            assertTrue(RoomWorkoutRepository(dao) { 3_000L }.finalizeWorkout(first.id))
+
+            val second = RoomWorkoutRepository(dao) { 4_000L }.startWorkout(Workout.B)
+            assertTrue(RoomWorkoutRepository(dao) { 2_000L }.finalizeWorkout(second.id))
+
+            val active = RoomWorkoutRepository(dao) { 5_000L }.startWorkout(Workout.A)
+            val source: CompletedWorkoutSource = RoomWorkoutRepository(dao) {
+                error("History reads must not consult the clock")
+            }
+
+            val history = source.getCompletedWorkouts()
+            assertEquals(listOf(first.id, second.id), history.map { it.id })
+            assertEquals(listOf(3_000L, 2_000L), history.map { it.completedAtEpochMillis })
+            assertEquals(listOf(CompletedWorkoutType.A, CompletedWorkoutType.B), history.map { it.workout })
+            assertEquals(listOf(5, 5, 5), history.first().exercises.map { it.sets })
+            assertNull(source.getCompletedWorkoutById(active.id))
+            assertNull(source.getCompletedWorkoutById(Long.MAX_VALUE))
         }
     }
 

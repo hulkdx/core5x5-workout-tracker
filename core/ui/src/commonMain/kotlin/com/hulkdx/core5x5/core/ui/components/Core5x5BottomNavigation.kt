@@ -35,7 +35,6 @@ fun Core5x5BottomNavigation(
     selectedItem: Core5x5NavigationItem,
     onItemSelected: (Core5x5NavigationItem) -> Unit,
     modifier: Modifier = Modifier,
-    historyEnabled: Boolean = true,
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -64,7 +63,6 @@ fun Core5x5BottomNavigation(
                         .heightIn(min = Core5x5Dimensions.NavigationItemHeight)
                         .selectable(
                             selected = selected,
-                            enabled = item != Core5x5NavigationItem.HISTORY || historyEnabled,
                             role = Role.Tab,
                             onClick = { onItemSelected(item) },
                         ),
