@@ -140,7 +140,7 @@ class ScreenScreenshotTest {
     @Preview(name = "Custom rest sheet", widthDp = 390, heightDp = 410)
     @Composable
     fun ActiveWorkoutEditRest() = Core5x5Theme {
-        androidx.compose.material3.Surface(color = com.hulkdx.core5x5.core.ui.theme.Core5x5EditTokens.Sheet) {
+        Box(Modifier.fillMaxSize().background(com.hulkdx.core5x5.core.ui.theme.Core5x5EditTokens.Sheet)) {
             CustomRestContent(150, {}, {}, {})
         }
     }

@@ -136,6 +136,8 @@ internal class ActiveWorkoutViewModelTest {
         assertTrue(viewModel.uiState.value.restTimer.isExpired)
         assertEquals("00:00", viewModel.uiState.value.restTimer.countdown)
         assertTrue(viewModel.uiState.value.canCompleteSet)
+        // Cancel the recurring ticker before runTest drains the scheduler.
+        viewModel.onPause()
     }
 
     @Test

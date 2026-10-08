@@ -80,7 +80,7 @@ fun Core5x5RestChoices(selected: Int, enabled: Boolean, onSelect: (Int) -> Unit)
         listOf("Off", "3 min", "Custom").forEachIndexed { index, label ->
             Surface(Modifier.weight(1f), shape = RoundedCornerShape(Home.ControlRadius), color = Home.Card,
                 border = BorderStroke(Home.BorderStroke, if (selected == index) Home.Action else Home.Border)) {
-                TextButton(onClick = { onSelect(index) }, enabled = enabled,
+                TextButton(onClick = { onSelect(index) }, enabled = enabled, contentPadding = PaddingValues(horizontal = 4.dp),
                     modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(label, style = Edit.Body, color = if (selected == index) Home.Action else Home.Secondary,
                         textAlign = TextAlign.Center)
