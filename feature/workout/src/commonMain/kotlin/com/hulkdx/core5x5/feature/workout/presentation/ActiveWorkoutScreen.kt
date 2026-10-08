@@ -52,6 +52,7 @@ internal fun ActiveWorkoutScreen(
     onFinishWorkout: () -> Unit,
     onRetryLoad: () -> Unit,
     onCompleteSet: (Int, Int) -> Unit,
+    onEditExercise: ((Int) -> Unit)? = null,
     modifier: Modifier = Modifier,
     weightUnit: WeightUnit = WeightUnit.KG,
     windowInsets: WindowInsets = WindowInsets.safeDrawing,
@@ -97,9 +98,11 @@ internal fun ActiveWorkoutScreen(
                             workout != null -> {
                                 workout.exercises.forEachIndexed { exercisePosition, exercise ->
                                     Core5x5ExpandedExerciseCard(
-                                        name = exercise.exercise.displayName(),
+                                        name = exercise.displayName(),
                                         prescription = exercise.prescription(weightUnit),
                                         resting = resting,
+                                        onEdit = onEditExercise?.let { edit -> { edit(exercisePosition) } },
+                                        editEnabled = uiState.canCompleteSet,
                                     ) {
                                         val nextSet = exercise.setStates.firstOrNull { !it.isCompleted }
                                         Core5x5SetControls(
@@ -111,7 +114,7 @@ internal fun ActiveWorkoutScreen(
                                                         exercisePosition == uiState.selectedExercisePosition && set == nextSet -> Core5x5SetState.Active
                                                         else -> Core5x5SetState.Default
                                                     },
-                                                    completionDescription = "${exercise.exercise.displayName()}, set ${set.position + 1}, ${exercise.reps} reps",
+                                                    completionDescription = "${exercise.displayName()}, set ${set.position + 1}, ${exercise.reps} reps",
                                                 )
                                             },
                                             onComplete = { setPosition -> onCompleteSet(exercisePosition, setPosition) },
@@ -125,6 +128,7 @@ internal fun ActiveWorkoutScreen(
                                         RestTimerScreen(uiState.restTimer)
                                     }
                                 }
+                                if (uiState.hasEditLoadError) WorkoutError("Unable to open the editor. Tap Edit to retry.")
                                 if (uiState.hasSetSaveError) WorkoutError("Unable to save the set. Tap it again to retry.")
                                 if (uiState.hasSaveError) WorkoutError("Unable to confirm the workout was saved. Try finishing again.")
                                 val finishLabel = if (uiState.isSaving) "Saving…" else "Finish Workout"

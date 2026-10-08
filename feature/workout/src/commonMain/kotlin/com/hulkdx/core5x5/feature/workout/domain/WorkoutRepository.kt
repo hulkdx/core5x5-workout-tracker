@@ -35,6 +35,9 @@ internal interface WorkoutRepository {
         isCompleted: Boolean,
     ): Boolean
 
+    /** Saves session-local details atomically, preserving completed sets and the running deadline. */
+    suspend fun editExercise(workoutId: Long, exercisePosition: Int, edit: ExerciseEdit): UnfinishedWorkout?
+
     /**
      * Atomically completes a set as prescribed and replaces the identified session's rest deadline.
      * Returns its saved snapshot. An already completed set returns the unchanged snapshot;

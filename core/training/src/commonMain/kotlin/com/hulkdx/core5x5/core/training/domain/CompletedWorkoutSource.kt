@@ -38,6 +38,7 @@ data class CompletedWorkoutExercise(
     val reps: Int,
     val weightKg: Double,
     val setStates: List<CompletedWorkoutSet>,
+    val customName: String? = null,
 ) {
     val completedSets: Int
         get() = setStates.count { it.isCompleted }

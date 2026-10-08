@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "6f7fe3369bcaf9b1377ef5149e89d4c3",
+    "identityHash": "a9b09477d65547b901220d80f1229ab6",
     "entities": [
       {
         "tableName": "unfinished_workout",
@@ -62,7 +62,7 @@
       },
       {
         "tableName": "unfinished_workout_exercise",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`workoutId` INTEGER NOT NULL, `position` INTEGER NOT NULL, `exercise` TEXT NOT NULL, `sets` INTEGER NOT NULL, `reps` INTEGER NOT NULL, `weightKg` REAL NOT NULL, PRIMARY KEY(`workoutId`, `position`), FOREIGN KEY(`workoutId`) REFERENCES `unfinished_workout`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`workoutId` INTEGER NOT NULL, `position` INTEGER NOT NULL, `exercise` TEXT NOT NULL, `sets` INTEGER NOT NULL, `reps` INTEGER NOT NULL, `weightKg` REAL NOT NULL, `customName` TEXT, `restDurationMillis` INTEGER, PRIMARY KEY(`workoutId`, `position`), FOREIGN KEY(`workoutId`) REFERENCES `unfinished_workout`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "workoutId",
@@ -99,6 +99,16 @@
             "columnName": "weightKg",
             "affinity": "REAL",
             "notNull": true
+          },
+          {
+            "fieldPath": "customName",
+            "columnName": "customName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "restDurationMillis",
+            "columnName": "restDurationMillis",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -179,7 +189,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6f7fe3369bcaf9b1377ef5149e89d4c3')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a9b09477d65547b901220d80f1229ab6')"
     ]
   }
 }

@@ -21,6 +21,8 @@ internal data class UnfinishedWorkoutExerciseEntity(
     val sets: Int,
     val reps: Int,
     val weightKg: Double,
+    val customName: String? = null,
+    val restDurationMillis: Long? = null,
 )
 
 internal data class StoredUnfinishedWorkout(

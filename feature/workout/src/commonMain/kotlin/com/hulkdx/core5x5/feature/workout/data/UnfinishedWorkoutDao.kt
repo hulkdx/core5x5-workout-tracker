@@ -4,6 +4,9 @@ import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
+import androidx.room3.Update
+import com.hulkdx.core5x5.feature.workout.domain.ExerciseEdit
+import com.hulkdx.core5x5.feature.workout.domain.RestTimerRules
 import androidx.room3.Transaction
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 
@@ -77,7 +80,7 @@ internal interface UnfinishedWorkoutDao {
         UPDATE unfinished_workout SET restDeadlineEpochMillis = :deadlineEpochMillis
         WHERE id = :workoutId AND unfinishedSlot = 1 AND completedAtEpochMillis IS NULL
     """)
-    suspend fun replaceRestDeadline(workoutId: Long, deadlineEpochMillis: Long): Int
+    suspend fun replaceRestDeadline(workoutId: Long, deadlineEpochMillis: Long?): Int
 
     /** The set and rest share one commit; duplicate completion never replaces the deadline. */
     @Transaction
@@ -85,7 +88,8 @@ internal interface UnfinishedWorkoutDao {
         workoutId: Long,
         exercisePosition: Int,
         setPosition: Int,
-        deadlineEpochMillis: Long,
+        restDurationMillis: Long,
+        nowEpochMillis: Long,
     ): StoredUnfinishedWorkout? {
         val stored = getSession(workoutId) ?: return null
         if (stored.session.completedAtEpochMillis != null || stored.session.unfinishedSlot != 1) return null
@@ -93,8 +97,34 @@ internal interface UnfinishedWorkoutDao {
             it.exercisePosition == exercisePosition && it.position == setPosition
         } ?: return null
         if (set.isCompleted) return stored
+        val exercise = stored.exercises.firstOrNull { it.position == exercisePosition } ?: return null
+        val duration = exercise.restDurationMillis ?: restDurationMillis
+        val deadlineEpochMillis = if (duration == 0L) null
+            else RestTimerRules { nowEpochMillis }.start(duration).deadlineEpochMillis
         check(completeNewSet(workoutId, exercisePosition, setPosition) == 1)
         check(replaceRestDeadline(workoutId, deadlineEpochMillis) == 1)
+        return getSession(workoutId)
+    }
+
+    @Update
+    suspend fun updateExercise(exercise: UnfinishedWorkoutExerciseEntity): Int
+
+    @Query("DELETE FROM unfinished_workout_set WHERE workoutId = :workoutId AND exercisePosition = :exercisePosition AND position >= :sets")
+    suspend fun removeTrailingSets(workoutId: Long, exercisePosition: Int, sets: Int)
+
+    @Transaction
+    suspend fun editExercise(workoutId: Long, exercisePosition: Int, edit: ExerciseEdit): StoredUnfinishedWorkout? {
+        val stored = getSession(workoutId) ?: return null
+        if (stored.session.completedAtEpochMillis != null || stored.session.unfinishedSlot != 1) return null
+        val exercise = stored.exercises.firstOrNull { it.position == exercisePosition } ?: return null
+        // Never silently discard a logged set, including non-sequential completions.
+        if (stored.sets.any { it.exercisePosition == exercisePosition && it.position >= edit.sets && it.isCompleted }) return null
+        check(updateExercise(exercise.copy(customName = edit.name.trim(), weightKg = edit.weightKg,
+            sets = edit.sets, reps = edit.reps, restDurationMillis = edit.restDurationMillis)) == 1)
+        if (edit.sets < exercise.sets) removeTrailingSets(workoutId, exercisePosition, edit.sets)
+        if (edit.sets > exercise.sets) insertSets((exercise.sets until edit.sets).map {
+            UnfinishedWorkoutSetEntity(workoutId, exercisePosition, it)
+        })
         return getSession(workoutId)
     }
 

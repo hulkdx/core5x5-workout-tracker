@@ -2,9 +2,9 @@ package com.hulkdx.core5x5.feature.workout.data
 
 import com.hulkdx.core5x5.feature.workout.domain.CompletedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
+import com.hulkdx.core5x5.feature.workout.domain.ExerciseEdit
 import com.hulkdx.core5x5.feature.workout.domain.ExercisePrescription
 import com.hulkdx.core5x5.feature.workout.domain.RestTimer
-import com.hulkdx.core5x5.feature.workout.domain.RestTimerRules
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutSet
@@ -79,15 +79,18 @@ internal class RoomWorkoutRepository(
         isCompleted: Boolean,
     ): Boolean = dao.setSetCompleted(exercisePosition, setPosition, isCompleted) == 1
 
+    override suspend fun editExercise(workoutId: Long, exercisePosition: Int, edit: ExerciseEdit): UnfinishedWorkout? =
+        dao.editExercise(workoutId, exercisePosition, edit)?.toDomain()
+
     override suspend fun completeSetAndStartRest(
         workoutId: Long,
         exercisePosition: Int,
         setPosition: Int,
         restDurationMillis: Long,
     ): UnfinishedWorkout? {
-        val timer = RestTimerRules(nowEpochMillis).start(restDurationMillis)
+        require(restDurationMillis > 0)
         return dao.completeSetAndStartRest(
-            workoutId, exercisePosition, setPosition, timer.deadlineEpochMillis,
+            workoutId, exercisePosition, setPosition, restDurationMillis, nowEpochMillis(),
         )?.toDomain()
     }
 
@@ -106,6 +109,8 @@ internal class RoomWorkoutRepository(
                 sets = exercise.sets,
                 reps = exercise.reps,
                 weightKg = exercise.weightKg,
+                customName = exercise.customName,
+                restDurationMillis = exercise.restDurationMillis,
                 setStates = sets.filter { it.exercisePosition == exercise.position }.map {
                     UnfinishedWorkoutSet(it.position, it.isCompleted)
                 },
@@ -125,6 +130,7 @@ internal class RoomWorkoutRepository(
                     sets = exercise.sets,
                     reps = exercise.reps,
                     weightKg = exercise.weightKg,
+                    customName = exercise.customName,
                     setStates = sets.filter { it.exercisePosition == exercise.position }.map {
                         CompletedWorkoutSet(it.position, it.isCompleted)
                     },

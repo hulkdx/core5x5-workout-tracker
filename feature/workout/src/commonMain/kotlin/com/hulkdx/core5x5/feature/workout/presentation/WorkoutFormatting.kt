@@ -21,3 +21,6 @@ internal fun Long.formatWorkoutDuration(): String {
         "${minutes / 60}:${(minutes % 60).toString().padStart(2, '0')}:$remainingSeconds"
     }
 }
+
+internal fun com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise.displayName(): String =
+    customName ?: exercise.displayName()
