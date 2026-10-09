@@ -77,6 +77,32 @@ internal interface UnfinishedWorkoutDao {
     suspend fun completeNewSet(workoutId: Long, exercisePosition: Int, setPosition: Int): Int
 
     @Query("""
+        UPDATE unfinished_workout_set SET isCompleted = 0
+        WHERE workoutId = :workoutId AND exercisePosition = :exercisePosition AND position = :setPosition
+        AND isCompleted = 1 AND workoutId IN (
+            SELECT id FROM unfinished_workout WHERE unfinishedSlot = 1 AND completedAtEpochMillis IS NULL
+        )
+    """)
+    suspend fun markSetIncomplete(workoutId: Long, exercisePosition: Int, setPosition: Int): Int
+
+    /** Undo is an explicit saved value, so retrying a lost acknowledgement cannot re-complete it. */
+    @Transaction
+    suspend fun undoSetCompletion(
+        workoutId: Long,
+        exercisePosition: Int,
+        setPosition: Int,
+    ): StoredUnfinishedWorkout? {
+        val stored = getSession(workoutId) ?: return null
+        if (stored.session.completedAtEpochMillis != null || stored.session.unfinishedSlot != 1) return null
+        val set = stored.sets.firstOrNull {
+            it.exercisePosition == exercisePosition && it.position == setPosition
+        } ?: return null
+        if (!set.isCompleted) return stored
+        check(markSetIncomplete(workoutId, exercisePosition, setPosition) == 1)
+        return getSession(workoutId)
+    }
+
+    @Query("""
         UPDATE unfinished_workout SET restDeadlineEpochMillis = :deadlineEpochMillis
         WHERE id = :workoutId AND unfinishedSlot = 1 AND completedAtEpochMillis IS NULL
     """)

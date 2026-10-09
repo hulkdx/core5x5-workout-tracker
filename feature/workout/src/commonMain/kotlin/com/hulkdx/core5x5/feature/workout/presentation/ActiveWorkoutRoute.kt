@@ -51,7 +51,7 @@ fun ActiveWorkoutRoute(
         onBack = onBack,
         onFinishWorkout = viewModel::finishWorkout,
         onRetryLoad = viewModel::loadWorkout,
-        onCompleteSet = viewModel::completeSet,
+        onToggleSet = viewModel::toggleSet,
         onEditExercise = { viewModel.openExerciseEdit(it, weightUnit) },
     )
 }

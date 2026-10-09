@@ -102,21 +102,35 @@ internal class ActiveWorkoutViewModel(
     }
 
     fun completeSet(exercisePosition: Int, setPosition: Int) {
+        saveSet(exercisePosition, setPosition, isCompleted = true)
+    }
+
+    fun toggleSet(exercisePosition: Int, setPosition: Int) {
+        val set = uiState.value.unfinishedWorkout?.exercises?.getOrNull(exercisePosition)?.setStates
+            ?.firstOrNull { it.position == setPosition } ?: return
+        saveSet(exercisePosition, setPosition, isCompleted = !set.isCompleted)
+    }
+
+    private fun saveSet(exercisePosition: Int, setPosition: Int, isCompleted: Boolean) {
         val state = uiState.value
         if (operationInProgress || !state.canCompleteSet) return
         val workout = state.unfinishedWorkout ?: return
         val set = workout.exercises.getOrNull(exercisePosition)?.setStates
             ?.firstOrNull { it.position == setPosition } ?: return
-        if (set.isCompleted) return
+        if (set.isCompleted == isCompleted) return
         operationInProgress = true
         _uiState.value = state.copy(isCompletingSet = true, hasSetSaveError = false)
         viewModelScope.launch {
             try {
-                val restOverride = workout.exercises[exercisePosition].restDurationMillis
-                val restDurationMillis = restOverride?.coerceAtLeast(1L) ?: preferences.getPreferences().restDurationMillis
-                val saved = repository.completeSetAndStartRest(
-                    workout.id, exercisePosition, setPosition, restDurationMillis,
-                )
+                val saved = if (isCompleted) {
+                    val restOverride = workout.exercises[exercisePosition].restDurationMillis
+                    val restDurationMillis = restOverride?.coerceAtLeast(1L) ?: preferences.getPreferences().restDurationMillis
+                    repository.completeSetAndStartRest(
+                        workout.id, exercisePosition, setPosition, restDurationMillis,
+                    )
+                } else {
+                    repository.undoSetCompletion(workout.id, exercisePosition, setPosition)
+                }
                 if (saved == null || saved.id != workout.id) {
                     _uiState.value = uiState.value.copy(hasSetSaveError = true)
                 } else {

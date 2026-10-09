@@ -53,6 +53,7 @@ fun Core5x5SetControls(
     refined: Boolean = false,
     enabled: Boolean = true,
     resting: Boolean = false,
+    allowUndo: Boolean = false,
 ) {
     FlowRow(
         modifier = modifier.fillMaxWidth(),
@@ -61,7 +62,7 @@ fun Core5x5SetControls(
     ) {
         sets.forEach { set ->
             if (refined) {
-                RefinedSetControl(set, enabled, resting, onComplete)
+                RefinedSetControl(set, enabled, resting, allowUndo, onComplete)
                 return@forEach
             }
             val active = set.state == Core5x5SetState.Active
@@ -94,7 +95,7 @@ fun Core5x5SetControls(
                         else -> "Incomplete"
                     }
                 },
-                enabled = !completed && !disabled,
+                enabled = enabled && (!completed || allowUndo) && !disabled,
                 shape = CircleShape,
                 color = background,
                 contentColor = foreground,
@@ -114,7 +115,13 @@ fun Core5x5SetControls(
 
 /** Active's smaller circles and Rest's larger circles share non-overlapping minimum 48dp targets. */
 @Composable
-private fun RefinedSetControl(set: Core5x5SetControl, enabled: Boolean, resting: Boolean, onComplete: (Int) -> Unit) {
+private fun RefinedSetControl(
+    set: Core5x5SetControl,
+    enabled: Boolean,
+    resting: Boolean,
+    allowUndo: Boolean,
+    onComplete: (Int) -> Unit,
+) {
     val completed = set.state == Core5x5SetState.Completed
     val current = set.state == Core5x5SetState.Active
     val disabled = set.state == Core5x5SetState.Disabled || !enabled
@@ -126,7 +133,11 @@ private fun RefinedSetControl(set: Core5x5SetControl, enabled: Boolean, resting:
     val targetSize = maxOf(Core5x5Dimensions.TouchTargetMin, visibleSize)
     Box(
         modifier = Modifier.size(targetSize)
-            .clickable(enabled = !completed && !disabled, role = Role.Button) { onComplete(set.position) }
+            .clickable(
+                enabled = (!completed || allowUndo) && !disabled,
+                role = Role.Button,
+                onClickLabel = if (completed && allowUndo) "Mark set incomplete" else "Complete set",
+            ) { onComplete(set.position) }
             .semantics {
                 contentDescription = set.completionDescription
                 stateDescription = when {

@@ -209,7 +209,7 @@ private fun ActiveWorkoutSnapshot(state: ActiveWorkoutUiState) = Core5x5Theme {
         onBack = {},
         onFinishWorkout = {},
         onRetryLoad = {},
-        onCompleteSet = { _, _ -> },
+        onToggleSet = { _, _ -> },
         onEditExercise = {},
         windowInsets = WindowInsets(top = Core5x5HomeTokens.SystemTopReserve, bottom = Core5x5HomeTokens.SystemBottomReserve),
     )

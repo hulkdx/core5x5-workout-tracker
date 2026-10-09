@@ -625,6 +625,177 @@ internal class ActiveWorkoutViewModelTest {
         assertFalse(requireNotNull(repository.savedWorkout).exercises[0].setStates[0].isCompleted)
     }
 
+    @Test
+    fun tappingACompletedSetUndoesOnlyThatSetAndRecompletionStartsFreshRest() = runTest(dispatcher) {
+        for (workout in Workout.entries) {
+            val repository = FakeWorkoutRepository(session(workout))
+            val preferences = FakeTrainingPreferencesRepository()
+            val viewModel = createViewModel(repository, preferences)
+            dispatcher.scheduler.runCurrent()
+            viewModel.toggleSet(2, 0)
+            dispatcher.scheduler.runCurrent()
+            val completed = requireNotNull(viewModel.uiState.value.unfinishedWorkout)
+            assertTrue(completed.exercises[2].setStates[0].isCompleted)
+
+            preferences.readError = IllegalStateException("Undo needs no duration preference")
+            repository.now += 20_000
+            viewModel.toggleSet(2, 0)
+            dispatcher.scheduler.runCurrent()
+            val undone = requireNotNull(viewModel.uiState.value.unfinishedWorkout)
+            assertFalse(undone.exercises[2].setStates[0].isCompleted)
+            assertEquals(completed.restTimer, undone.restTimer)
+            assertEquals("02:40", viewModel.uiState.value.restTimer.countdown)
+            assertEquals(completed.exercises.take(2), undone.exercises.take(2))
+            assertEquals(completed.exercises[2].setStates.drop(1), undone.exercises[2].setStates.drop(1))
+            assertEquals(2, viewModel.uiState.value.selectedExercisePosition)
+            assertFalse(viewModel.uiState.value.hasSetSaveError)
+
+            preferences.readError = null
+            viewModel.toggleSet(2, 0)
+            dispatcher.scheduler.runCurrent()
+            assertTrue(requireNotNull(viewModel.uiState.value.unfinishedWorkout).exercises[2].setStates[0].isCompleted)
+            assertEquals(RestTimer(201_000), viewModel.uiState.value.unfinishedWorkout?.restTimer)
+        }
+    }
+
+    @Test
+    fun undoPreservesExistingRestAndRecompletionUsesTheExerciseOverride() = runTest(dispatcher) {
+        for (restOverride in listOf(0L, 150_000L)) {
+            val workout = session(Workout.A).copy(
+                restTimer = RestTimer(181_000L),
+                exercises = session(Workout.A).exercises.mapIndexed { index, exercise ->
+                    if (index != 0) exercise else exercise.copy(
+                        restDurationMillis = restOverride,
+                        setStates = exercise.setStates.map {
+                            if (it.position == 0) it.copy(isCompleted = true) else it
+                        },
+                    )
+                },
+            )
+            val repository = FakeWorkoutRepository(workout)
+            val preferences = FakeTrainingPreferencesRepository().apply {
+                readError = IllegalStateException("Exercise overrides need no preference read")
+            }
+            val viewModel = createViewModel(repository, preferences)
+            dispatcher.scheduler.runCurrent()
+
+            repository.now += 20_000L
+            viewModel.toggleSet(0, 0)
+            dispatcher.scheduler.runCurrent()
+            val undone = requireNotNull(viewModel.uiState.value.unfinishedWorkout)
+            assertFalse(undone.exercises[0].setStates[0].isCompleted)
+            assertEquals(workout.restTimer, undone.restTimer)
+            assertFalse(viewModel.uiState.value.hasSetSaveError)
+
+            viewModel.toggleSet(0, 0)
+            dispatcher.scheduler.runCurrent()
+            val recompleted = requireNotNull(viewModel.uiState.value.unfinishedWorkout)
+            assertTrue(recompleted.exercises[0].setStates[0].isCompleted)
+            assertEquals(restOverride.takeIf { it > 0 }?.let { RestTimer(repository.now + it) }, recompleted.restTimer)
+            assertFalse(viewModel.uiState.value.hasSetSaveError)
+        }
+    }
+
+    @Test
+    fun undoFailurePreservesProgressAndRestAndCanRetry() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A))
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.toggleSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+        val completed = viewModel.uiState.value.unfinishedWorkout
+        repository.setSaveError = IllegalStateException("Disk unavailable")
+        viewModel.toggleSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.hasSetSaveError)
+        assertSame(completed, viewModel.uiState.value.unfinishedWorkout)
+        assertTrue(viewModel.uiState.value.canCompleteSet)
+
+        repository.setSaveError = null
+        viewModel.toggleSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+        assertFalse(viewModel.uiState.value.hasSetSaveError)
+        assertFalse(requireNotNull(viewModel.uiState.value.unfinishedWorkout).exercises[0].setStates[0].isCompleted)
+        assertEquals(completed?.restTimer, viewModel.uiState.value.unfinishedWorkout?.restTimer)
+    }
+
+    @Test
+    fun retryAfterLostUndoAcknowledgementDoesNotRecompleteTheSet() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.B))
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.toggleSet(2, 0)
+        dispatcher.scheduler.runCurrent()
+        val timer = repository.savedWorkout?.restTimer
+        repository.afterSetSaveError = IllegalStateException("Acknowledgement lost")
+        viewModel.toggleSet(2, 0)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.hasSetSaveError)
+        assertTrue(requireNotNull(viewModel.uiState.value.unfinishedWorkout).exercises[2].setStates[0].isCompleted)
+        assertFalse(requireNotNull(repository.savedWorkout).exercises[2].setStates[0].isCompleted)
+
+        repository.afterSetSaveError = null
+        viewModel.toggleSet(2, 0)
+        dispatcher.scheduler.runCurrent()
+        assertFalse(viewModel.uiState.value.hasSetSaveError)
+        assertFalse(requireNotNull(viewModel.uiState.value.unfinishedWorkout).exercises[2].setStates[0].isCompleted)
+        assertEquals(timer, viewModel.uiState.value.unfinishedWorkout?.restTimer)
+        assertEquals(1, repository.completedSetRequests.size)
+        assertEquals(2, repository.undoneSetRequests.size)
+    }
+
+    @Test
+    fun undoGuardsOverlappingActionsAndPublishesOnlySavedProgress() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A))
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.toggleSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+        val completed = viewModel.uiState.value.unfinishedWorkout
+        viewModel.toggleSet(-1, 0)
+        viewModel.toggleSet(0, 5)
+        assertTrue(repository.undoneSetRequests.isEmpty())
+
+        repository.setSaveGate = CompletableDeferred()
+        viewModel.toggleSet(0, 0)
+        viewModel.toggleSet(0, 0)
+        viewModel.toggleSet(1, 0)
+        viewModel.finishWorkout()
+        viewModel.loadWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.isCompletingSet)
+        assertFalse(viewModel.uiState.value.canFinish)
+        assertSame(completed, viewModel.uiState.value.unfinishedWorkout)
+        assertEquals(1, repository.undoneSetRequests.size)
+        assertEquals(1, repository.completedSetRequests.size)
+        assertTrue(repository.finalizedIds.isEmpty())
+        assertEquals(1, repository.readCount)
+
+        repository.setSaveGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertFalse(viewModel.uiState.value.isCompletingSet)
+        assertTrue(viewModel.uiState.value.canFinish)
+        assertFalse(requireNotNull(viewModel.uiState.value.unfinishedWorkout).exercises[0].setStates[0].isCompleted)
+    }
+
+    @Test
+    fun undoNeverModifiesALaterActiveSession() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A, id = 42L))
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.toggleSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+        val original = viewModel.uiState.value.unfinishedWorkout
+        val later = session(Workout.B, id = 43L)
+        repository.savedWorkout = later
+        viewModel.toggleSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.hasSetSaveError)
+        assertSame(original, viewModel.uiState.value.unfinishedWorkout)
+        assertSame(later, repository.savedWorkout)
+        assertEquals(listOf(Triple(42L, 0, 0)), repository.undoneSetRequests)
+    }
+
     private fun createViewModel(
         repository: FakeWorkoutRepository,
         preferences: FakeTrainingPreferencesRepository = FakeTrainingPreferencesRepository(),
@@ -808,6 +979,7 @@ internal class ActiveWorkoutViewModelTest {
         var setSaveError: Exception? = null
         var afterSetSaveError: Exception? = null
         var setSaveCancelled = false
+        val undoneSetRequests = mutableListOf<Triple<Long, Int, Int>>()
         val completedSetRequests = mutableListOf<Triple<Long, Int, Int>>()
         val finalizedIds = mutableListOf<Long>()
         val completedReadIds = mutableListOf<Long>()
@@ -875,6 +1047,33 @@ internal class ActiveWorkoutViewModelTest {
                         ?: com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutSet(position) })
             })
             savedWorkout = saved
+            return saved
+        }
+
+        override suspend fun undoSetCompletion(
+            workoutId: Long,
+            exercisePosition: Int,
+            setPosition: Int,
+        ): UnfinishedWorkout? {
+            undoneSetRequests += Triple(workoutId, exercisePosition, setPosition)
+            try {
+                setSaveGate?.await()
+            } catch (cancelled: CancellationException) {
+                setSaveCancelled = true
+                throw cancelled
+            }
+            setSaveError?.let { throw it }
+            val active = savedWorkout?.takeIf { it.id == workoutId } ?: return null
+            val set = active.exercises.getOrNull(exercisePosition)?.setStates
+                ?.firstOrNull { it.position == setPosition } ?: return null
+            if (!set.isCompleted) return active
+            val saved = active.copy(exercises = active.exercises.mapIndexed { index, exercise ->
+                if (index != exercisePosition) exercise else exercise.copy(
+                    setStates = exercise.setStates.map { if (it.position == setPosition) it.copy(isCompleted = false) else it },
+                )
+            })
+            savedWorkout = saved
+            afterSetSaveError?.let { throw it }
             return saved
         }
 

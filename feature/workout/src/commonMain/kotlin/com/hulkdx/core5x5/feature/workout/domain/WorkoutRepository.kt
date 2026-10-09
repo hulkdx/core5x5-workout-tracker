@@ -39,6 +39,17 @@ internal interface WorkoutRepository {
     suspend fun editExercise(workoutId: Long, exercisePosition: Int, edit: ExerciseEdit): UnfinishedWorkout?
 
     /**
+     * Marks a set incomplete in the identified active session, preserving its rest deadline.
+     * Returns the saved snapshot, including for an already incomplete set; missing sets and
+     * inactive/stale session IDs return null without changing any session.
+     */
+    suspend fun undoSetCompletion(
+        workoutId: Long,
+        exercisePosition: Int,
+        setPosition: Int,
+    ): UnfinishedWorkout?
+
+    /**
      * Atomically completes a set as prescribed and replaces the identified session's rest deadline.
      * Returns its saved snapshot. An already completed set returns the unchanged snapshot;
      * a missing set or an inactive/stale session returns null without changing any session.

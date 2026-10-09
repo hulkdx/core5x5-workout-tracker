@@ -82,6 +82,12 @@ internal class RoomWorkoutRepository(
     override suspend fun editExercise(workoutId: Long, exercisePosition: Int, edit: ExerciseEdit): UnfinishedWorkout? =
         dao.editExercise(workoutId, exercisePosition, edit)?.toDomain()
 
+    override suspend fun undoSetCompletion(
+        workoutId: Long,
+        exercisePosition: Int,
+        setPosition: Int,
+    ): UnfinishedWorkout? = dao.undoSetCompletion(workoutId, exercisePosition, setPosition)?.toDomain()
+
     override suspend fun completeSetAndStartRest(
         workoutId: Long,
         exercisePosition: Int,

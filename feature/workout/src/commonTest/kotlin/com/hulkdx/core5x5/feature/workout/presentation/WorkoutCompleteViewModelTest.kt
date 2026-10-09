@@ -265,6 +265,12 @@ internal class WorkoutCompleteViewModelTest {
             edit: com.hulkdx.core5x5.feature.workout.domain.ExerciseEdit,
         ): UnfinishedWorkout? = error("Editing is not used by this fixture")
 
+        override suspend fun undoSetCompletion(
+            workoutId: Long,
+            exercisePosition: Int,
+            setPosition: Int,
+        ): UnfinishedWorkout? = error("This screen cannot undo sets")
+
         override suspend fun completeSetAndStartRest(
             workoutId: Long,
             exercisePosition: Int,

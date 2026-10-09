@@ -51,7 +51,7 @@ internal fun ActiveWorkoutScreen(
     onBack: () -> Unit,
     onFinishWorkout: () -> Unit,
     onRetryLoad: () -> Unit,
-    onCompleteSet: (Int, Int) -> Unit,
+    onToggleSet: (Int, Int) -> Unit,
     onEditExercise: ((Int) -> Unit)? = null,
     modifier: Modifier = Modifier,
     weightUnit: WeightUnit = WeightUnit.KG,
@@ -111,16 +111,17 @@ internal fun ActiveWorkoutScreen(
                                                     position = set.position,
                                                     state = when {
                                                         set.isCompleted -> Core5x5SetState.Completed
-                                                        exercisePosition == uiState.selectedExercisePosition && set == nextSet -> Core5x5SetState.Active
+                                                        set == nextSet -> Core5x5SetState.Active
                                                         else -> Core5x5SetState.Default
                                                     },
                                                     completionDescription = "${exercise.displayName()}, set ${set.position + 1}, ${exercise.reps} reps",
                                                 )
                                             },
-                                            onComplete = { setPosition -> onCompleteSet(exercisePosition, setPosition) },
+                                            onComplete = { setPosition -> onToggleSet(exercisePosition, setPosition) },
                                             refined = true,
                                             enabled = uiState.canCompleteSet,
                                             resting = resting,
+                                            allowUndo = true,
                                         )
                                     }
                                     // Selection is already restored/advanced by the ViewModel.
@@ -205,7 +206,7 @@ private fun WorkoutPreview(rest: Boolean, expired: Boolean = false) {
         ActiveWorkoutScreen(
             uiState = ActiveWorkoutUiState(isLoading = false, unfinishedWorkout = workout,
                 restTimer = RestTimerUiState(isVisible = rest, isExpired = expired, countdown = if (expired) "00:00" else "02:30")),
-            onBack = {}, onFinishWorkout = {}, onRetryLoad = {}, onCompleteSet = { _, _ -> },
+            onBack = {}, onFinishWorkout = {}, onRetryLoad = {}, onToggleSet = { _, _ -> },
             windowInsets = WindowInsets(top = Home.SystemTopReserve, bottom = Home.SystemBottomReserve),
         )
     }
