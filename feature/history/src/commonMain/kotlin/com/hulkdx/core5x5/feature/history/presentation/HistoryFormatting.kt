@@ -1,7 +1,5 @@
 package com.hulkdx.core5x5.feature.history.presentation
 
-import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
-import com.hulkdx.core5x5.core.preferences.domain.formatWeight
 import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutRecord
 import kotlin.math.max
@@ -54,11 +52,6 @@ internal fun CompletedWorkoutRecord.durationLabel(): String {
         "${totalMinutes / 60L} h ${totalMinutes % 60L} min"
     }
 }
-
-internal fun CompletedWorkoutRecord.exerciseSummary(unit: WeightUnit): String =
-    exercises.joinToString(separator = " · ") { exercise ->
-        "${(exercise.customName ?: exercise.exercise.displayName())} ${formatWeight(exercise.weightKg, unit)}"
-    }
 
 internal fun CompletedWorkoutRecord.durationClockLabel(): String {
     val totalSeconds = max(0L, durationMillis / 1_000L)
