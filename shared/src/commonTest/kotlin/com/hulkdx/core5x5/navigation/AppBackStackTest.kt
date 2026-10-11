@@ -2,7 +2,7 @@ package com.hulkdx.core5x5.navigation
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.saveable.SaverScope
-import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
+import com.hulkdx.core5x5.core.ui.components.AppNavigationItem
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotSame
@@ -14,9 +14,9 @@ internal class AppBackStackTest {
     fun switchingTabsReplacesThePreviousTabAndBackReturnsToToday() {
         val backStack = mutableStateListOf<AppDestination>(AppDestination.Today)
 
-        backStack.selectNavigationItem(Core5x5NavigationItem.HISTORY)
-        backStack.selectNavigationItem(Core5x5NavigationItem.SETTINGS)
-        backStack.selectNavigationItem(Core5x5NavigationItem.HISTORY)
+        backStack.selectNavigationItem(AppNavigationItem.HISTORY)
+        backStack.selectNavigationItem(AppNavigationItem.SETTINGS)
+        backStack.selectNavigationItem(AppNavigationItem.HISTORY)
 
         assertEquals(listOf(AppDestination.Today, AppDestination.History), backStack.toList())
         backStack.removeLastOrNull()
@@ -27,17 +27,17 @@ internal class AppBackStackTest {
     fun repeatedTabSelectionDoesNotDuplicateDestinations() {
         val backStack = mutableStateListOf<AppDestination>(AppDestination.Today)
 
-        backStack.selectNavigationItem(Core5x5NavigationItem.TODAY)
-        backStack.selectNavigationItem(Core5x5NavigationItem.HISTORY)
-        backStack.selectNavigationItem(Core5x5NavigationItem.HISTORY)
+        backStack.selectNavigationItem(AppNavigationItem.TODAY)
+        backStack.selectNavigationItem(AppNavigationItem.HISTORY)
+        backStack.selectNavigationItem(AppNavigationItem.HISTORY)
         assertEquals(listOf(AppDestination.Today, AppDestination.History), backStack.toList())
 
-        backStack.selectNavigationItem(Core5x5NavigationItem.SETTINGS)
-        backStack.selectNavigationItem(Core5x5NavigationItem.SETTINGS)
+        backStack.selectNavigationItem(AppNavigationItem.SETTINGS)
+        backStack.selectNavigationItem(AppNavigationItem.SETTINGS)
         assertEquals(listOf(AppDestination.Today, AppDestination.Settings), backStack.toList())
 
-        backStack.selectNavigationItem(Core5x5NavigationItem.TODAY)
-        backStack.selectNavigationItem(Core5x5NavigationItem.TODAY)
+        backStack.selectNavigationItem(AppNavigationItem.TODAY)
+        backStack.selectNavigationItem(AppNavigationItem.TODAY)
         assertEquals(listOf(AppDestination.Today), backStack.toList())
     }
 
@@ -67,7 +67,7 @@ internal class AppBackStackTest {
             val backStack = mutableStateListOf<AppDestination>(AppDestination.Today, destination)
 
             assertNull(destination.navigationItem)
-            Core5x5NavigationItem.entries.forEach(backStack::selectNavigationItem)
+            AppNavigationItem.entries.forEach(backStack::selectNavigationItem)
 
             assertEquals(listOf(AppDestination.Today, destination), backStack.toList())
         }

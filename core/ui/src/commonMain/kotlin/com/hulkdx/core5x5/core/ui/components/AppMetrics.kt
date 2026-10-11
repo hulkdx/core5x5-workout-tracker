@@ -14,12 +14,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppTypography
 
 @Composable
-fun Core5x5Metrics(
+fun AppMetrics(
     firstLabel: String,
     firstValue: String,
     secondLabel: String,
@@ -27,33 +27,33 @@ fun Core5x5Metrics(
     modifier: Modifier = Modifier,
 ) {
     // At reference scale the cards measure 78dp inside an 86dp row. The remaining space stays below.
-    Column(modifier = modifier.fillMaxWidth().heightIn(min = Core5x5Dimensions.MetricsRowHeight)) {
+    Column(modifier = modifier.fillMaxWidth().heightIn(min = AppDimensions.MetricsRowHeight)) {
         Row(
             modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
-            horizontalArrangement = Arrangement.spacedBy(Core5x5Dimensions.MetricsGap),
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.MetricsGap),
         ) {
-            Core5x5MetricCard(firstLabel, firstValue, Modifier.weight(1f).fillMaxHeight())
-            Core5x5MetricCard(secondLabel, secondValue, Modifier.weight(1f).fillMaxHeight())
+            AppMetricCard(firstLabel, firstValue, Modifier.weight(1f).fillMaxHeight())
+            AppMetricCard(secondLabel, secondValue, Modifier.weight(1f).fillMaxHeight())
         }
     }
 }
 
 @Composable
-fun Core5x5MetricCard(label: String, value: String, modifier: Modifier = Modifier) {
+fun AppMetricCard(label: String, value: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(Core5x5Dimensions.RadiusLarge),
-        color = Core5x5Colors.Elevated,
+        shape = RoundedCornerShape(AppDimensions.RadiusLarge),
+        color = AppColors.Elevated,
     ) {
         Column(
             modifier = Modifier.padding(
-                horizontal = Core5x5Dimensions.MetricPaddingHorizontal,
-                vertical = Core5x5Dimensions.MetricPaddingVertical,
+                horizontal = AppDimensions.MetricPaddingHorizontal,
+                vertical = AppDimensions.MetricPaddingVertical,
             ),
-            verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.MetricLabelGap),
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.MetricLabelGap),
         ) {
-            Text(text = label, style = Core5x5Typography.Caption, color = Core5x5Colors.SecondaryText)
-            Text(text = value, style = Core5x5Typography.Heading, color = Core5x5Colors.PrimaryText)
+            Text(text = label, style = AppTypography.Caption, color = AppColors.SecondaryText)
+            Text(text = value, style = AppTypography.Heading, color = AppColors.PrimaryText)
         }
     }
 }

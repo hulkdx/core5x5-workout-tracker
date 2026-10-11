@@ -26,12 +26,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.preferences.domain.formatWeight
-import com.hulkdx.core5x5.core.ui.components.Core5x5HomeExerciseRow
-import com.hulkdx.core5x5.core.ui.components.Core5x5HomeStartButton
-import com.hulkdx.core5x5.core.ui.components.Core5x5WorkoutSwitch
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens as Home
+import com.hulkdx.core5x5.core.ui.components.AppHomeExerciseRow
+import com.hulkdx.core5x5.core.ui.components.AppHomeStartButton
+import com.hulkdx.core5x5.core.ui.components.AppWorkoutSwitch
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppTheme
+import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
 import com.hulkdx.core5x5.feature.workout.domain.ExercisePrescription
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
@@ -90,7 +90,7 @@ internal fun TodayScreen(
                     )
                     else -> Column(verticalArrangement = Arrangement.spacedBy(Home.BrandGap)) {
                         Text(text = "Unable to load your workout.", color = Home.Secondary, style = Home.Prescription)
-                        Core5x5HomeStartButton(label = "Try Again", onClick = onRetryLoad, enabled = !uiState.isLoading)
+                        AppHomeStartButton(label = "Try Again", onClick = onRetryLoad, enabled = !uiState.isLoading)
                     }
                 }
             }
@@ -121,7 +121,7 @@ private fun WorkoutSummaryCard(
             Spacer(Modifier.height(Home.HeadingGap))
             Divider()
             exercises.forEachIndexed { index, exercise ->
-                Core5x5HomeExerciseRow(
+                AppHomeExerciseRow(
                     name = exercise.exercise.displayName(),
                     prescription = "${exercise.sets} × ${exercise.reps} · ${formatWeight(exercise.weightKg, weightUnit)}",
                 )
@@ -129,10 +129,10 @@ private fun WorkoutSummaryCard(
             }
             Spacer(Modifier.height(Home.ButtonGap))
             if (error != null) {
-                Text(text = error.message(), color = Core5x5Colors.Destructive, style = Home.Eyebrow)
+                Text(text = error.message(), color = AppColors.Destructive, style = Home.Eyebrow)
                 Spacer(Modifier.height(Home.ButtonGap))
             }
-            Core5x5HomeStartButton(label = buttonLabel, onClick = onAction, enabled = buttonEnabled)
+            AppHomeStartButton(label = buttonLabel, onClick = onAction, enabled = buttonEnabled)
         }
     }
 }
@@ -145,12 +145,12 @@ private fun WorkoutHeading(eyebrow: String, workout: Workout, onSwitch: (() -> U
         if (stacked) {
             Column(verticalArrangement = Arrangement.spacedBy(Home.SwitchGap)) {
                 HeadingText(eyebrow, workout)
-                if (onSwitch != null) Core5x5WorkoutSwitch("Switch to ${workout.nextWorkout().name}", onSwitch, enabled)
+                if (onSwitch != null) AppWorkoutSwitch("Switch to ${workout.nextWorkout().name}", onSwitch, enabled)
             }
         } else {
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(Home.SwitchGap)) {
                 HeadingText(eyebrow, workout, Modifier.weight(1f))
-                if (onSwitch != null) Core5x5WorkoutSwitch("Switch to ${workout.nextWorkout().name}", onSwitch, enabled)
+                if (onSwitch != null) AppWorkoutSwitch("Switch to ${workout.nextWorkout().name}", onSwitch, enabled)
             }
         }
     }
@@ -182,7 +182,7 @@ private fun TodayError.message() = when (this) {
 @Preview(name = "Today large text", widthDp = 320, heightDp = 540, fontScale = 2f)
 @Composable
 private fun TodayScreenPreview() {
-    Core5x5Theme {
+    AppTheme {
         TodayScreen(TodayUiState(isLoading = false, nextWorkout = Workout.A), onStartWorkout = {}, onResumeWorkout = {}, onRetryLoad = {})
     }
 }

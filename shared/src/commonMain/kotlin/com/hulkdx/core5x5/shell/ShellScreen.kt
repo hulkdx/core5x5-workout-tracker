@@ -15,11 +15,11 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
-import com.hulkdx.core5x5.core.ui.components.Core5x5SecondaryButton
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
+import com.hulkdx.core5x5.core.ui.components.AppSecondaryButton
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppTheme
+import com.hulkdx.core5x5.core.ui.theme.AppTypography
 
 @Composable
 internal fun ShellScreen(
@@ -27,13 +27,13 @@ internal fun ShellScreen(
     modifier: Modifier = Modifier,
     showTitle: Boolean = true,
     onRetryPreferences: () -> Unit = {},
-    backgroundColor: Color = Core5x5Colors.Background,
+    backgroundColor: Color = AppColors.Background,
     content: @Composable () -> Unit,
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
         color = backgroundColor,
-        contentColor = Core5x5Colors.PrimaryText,
+        contentColor = AppColors.PrimaryText,
     ) {
         // AppNavigation owns safe insets and reserves the anchored navigation bar.
         Column(modifier = Modifier.fillMaxSize()) {
@@ -44,28 +44,28 @@ internal fun ShellScreen(
                         append(uiState.title)
                     } else {
                         append(uiState.title.substring(0, accentIndex))
-                        withStyle(SpanStyle(color = Core5x5Colors.Action)) {
+                        withStyle(SpanStyle(color = AppColors.Action)) {
                             append(uiState.title.substring(accentIndex))
                         }
                     }
                 },
-                style = Core5x5Typography.Title,
-                color = Core5x5Colors.PrimaryText,
+                style = AppTypography.Title,
+                color = AppColors.PrimaryText,
                 modifier = Modifier.padding(
-                    start = Core5x5Dimensions.ScreenInset,
-                    top = Core5x5Dimensions.ContentGap,
-                    end = Core5x5Dimensions.ScreenInset,
-                    bottom = Core5x5Dimensions.ContentGap,
+                    start = AppDimensions.ScreenInset,
+                    top = AppDimensions.ContentGap,
+                    end = AppDimensions.ScreenInset,
+                    bottom = AppDimensions.ContentGap,
                 ),
             )
             if (uiState.hasPreferencesError) {
-                Column(modifier = Modifier.padding(Core5x5Dimensions.ScreenInset)) {
+                Column(modifier = Modifier.padding(AppDimensions.ScreenInset)) {
                     Text(
                         text = "Unable to load weight units. Showing ${uiState.weightUnit.symbol}.",
-                        style = Core5x5Typography.Caption,
-                        color = Core5x5Colors.Destructive,
+                        style = AppTypography.Caption,
+                        color = AppColors.Destructive,
                     )
-                    Core5x5SecondaryButton(label = "Retry preferences", onClick = onRetryPreferences)
+                    AppSecondaryButton(label = "Retry preferences", onClick = onRetryPreferences)
                 }
             }
             Box(
@@ -81,7 +81,7 @@ internal fun ShellScreen(
 @Preview
 @Composable
 private fun ShellScreenPreview() {
-    Core5x5Theme {
+    AppTheme {
         ShellScreen(uiState = ShellUiState()) {
             Text(text = "Today")
         }

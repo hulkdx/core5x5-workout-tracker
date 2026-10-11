@@ -8,12 +8,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /** Implementation motion correction documented in design/DESIGN_SYSTEM.md. */
-object Core5x5Motion {
+object AppMotion {
     const val NavigationFadeDurationMillis = 180 // motion.navigation.fadeDurationMillis
 }
 
 /** Measured dark tokens from the workspace's design/tokens.json. */
-object Core5x5Colors {
+object AppColors {
     val Background = Color(0xFF0C1114)
     val Elevated = Color(0xFF151B20)
     val Subtle = Color(0xFF11171B)
@@ -31,7 +31,7 @@ object Core5x5Colors {
 }
 
 /** The type.* measurements, using platform sans-serif in place of the reference Inter font. */
-object Core5x5Typography {
+object AppTypography {
     val Title = style(size = 24, lineHeight = 30, weight = FontWeight.SemiBold)
     val Heading = style(size = 20, lineHeight = 26, weight = FontWeight.SemiBold)
     val Body = style(size = 16, lineHeight = 23, weight = FontWeight.Normal)
@@ -48,7 +48,7 @@ object Core5x5Typography {
     )
 }
 
-object Core5x5Dimensions {
+object AppDimensions {
     val ReferenceWidth = 390.dp // reference.width
     val ReferenceSystemTopReserve = 38.dp // reference.systemTopReserve; reference previews only
     val ScreenInset = 20.dp // layout.screenInset

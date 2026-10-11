@@ -18,12 +18,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import com.hulkdx.core5x5.core.ui.theme.Core5x5ActiveTokens as Active
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens as Home
-import com.hulkdx.core5x5.core.ui.theme.Core5x5RestTokens as Rest
+import com.hulkdx.core5x5.core.ui.theme.AppActiveTokens as Active
+import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
+import com.hulkdx.core5x5.core.ui.theme.AppRestTokens as Rest
 
 @Composable
-fun Core5x5ExpandedExerciseCard(
+fun AppExpandedExerciseCard(
     name: String,
     prescription: String,
     modifier: Modifier = Modifier,
@@ -53,7 +53,7 @@ fun Core5x5ExpandedExerciseCard(
                     Text(text = prescription, style = metadataStyle, color = Home.Secondary)
                 }
                 if (onEdit != null) TextButton(onClick = onEdit, enabled = editEnabled,
-                    modifier = Modifier.heightIn(min = com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions.TouchTargetMin)) {
+                    modifier = Modifier.heightIn(min = com.hulkdx.core5x5.core.ui.theme.AppDimensions.TouchTargetMin)) {
                     Text("Edit", style = Home.SwitchLabel, color = if (editEnabled) Home.Action else Home.Secondary)
                 }
             }

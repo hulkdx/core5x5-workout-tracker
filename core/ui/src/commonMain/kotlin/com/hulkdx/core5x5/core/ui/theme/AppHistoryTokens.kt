@@ -6,7 +6,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /** history.* raster estimates from 07 History.png, normalized to width 390. */
-object Core5x5HistoryTokens {
+object AppHistoryTokens {
     val Background = Color(0xFF0B1216)
     val Card = Color(0xFF10181D)
     val DateTile = Color(0xFF192229)
@@ -34,10 +34,10 @@ object Core5x5HistoryTokens {
     val ClockSize = 14.dp
     val ClockGap = 6.dp
     val NavigationIconSize = 24.dp
-    val Title = Core5x5Typography.Title.copy(fontSize = 34.sp, lineHeight = 42.sp, fontWeight = FontWeight.Bold)
-    val Month = Core5x5Typography.Caption.copy(fontSize = 11.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp)
-    val Workout = Core5x5Typography.Label.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Bold)
-    val Metadata = Core5x5Typography.Caption.copy(fontSize = 11.sp, lineHeight = 16.sp)
+    val Title = AppTypography.Title.copy(fontSize = 34.sp, lineHeight = 42.sp, fontWeight = FontWeight.Bold)
+    val Month = AppTypography.Caption.copy(fontSize = 11.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp)
+    val Workout = AppTypography.Label.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Bold)
+    val Metadata = AppTypography.Caption.copy(fontSize = 11.sp, lineHeight = 16.sp)
     val Weekday = Metadata
-    val Day = Core5x5Typography.Heading.copy(fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
+    val Day = AppTypography.Heading.copy(fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
 }

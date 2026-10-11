@@ -25,13 +25,13 @@ import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDe
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.hulkdx.core5x5.core.ui.components.Core5x5BottomNavigation
-import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Motion
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HistoryTokens
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
-import com.hulkdx.core5x5.core.ui.theme.Core5x5SettingsTokens
+import com.hulkdx.core5x5.core.ui.components.AppBottomNavigation
+import com.hulkdx.core5x5.core.ui.components.AppNavigationItem
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppMotion
+import com.hulkdx.core5x5.core.ui.theme.AppHistoryTokens
+import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens
+import com.hulkdx.core5x5.core.ui.theme.AppSettingsTokens
 import com.hulkdx.core5x5.feature.history.presentation.HistoryRoute
 import com.hulkdx.core5x5.feature.history.presentation.WorkoutDetailRoute
 import com.hulkdx.core5x5.feature.settings.presentation.SettingsRoute
@@ -49,15 +49,15 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
         mutableStateListOf<AppDestination>(AppDestination.Today)
     }
 
-    val onItemSelected: (Core5x5NavigationItem) -> Unit = { item ->
+    val onItemSelected: (AppNavigationItem) -> Unit = { item ->
         if (backStack.lastOrNull()?.navigationItem != null) {
             backStack.selectNavigationItem(item)
-            if (item == Core5x5NavigationItem.TODAY) viewModel.loadPreferences()
+            if (item == AppNavigationItem.TODAY) viewModel.loadPreferences()
         }
     }
 
     NavDisplay(
-        modifier = Modifier.fillMaxSize().background(Core5x5Colors.Background),
+        modifier = Modifier.fillMaxSize().background(AppColors.Background),
         backStack = backStack,
         onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
         sizeTransform = null,
@@ -71,11 +71,11 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
         ),
         entryProvider = entryProvider {
             entry<AppDestination.Today>(clazzContentKey = { "today" }) {
-                TopLevelDestination(Core5x5NavigationItem.TODAY, onItemSelected) {
+                TopLevelDestination(AppNavigationItem.TODAY, onItemSelected) {
                     ShellScreen(
                         uiState = uiState,
                         showTitle = false,
-                        backgroundColor = Core5x5HomeTokens.Background,
+                        backgroundColor = AppHomeTokens.Background,
                         onRetryPreferences = viewModel::loadPreferences,
                     ) {
                         TodayRoute(
@@ -88,11 +88,11 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
                 }
             }
             entry<AppDestination.History>(clazzContentKey = { "history" }) {
-                TopLevelDestination(Core5x5NavigationItem.HISTORY, onItemSelected) {
+                TopLevelDestination(AppNavigationItem.HISTORY, onItemSelected) {
                     ShellScreen(
                         uiState = uiState.copy(title = "History"),
                         showTitle = false,
-                        backgroundColor = Core5x5HistoryTokens.Background,
+                        backgroundColor = AppHistoryTokens.Background,
                         onRetryPreferences = viewModel::loadPreferences,
                     ) {
                         HistoryRoute()
@@ -100,11 +100,11 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
                 }
             }
             entry<AppDestination.Settings>(clazzContentKey = { "settings" }) {
-                TopLevelDestination(Core5x5NavigationItem.SETTINGS, onItemSelected) {
+                TopLevelDestination(AppNavigationItem.SETTINGS, onItemSelected) {
                     ShellScreen(
                         uiState = uiState,
                         showTitle = false,
-                        backgroundColor = Core5x5SettingsTokens.Background,
+                        backgroundColor = AppSettingsTokens.Background,
                         onRetryPreferences = viewModel::loadPreferences,
                     ) {
                         SettingsRoute()
@@ -142,30 +142,30 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
 }
 
 private fun navigationFade() =
-    fadeIn(tween(Core5x5Motion.NavigationFadeDurationMillis, easing = LinearEasing)) togetherWith
-        fadeOut(tween(Core5x5Motion.NavigationFadeDurationMillis, easing = LinearEasing))
+    fadeIn(tween(AppMotion.NavigationFadeDurationMillis, easing = LinearEasing)) togetherWith
+        fadeOut(tween(AppMotion.NavigationFadeDurationMillis, easing = LinearEasing))
 
 /** Keeps an outgoing tab's insets and bottom-bar space intact throughout its transition. */
 @Composable
 private fun TopLevelDestination(
-    selectedItem: Core5x5NavigationItem,
-    onItemSelected: (Core5x5NavigationItem) -> Unit,
+    selectedItem: AppNavigationItem,
+    onItemSelected: (AppNavigationItem) -> Unit,
     content: @Composable () -> Unit,
 ) {
-    val isToday = selectedItem == Core5x5NavigationItem.TODAY
-    val isHistory = selectedItem == Core5x5NavigationItem.HISTORY
-    val isSettings = selectedItem == Core5x5NavigationItem.SETTINGS
+    val isToday = selectedItem == AppNavigationItem.TODAY
+    val isHistory = selectedItem == AppNavigationItem.HISTORY
+    val isSettings = selectedItem == AppNavigationItem.SETTINGS
     val useRevisedNavigation = isToday || isHistory || isSettings
     val background = when {
-        isToday -> Core5x5HomeTokens.Background
-        isHistory -> Core5x5HistoryTokens.Background
-        isSettings -> Core5x5SettingsTokens.Background
-        else -> Core5x5Colors.Background
+        isToday -> AppHomeTokens.Background
+        isHistory -> AppHistoryTokens.Background
+        isSettings -> AppSettingsTokens.Background
+        else -> AppColors.Background
     }
     val navigationBackground = when {
-        isToday || isSettings -> Core5x5HomeTokens.Card
-        isHistory -> Core5x5HistoryTokens.Card
-        else -> Core5x5Colors.Elevated
+        isToday || isSettings -> AppHomeTokens.Card
+        isHistory -> AppHistoryTokens.Card
+        else -> AppColors.Elevated
     }
     Column(modifier = Modifier.fillMaxSize().background(background)) {
         Box(
@@ -186,7 +186,7 @@ private fun TopLevelDestination(
                     WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal),
                 ),
         ) {
-            Core5x5BottomNavigation(
+            AppBottomNavigation(
                 selectedItem = selectedItem,
                 onItemSelected = onItemSelected,
                 useHomeDesign = useRevisedNavigation,

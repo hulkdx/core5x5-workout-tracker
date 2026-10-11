@@ -26,13 +26,13 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens as Home
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
+import com.hulkdx.core5x5.core.ui.theme.AppTypography
 
 @Composable
-fun Core5x5WorkoutTopBar(
+fun AppWorkoutTopBar(
     title: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -41,13 +41,13 @@ fun Core5x5WorkoutTopBar(
     refined: Boolean = false,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().heightIn(min = Core5x5Dimensions.TopBarHeight),
+        modifier = modifier.fillMaxWidth().heightIn(min = AppDimensions.TopBarHeight),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier.sizeIn(
-                minWidth = Core5x5Dimensions.TouchTargetMin,
-                minHeight = Core5x5Dimensions.TouchTargetMin,
+                minWidth = AppDimensions.TouchTargetMin,
+                minHeight = AppDimensions.TouchTargetMin,
             ).clickable(enabled = backEnabled, role = Role.Button, onClick = onBack)
                 .semantics { contentDescription = backContentDescription },
             contentAlignment = Alignment.CenterStart,
@@ -60,18 +60,18 @@ fun Core5x5WorkoutTopBar(
             ) else Text(
                 text = "‹",
                 modifier = Modifier.clearAndSetSemantics {},
-                style = Core5x5Typography.Title,
-                color = Core5x5Colors.PrimaryText,
+                style = AppTypography.Title,
+                color = AppColors.PrimaryText,
             )
         }
         Text(
             text = title,
             modifier = Modifier.weight(1f),
-            style = if (refined) Home.Button else Core5x5Typography.Label,
-            color = if (refined) Home.Primary else Core5x5Colors.PrimaryText,
+            style = if (refined) Home.Button else AppTypography.Label,
+            color = if (refined) Home.Primary else AppColors.PrimaryText,
             textAlign = TextAlign.Center,
         )
-        Spacer(modifier = Modifier.width(Core5x5Dimensions.TouchTargetMin))
+        Spacer(modifier = Modifier.width(AppDimensions.TouchTargetMin))
     }
 }
 

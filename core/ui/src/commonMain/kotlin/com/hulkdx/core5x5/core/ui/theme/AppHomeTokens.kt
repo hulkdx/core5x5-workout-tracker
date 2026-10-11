@@ -6,7 +6,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /** home.* raster estimates from 01. HomeScreen.png; see design/specs/today.md. */
-object Core5x5HomeTokens {
+object AppHomeTokens {
     val Background = Color(0xFF0E1011)
     val Card = Color(0xFF141617)
     val Primary = Color(0xFFF5F8F7)
@@ -41,11 +41,11 @@ object Core5x5HomeTokens {
     val NavigationItemHeight = 50.dp
     val NavigationIconSize = 28.dp
     val NavigationLabelGap = 4.dp
-    val Brand = Core5x5Typography.Title.copy(fontSize = 36.sp, lineHeight = 44.sp, fontWeight = FontWeight.Bold)
-    val Title = Core5x5Typography.Title.copy(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
-    val Eyebrow = Core5x5Typography.Caption.copy(fontWeight = FontWeight.SemiBold)
-    val Exercise = Core5x5Typography.Heading.copy(fontSize = 18.sp, lineHeight = 24.sp)
-    val Prescription = Core5x5Typography.Label.copy(lineHeight = 22.sp)
-    val Button = Core5x5Typography.Heading.copy(fontWeight = FontWeight.Bold)
-    val SwitchLabel = Core5x5Typography.Caption.copy(fontWeight = FontWeight.SemiBold)
+    val Brand = AppTypography.Title.copy(fontSize = 36.sp, lineHeight = 44.sp, fontWeight = FontWeight.Bold)
+    val Title = AppTypography.Title.copy(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
+    val Eyebrow = AppTypography.Caption.copy(fontWeight = FontWeight.SemiBold)
+    val Exercise = AppTypography.Heading.copy(fontSize = 18.sp, lineHeight = 24.sp)
+    val Prescription = AppTypography.Label.copy(lineHeight = 22.sp)
+    val Button = AppTypography.Heading.copy(fontWeight = FontWeight.Bold)
+    val SwitchLabel = AppTypography.Caption.copy(fontWeight = FontWeight.SemiBold)
 }

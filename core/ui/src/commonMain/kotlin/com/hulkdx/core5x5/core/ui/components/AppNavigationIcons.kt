@@ -9,19 +9,19 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.unit.dp
 
-internal val Core5x5NavigationItem.icon: ImageVector
+internal val AppNavigationItem.icon: ImageVector
     get() = when (this) {
-        Core5x5NavigationItem.TODAY -> HomeIcon
-        Core5x5NavigationItem.HISTORY -> HistoryIcon
-        Core5x5NavigationItem.SETTINGS -> SettingsIcon
+        AppNavigationItem.TODAY -> HomeIcon
+        AppNavigationItem.HISTORY -> HistoryIcon
+        AppNavigationItem.SETTINGS -> SettingsIcon
     }
 
 /** Native vectors matching the revised Home PNG; the original SVG family remains below. */
-internal val Core5x5NavigationItem.homeIcon: ImageVector
+internal val AppNavigationItem.homeIcon: ImageVector
     get() = when (this) {
-        Core5x5NavigationItem.TODAY -> FilledHomeIcon
-        Core5x5NavigationItem.HISTORY -> ClockHistoryIcon
-        Core5x5NavigationItem.SETTINGS -> FilledSettingsIcon
+        AppNavigationItem.TODAY -> FilledHomeIcon
+        AppNavigationItem.HISTORY -> ClockHistoryIcon
+        AppNavigationItem.SETTINGS -> FilledSettingsIcon
     }
 
 private val FilledHomeIcon = ImageVector.Builder(

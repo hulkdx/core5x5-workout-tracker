@@ -20,14 +20,14 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
-import com.hulkdx.core5x5.core.ui.theme.Core5x5RestTokens as Rest
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppTypography
+import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens
+import com.hulkdx.core5x5.core.ui.theme.AppRestTokens as Rest
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun Core5x5RestTimer(
+fun AppRestTimer(
     countdown: String,
     isExpired: Boolean,
     modifier: Modifier = Modifier,
@@ -36,37 +36,37 @@ fun Core5x5RestTimer(
     val label = if (isExpired) "Rest complete" else "Rest"
     Surface(
         modifier = modifier.fillMaxWidth().heightIn(
-            min = if (compact) Core5x5Dimensions.TimerPinnedMinHeight else Rest.TimerHeight,
+            min = if (compact) AppDimensions.TimerPinnedMinHeight else Rest.TimerHeight,
         ).semantics(mergeDescendants = true) {
             contentDescription = "$label, $countdown"
             // Foreground expiry is announced once; ticking time is available on demand.
             if (isExpired) liveRegion = LiveRegionMode.Polite
         },
-        shape = RoundedCornerShape(Core5x5HomeTokens.CardRadius),
-        color = Core5x5HomeTokens.Card,
-        border = BorderStroke(Core5x5HomeTokens.BorderStroke, Core5x5HomeTokens.Border),
+        shape = RoundedCornerShape(AppHomeTokens.CardRadius),
+        color = AppHomeTokens.Card,
+        border = BorderStroke(AppHomeTokens.BorderStroke, AppHomeTokens.Border),
     ) {
         Column(
-            modifier = Modifier.padding(if (compact) Core5x5Dimensions.TimerPadding else Rest.TimerPadding),
+            modifier = Modifier.padding(if (compact) AppDimensions.TimerPadding else Rest.TimerPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Rest.TimerLabelGap, Alignment.CenterVertically),
         ) {
             if (compact) FlowRow(
-                modifier = Modifier.fillMaxWidth().heightIn(min = Core5x5Dimensions.TimerTopHeight),
-                horizontalArrangement = Arrangement.spacedBy(Core5x5Dimensions.TimerLabelGap, Alignment.CenterHorizontally),
-                verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.TimerLabelGap, Alignment.CenterVertically),
+                modifier = Modifier.fillMaxWidth().heightIn(min = AppDimensions.TimerTopHeight),
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.TimerLabelGap, Alignment.CenterHorizontally),
+                verticalArrangement = Arrangement.spacedBy(AppDimensions.TimerLabelGap, Alignment.CenterVertically),
             ) {
                 Text(
                     text = if (isExpired) label else "REST",
                     modifier = Modifier.align(Alignment.CenterVertically).clearAndSetSemantics {},
-                    style = Core5x5Typography.Caption,
-                    color = if (isExpired) Core5x5HomeTokens.Action else Core5x5HomeTokens.Secondary,
+                    style = AppTypography.Caption,
+                    color = if (isExpired) AppHomeTokens.Action else AppHomeTokens.Secondary,
                 )
                 Text(
                     text = countdown,
                     modifier = Modifier.align(Alignment.CenterVertically).clearAndSetSemantics {},
-                    style = Core5x5Typography.Numeric,
-                    color = if (isExpired) Core5x5HomeTokens.Action else Core5x5HomeTokens.Primary,
+                    style = AppTypography.Numeric,
+                    color = if (isExpired) AppHomeTokens.Action else AppHomeTokens.Primary,
                 )
             } else {
                 Text(
@@ -74,14 +74,14 @@ fun Core5x5RestTimer(
                     modifier = Modifier.fillMaxWidth().clearAndSetSemantics {},
                     style = Rest.TimerLabel,
                     textAlign = TextAlign.Center,
-                    color = if (isExpired) Core5x5HomeTokens.Action else Core5x5HomeTokens.Secondary,
+                    color = if (isExpired) AppHomeTokens.Action else AppHomeTokens.Secondary,
                 )
                 Text(
                     text = countdown,
                     modifier = Modifier.fillMaxWidth().clearAndSetSemantics {},
                     style = Rest.Countdown,
                     textAlign = TextAlign.Center,
-                    color = if (isExpired) Core5x5HomeTokens.Action else Core5x5HomeTokens.Primary,
+                    color = if (isExpired) AppHomeTokens.Action else AppHomeTokens.Primary,
                 )
             }
         }

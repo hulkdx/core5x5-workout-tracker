@@ -30,21 +30,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import com.hulkdx.core5x5.core.ui.components.Core5x5CompletionButton
-import com.hulkdx.core5x5.core.ui.components.Core5x5CompletionMetrics
-import com.hulkdx.core5x5.core.ui.components.Core5x5CompletionSuccessIcon
-import com.hulkdx.core5x5.core.ui.components.Core5x5NextWorkoutSummary
-import com.hulkdx.core5x5.core.ui.components.Core5x5PrimaryButton
-import com.hulkdx.core5x5.core.ui.components.Core5x5SecondaryButton
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
+import com.hulkdx.core5x5.core.ui.components.AppCompletionButton
+import com.hulkdx.core5x5.core.ui.components.AppCompletionMetrics
+import com.hulkdx.core5x5.core.ui.components.AppCompletionSuccessIcon
+import com.hulkdx.core5x5.core.ui.components.AppNextWorkoutSummary
+import com.hulkdx.core5x5.core.ui.components.AppPrimaryButton
+import com.hulkdx.core5x5.core.ui.components.AppSecondaryButton
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppTheme
+import com.hulkdx.core5x5.core.ui.theme.AppTypography
 import com.hulkdx.core5x5.feature.workout.domain.CompletedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutSet
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
-import com.hulkdx.core5x5.core.ui.theme.Core5x5CompleteTokens as Complete
+import com.hulkdx.core5x5.core.ui.theme.AppCompleteTokens as Complete
 
 @Composable
 internal fun WorkoutCompleteScreen(
@@ -83,18 +83,18 @@ internal fun WorkoutCompleteScreen(
                         when {
                             uiState.isLoading -> Text(
                                 text = "Loading saved workout…",
-                                style = Core5x5Typography.Body,
-                                color = Core5x5Colors.SecondaryText,
+                                style = AppTypography.Body,
+                                color = AppColors.SecondaryText,
                                 textAlign = TextAlign.Center,
                             )
                             completed != null && next != null -> {
-                                Core5x5CompletionSuccessIcon()
+                                AppCompletionSuccessIcon()
                                 Spacer(Modifier.height(Complete.SuccessTitleGap))
                                 Text(
                                     text = "Workout Complete",
                                     modifier = Modifier.fillMaxWidth().semantics { heading() },
                                     style = Complete.Title,
-                                    color = Core5x5Colors.PrimaryText,
+                                    color = AppColors.PrimaryText,
                                     textAlign = TextAlign.Center,
                                 )
                                 Spacer(Modifier.height(Complete.SubtitleGap))
@@ -102,16 +102,16 @@ internal fun WorkoutCompleteScreen(
                                     text = "Workout saved. Your next workout is ready.",
                                     modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
                                     style = Complete.Subtitle,
-                                    color = Core5x5Colors.SecondaryText,
+                                    color = AppColors.SecondaryText,
                                     textAlign = TextAlign.Center,
                                 )
                                 Spacer(Modifier.height(Complete.MetricsTopGap))
-                                Core5x5CompletionMetrics(
+                                AppCompletionMetrics(
                                     duration = completed.durationMillis.formatWorkoutDuration(),
                                     completedSets = "${completed.completedSets} / ${completed.prescribedSets}",
                                 )
                                 Spacer(Modifier.height(Complete.ContentGap))
-                                Core5x5NextWorkoutSummary(
+                                AppNextWorkoutSummary(
                                     title = "Workout ${next.workout.name}",
                                     indicator = next.workout.name,
                                 )
@@ -124,20 +124,20 @@ internal fun WorkoutCompleteScreen(
                                         "Unable to load the saved workout. Try again."
                                     },
                                     modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-                                    style = Core5x5Typography.Body,
-                                    color = Core5x5Colors.SecondaryText,
+                                    style = AppTypography.Body,
+                                    color = AppColors.SecondaryText,
                                     textAlign = TextAlign.Center,
                                 )
                                 Spacer(Modifier.height(Complete.ContentGap))
-                                Core5x5PrimaryButton(label = "Try Again", onClick = onRetryLoad)
+                                AppPrimaryButton(label = "Try Again", onClick = onRetryLoad)
                             }
                         }
                     }
                 }
                 if (completed != null && next != null && !uiState.isLoading) {
-                    Core5x5CompletionButton(label = "Back to Today", onClick = onBackToToday)
+                    AppCompletionButton(label = "Back to Today", onClick = onBackToToday)
                 } else {
-                    Core5x5SecondaryButton(label = "Back to Today", onClick = onBackToToday)
+                    AppSecondaryButton(label = "Back to Today", onClick = onBackToToday)
                 }
             }
         }
@@ -181,7 +181,7 @@ private fun CompletionPreview(workout: Workout, completedSets: Int = workout.exe
             },
         )
     }
-    Core5x5Theme {
+    AppTheme {
         WorkoutCompleteScreen(
             uiState = WorkoutCompleteUiState(
                 isLoading = false,

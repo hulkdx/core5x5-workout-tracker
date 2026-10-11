@@ -23,11 +23,11 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HistoryTokens as History
+import com.hulkdx.core5x5.core.ui.theme.AppHistoryTokens as History
 
 /** An informational saved-session card with grouped accessibility content. */
 @Composable
-fun Core5x5HistoryCard(
+fun AppHistoryCard(
     weekday: String,
     day: String,
     fullDate: String,

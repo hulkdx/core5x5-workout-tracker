@@ -21,13 +21,13 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HistoryTokens as History
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens as Home
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppHistoryTokens as History
+import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
+import com.hulkdx.core5x5.core.ui.theme.AppTypography
 
-enum class Core5x5NavigationItem(val label: String) {
+enum class AppNavigationItem(val label: String) {
     TODAY("Today"),
     HISTORY("History"),
     SETTINGS("Settings"),
@@ -35,45 +35,45 @@ enum class Core5x5NavigationItem(val label: String) {
 
 /** The app shell owns system insets; this component owns only the design's internal padding. */
 @Composable
-fun Core5x5BottomNavigation(
-    selectedItem: Core5x5NavigationItem,
-    onItemSelected: (Core5x5NavigationItem) -> Unit,
+fun AppBottomNavigation(
+    selectedItem: AppNavigationItem,
+    onItemSelected: (AppNavigationItem) -> Unit,
     modifier: Modifier = Modifier,
-    useHomeDesign: Boolean = selectedItem == Core5x5NavigationItem.TODAY || selectedItem == Core5x5NavigationItem.HISTORY,
+    useHomeDesign: Boolean = selectedItem == AppNavigationItem.TODAY || selectedItem == AppNavigationItem.HISTORY,
 ) {
-    val isHistoryDesign = useHomeDesign && selectedItem == Core5x5NavigationItem.HISTORY
+    val isHistoryDesign = useHomeDesign && selectedItem == AppNavigationItem.HISTORY
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .background(if (isHistoryDesign) History.Card else if (useHomeDesign) Home.Card else Core5x5Colors.Elevated)
+            .background(if (isHistoryDesign) History.Card else if (useHomeDesign) Home.Card else AppColors.Elevated)
             .drawBehind {
                 if (useHomeDesign) drawLine(if (isHistoryDesign) History.Border else Home.Border, Offset.Zero, Offset(size.width, 0f), Home.BorderStroke.toPx())
             }
-            .heightIn(min = if (useHomeDesign) Home.NavigationHeight else Core5x5Dimensions.NavigationHeight)
+            .heightIn(min = if (useHomeDesign) Home.NavigationHeight else AppDimensions.NavigationHeight)
             .padding(
-                horizontal = if (useHomeDesign) Home.NavigationPaddingHorizontal else Core5x5Dimensions.NavigationPaddingHorizontal,
-                vertical = if (useHomeDesign) Home.NavigationPadding else Core5x5Dimensions.NavigationPaddingVertical,
+                horizontal = if (useHomeDesign) Home.NavigationPaddingHorizontal else AppDimensions.NavigationPaddingHorizontal,
+                vertical = if (useHomeDesign) Home.NavigationPadding else AppDimensions.NavigationPaddingVertical,
             ),
     ) {
         val itemWidth = minOf(
-            Core5x5Dimensions.NavigationItemWidth,
-            maxWidth / Core5x5NavigationItem.entries.size,
+            AppDimensions.NavigationItemWidth,
+            maxWidth / AppNavigationItem.entries.size,
         )
         Row(
             modifier = Modifier.fillMaxWidth().selectableGroup(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Core5x5NavigationItem.entries.forEach { item ->
+            AppNavigationItem.entries.forEach { item ->
                 val selected = item == selectedItem
                 val color = if (useHomeDesign) {
                     if (selected) Home.Action else if (isHistoryDesign) History.Secondary else Home.Secondary
                 } else {
-                    if (selected) Core5x5Colors.Action else Core5x5Colors.MutedText
+                    if (selected) AppColors.Action else AppColors.MutedText
                 }
                 Column(
                     modifier = Modifier
                         .width(itemWidth)
-                        .heightIn(min = if (useHomeDesign) Home.NavigationItemHeight else Core5x5Dimensions.NavigationItemHeight)
+                        .heightIn(min = if (useHomeDesign) Home.NavigationItemHeight else AppDimensions.NavigationItemHeight)
                         .selectable(
                             selected = selected,
                             role = Role.Tab,
@@ -81,19 +81,19 @@ fun Core5x5BottomNavigation(
                         ),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(
-                        if (useHomeDesign) Home.NavigationLabelGap else Core5x5Dimensions.NavigationLabelGap,
+                        if (useHomeDesign) Home.NavigationLabelGap else AppDimensions.NavigationLabelGap,
                         Alignment.CenterVertically,
                     ),
                 ) {
                     Icon(
                         imageVector = if (useHomeDesign) item.homeIcon else item.icon,
                         contentDescription = null,
-                        modifier = Modifier.size(if (isHistoryDesign) History.NavigationIconSize else if (useHomeDesign) Home.NavigationIconSize else Core5x5Dimensions.NavigationIconSize),
+                        modifier = Modifier.size(if (isHistoryDesign) History.NavigationIconSize else if (useHomeDesign) Home.NavigationIconSize else AppDimensions.NavigationIconSize),
                         tint = color,
                     )
                     Text(
                         text = item.label,
-                        style = if (isHistoryDesign) History.Metadata else if (useHomeDesign) Home.Eyebrow else Core5x5Typography.Caption,
+                        style = if (isHistoryDesign) History.Metadata else if (useHomeDesign) Home.Eyebrow else AppTypography.Caption,
                         color = color,
                         textAlign = TextAlign.Center,
                     )

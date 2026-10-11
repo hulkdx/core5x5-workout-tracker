@@ -15,32 +15,32 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppTypography
 
 @Composable
-fun Core5x5PrimaryButton(
+fun AppPrimaryButton(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    Core5x5Button(label, onClick, modifier, enabled, primary = true)
+    AppButton(label, onClick, modifier, enabled, primary = true)
 }
 
 @Composable
-fun Core5x5SecondaryButton(
+fun AppSecondaryButton(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    Core5x5Button(label, onClick, modifier, enabled, primary = false)
+    AppButton(label, onClick, modifier, enabled, primary = false)
 }
 
 @Composable
-private fun Core5x5Button(
+private fun AppButton(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier,
@@ -50,27 +50,27 @@ private fun Core5x5Button(
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val background = when {
-        primary && pressed -> Core5x5Colors.ActionPressed
-        primary -> Core5x5Colors.Action
-        pressed -> Core5x5Colors.Pressed
-        else -> Core5x5Colors.Elevated
+        primary && pressed -> AppColors.ActionPressed
+        primary -> AppColors.Action
+        pressed -> AppColors.Pressed
+        else -> AppColors.Elevated
     }
     Button(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth().heightIn(min = Core5x5Dimensions.ButtonHeight),
+        modifier = modifier.fillMaxWidth().heightIn(min = AppDimensions.ButtonHeight),
         enabled = enabled,
-        shape = RoundedCornerShape(Core5x5Dimensions.RadiusMedium),
+        shape = RoundedCornerShape(AppDimensions.RadiusMedium),
         colors = ButtonDefaults.buttonColors(
             containerColor = background,
-            contentColor = if (primary) Core5x5Colors.Background else Core5x5Colors.PrimaryText,
-            disabledContainerColor = Core5x5Colors.Disabled,
-            disabledContentColor = Core5x5Colors.DisabledText,
+            contentColor = if (primary) AppColors.Background else AppColors.PrimaryText,
+            disabledContainerColor = AppColors.Disabled,
+            disabledContentColor = AppColors.DisabledText,
         ),
-        contentPadding = PaddingValues(Core5x5Dimensions.ButtonPadding),
-        border = if (primary) null else BorderStroke(Core5x5Dimensions.BorderStroke, Core5x5Colors.Border),
+        contentPadding = PaddingValues(AppDimensions.ButtonPadding),
+        border = if (primary) null else BorderStroke(AppDimensions.BorderStroke, AppColors.Border),
         elevation = null,
         interactionSource = interactionSource,
     ) {
-        Text(text = label, style = Core5x5Typography.Label, textAlign = TextAlign.Center)
+        Text(text = label, style = AppTypography.Label, textAlign = TextAlign.Center)
     }
 }

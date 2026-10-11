@@ -23,12 +23,12 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppTypography
 
 @Composable
-fun Core5x5WorkoutCard(
+fun AppWorkoutCard(
     eyebrow: String,
     title: String,
     indicator: String,
@@ -37,23 +37,23 @@ fun Core5x5WorkoutCard(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(Core5x5Dimensions.RadiusLarge),
-        color = Core5x5Colors.Elevated,
+        shape = RoundedCornerShape(AppDimensions.RadiusLarge),
+        color = AppColors.Elevated,
     ) {
         Column(
-            modifier = Modifier.padding(Core5x5Dimensions.CardPadding),
-            verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.CardGap),
+            modifier = Modifier.padding(AppDimensions.CardPadding),
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.CardGap),
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().heightIn(min = Core5x5Dimensions.CardHeadingMinHeight),
+                modifier = Modifier.fillMaxWidth().heightIn(min = AppDimensions.CardHeadingMinHeight),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = eyebrow, style = Core5x5Typography.Caption, color = Core5x5Colors.MutedText)
-                    Text(text = title, style = Core5x5Typography.Heading, color = Core5x5Colors.PrimaryText)
+                    Text(text = eyebrow, style = AppTypography.Caption, color = AppColors.MutedText)
+                    Text(text = title, style = AppTypography.Heading, color = AppColors.PrimaryText)
                 }
-                Core5x5WorkoutIndicator(indicator)
+                AppWorkoutIndicator(indicator)
             }
             content()
         }
@@ -61,27 +61,27 @@ fun Core5x5WorkoutCard(
 }
 
 @Composable
-fun Core5x5WorkoutIndicator(label: String, modifier: Modifier = Modifier) {
+fun AppWorkoutIndicator(label: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(Core5x5Dimensions.RadiusSmall),
-        color = Core5x5Colors.Action,
+        shape = RoundedCornerShape(AppDimensions.RadiusSmall),
+        color = AppColors.Action,
     ) {
         Box(
             modifier = Modifier.sizeIn(
-                minWidth = Core5x5Dimensions.IndicatorSize,
-                minHeight = Core5x5Dimensions.IndicatorSize,
+                minWidth = AppDimensions.IndicatorSize,
+                minHeight = AppDimensions.IndicatorSize,
             ),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = label, style = Core5x5Typography.Label, color = Core5x5Colors.Background)
+            Text(text = label, style = AppTypography.Label, color = AppColors.Background)
         }
     }
 }
 
 /** An informational row or a single exercise-selection target; its status is decorative. */
 @Composable
-fun Core5x5ExerciseRow(
+fun AppExerciseRow(
     name: String,
     prescription: String,
     modifier: Modifier = Modifier,
@@ -95,36 +95,36 @@ fun Core5x5ExerciseRow(
         }
     }
     Surface(
-        modifier = modifier.fillMaxWidth().heightIn(min = Core5x5Dimensions.ExerciseRowHeight).then(interactionModifier),
-        shape = RoundedCornerShape(Core5x5Dimensions.RadiusMedium),
-        color = Core5x5Colors.Subtle,
+        modifier = modifier.fillMaxWidth().heightIn(min = AppDimensions.ExerciseRowHeight).then(interactionModifier),
+        shape = RoundedCornerShape(AppDimensions.RadiusMedium),
+        color = AppColors.Subtle,
     ) {
         Row(
             modifier = Modifier.padding(
-                horizontal = Core5x5Dimensions.ExerciseRowInset,
-                vertical = Core5x5Dimensions.ExerciseRowPaddingVertical,
+                horizontal = AppDimensions.ExerciseRowInset,
+                vertical = AppDimensions.ExerciseRowPaddingVertical,
             ),
-            horizontalArrangement = Arrangement.spacedBy(Core5x5Dimensions.ExerciseRowGap),
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.ExerciseRowGap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.TextGap),
+                verticalArrangement = Arrangement.spacedBy(AppDimensions.TextGap),
             ) {
-                Text(text = name, style = Core5x5Typography.Label, color = Core5x5Colors.PrimaryText)
+                Text(text = name, style = AppTypography.Label, color = AppColors.PrimaryText)
                 Text(
                     text = prescription,
-                    style = Core5x5Typography.Caption,
-                    color = if (isCompleted) Core5x5Colors.MutedText else Core5x5Colors.SecondaryText,
+                    style = AppTypography.Caption,
+                    color = if (isCompleted) AppColors.MutedText else AppColors.SecondaryText,
                 )
             }
             val statusSize = maxOf(
-                Core5x5Dimensions.ExerciseStatusSize,
-                with(LocalDensity.current) { Core5x5Typography.Heading.lineHeight.toDp() },
+                AppDimensions.ExerciseStatusSize,
+                with(LocalDensity.current) { AppTypography.Heading.lineHeight.toDp() },
             )
             Surface(
                 shape = CircleShape,
-                color = if (isCompleted) Core5x5Colors.ActionTint else Core5x5Colors.Elevated,
+                color = if (isCompleted) AppColors.ActionTint else AppColors.Elevated,
             ) {
                 Box(
                     modifier = Modifier.size(statusSize).clearAndSetSemantics {},
@@ -132,8 +132,8 @@ fun Core5x5ExerciseRow(
                 ) {
                     Text(
                         text = if (isCompleted) "✓" else "›",
-                        style = Core5x5Typography.Heading,
-                        color = if (isCompleted) Core5x5Colors.Action else Core5x5Colors.SecondaryText,
+                        style = AppTypography.Heading,
+                        color = if (isCompleted) AppColors.Action else AppColors.SecondaryText,
                     )
                 }
             }

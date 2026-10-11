@@ -6,7 +6,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /** complete.* raster estimates from 06. CompleteWorkout.png, normalized to width 390. */
-object Core5x5CompleteTokens {
+object AppCompleteTokens {
     val Background = Color(0xFF0A1013)
     val Card = Color(0xFF151B20)
     val Border = Color(0xFF303C43)
@@ -33,11 +33,11 @@ object Core5x5CompleteTokens {
     val CardRadius = 12.dp
     val BorderStroke = 1.dp
     val ButtonHeight = 52.dp
-    val Title = Core5x5Typography.Title.copy(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
-    val Subtitle = Core5x5Typography.Body.copy(fontSize = 14.sp, lineHeight = 22.sp)
-    val Label = Core5x5Typography.Caption
-    val MetricValue = Core5x5Typography.Title.copy(fontWeight = FontWeight.Bold)
-    val NextTitle = Core5x5Typography.Heading.copy(fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold)
-    val BadgeLabel = Core5x5Typography.Heading.copy(fontWeight = FontWeight.Bold)
-    val ButtonLabel = Core5x5Typography.Heading.copy(fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold)
+    val Title = AppTypography.Title.copy(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
+    val Subtitle = AppTypography.Body.copy(fontSize = 14.sp, lineHeight = 22.sp)
+    val Label = AppTypography.Caption
+    val MetricValue = AppTypography.Title.copy(fontWeight = FontWeight.Bold)
+    val NextTitle = AppTypography.Heading.copy(fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold)
+    val BadgeLabel = AppTypography.Heading.copy(fontWeight = FontWeight.Bold)
+    val ButtonLabel = AppTypography.Heading.copy(fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold)
 }

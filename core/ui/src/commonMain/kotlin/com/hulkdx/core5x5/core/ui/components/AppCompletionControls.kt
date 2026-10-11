@@ -37,11 +37,11 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5CompleteTokens as Complete
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppCompleteTokens as Complete
 
 @Composable
-fun Core5x5CompletionSuccessIcon() {
+fun AppCompletionSuccessIcon() {
     Canvas(Modifier.size(Complete.SuccessSize).clearAndSetSemantics {}) {
         drawCircle(Complete.Action)
         val check = Path().apply {
@@ -56,7 +56,7 @@ fun Core5x5CompletionSuccessIcon() {
 }
 
 @Composable
-fun Core5x5CompletionMetrics(duration: String, completedSets: String, modifier: Modifier = Modifier) {
+fun AppCompletionMetrics(duration: String, completedSets: String, modifier: Modifier = Modifier) {
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
     BoxWithConstraints(modifier.fillMaxWidth()) {
@@ -95,14 +95,14 @@ private fun CompletionMetric(label: String, value: String, modifier: Modifier) {
             modifier = Modifier.padding(horizontal = Complete.CardPadding, vertical = Complete.MetricPaddingVertical),
             verticalArrangement = Arrangement.spacedBy(Complete.MetricLabelGap),
         ) {
-            Text(label, style = Complete.Label, color = Core5x5Colors.SecondaryText)
-            Text(value, style = Complete.MetricValue, color = Core5x5Colors.PrimaryText)
+            Text(label, style = Complete.Label, color = AppColors.SecondaryText)
+            Text(value, style = Complete.MetricValue, color = AppColors.PrimaryText)
         }
     }
 }
 
 @Composable
-fun Core5x5NextWorkoutSummary(title: String, indicator: String, modifier: Modifier = Modifier) {
+fun AppNextWorkoutSummary(title: String, indicator: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.fillMaxWidth().heightIn(min = Complete.NextHeight),
         shape = RoundedCornerShape(Complete.CardRadius), color = Complete.Card,
@@ -114,8 +114,8 @@ fun Core5x5NextWorkoutSummary(title: String, indicator: String, modifier: Modifi
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Complete.NextLabelGap)) {
-                Text("Next up", style = Complete.Label, color = Core5x5Colors.SecondaryText)
-                Text(title, style = Complete.NextTitle, color = Core5x5Colors.PrimaryText)
+                Text("Next up", style = Complete.Label, color = AppColors.SecondaryText)
+                Text(title, style = Complete.NextTitle, color = AppColors.PrimaryText)
             }
             Surface(shape = RoundedCornerShape(Complete.BadgeRadius), color = Complete.Action) {
                 Box(
@@ -131,7 +131,7 @@ fun Core5x5NextWorkoutSummary(title: String, indicator: String, modifier: Modifi
 }
 
 @Composable
-fun Core5x5CompletionButton(label: String, onClick: () -> Unit) {
+fun AppCompletionButton(label: String, onClick: () -> Unit) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     Button(

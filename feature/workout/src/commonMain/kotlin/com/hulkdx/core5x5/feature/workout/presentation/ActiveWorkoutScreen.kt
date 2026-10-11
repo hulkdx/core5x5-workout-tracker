@@ -27,19 +27,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.preferences.domain.formatWeight
-import com.hulkdx.core5x5.core.ui.components.Core5x5ExpandedExerciseCard
-import com.hulkdx.core5x5.core.ui.components.Core5x5HomeStartButton
-import com.hulkdx.core5x5.core.ui.components.Core5x5RestFinishButton
-import com.hulkdx.core5x5.core.ui.components.Core5x5SetControl
-import com.hulkdx.core5x5.core.ui.components.Core5x5SetControls
-import com.hulkdx.core5x5.core.ui.components.Core5x5SetState
-import com.hulkdx.core5x5.core.ui.components.Core5x5WorkoutTopBar
-import com.hulkdx.core5x5.core.ui.theme.Core5x5ActiveTokens as Active
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens as Home
-import com.hulkdx.core5x5.core.ui.theme.Core5x5RestTokens as Rest
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
+import com.hulkdx.core5x5.core.ui.components.AppExpandedExerciseCard
+import com.hulkdx.core5x5.core.ui.components.AppHomeStartButton
+import com.hulkdx.core5x5.core.ui.components.AppRestFinishButton
+import com.hulkdx.core5x5.core.ui.components.AppSetControl
+import com.hulkdx.core5x5.core.ui.components.AppSetControls
+import com.hulkdx.core5x5.core.ui.components.AppSetState
+import com.hulkdx.core5x5.core.ui.components.AppWorkoutTopBar
+import com.hulkdx.core5x5.core.ui.theme.AppActiveTokens as Active
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
+import com.hulkdx.core5x5.core.ui.theme.AppRestTokens as Rest
+import com.hulkdx.core5x5.core.ui.theme.AppTheme
 import com.hulkdx.core5x5.feature.workout.domain.RestTimer
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
@@ -63,7 +63,7 @@ internal fun ActiveWorkoutScreen(
         BoxWithConstraints(modifier = Modifier.fillMaxSize().windowInsetsPadding(windowInsets)) {
             val cardHeight = (if (resting) Rest.CardPaddingVertical else Active.CardPaddingVertical) * 2 +
                 (if (resting) Rest.SetGap else Active.SetGap) + Home.TextGap +
-                (if (resting) Rest.SetDiameter else Active.SetDiameter).coerceAtLeast(Core5x5Dimensions.TouchTargetMin) +
+                (if (resting) Rest.SetDiameter else Active.SetDiameter).coerceAtLeast(AppDimensions.TouchTargetMin) +
                 with(LocalDensity.current) {
                     if (resting) Rest.Exercise.lineHeight.toDp() + Rest.Metadata.lineHeight.toDp()
                     else Active.Exercise.lineHeight.toDp() + Active.Metadata.lineHeight.toDp()
@@ -72,7 +72,7 @@ internal fun ActiveWorkoutScreen(
             val inlineHeight = Active.TopGap + Active.TopBarHeight + cardHeight * count.toFloat() +
                 Home.BrandGap * (count + 3).toFloat() + Home.ButtonHeight + Rest.TimerHeight
             val pinTimer = resting && (
-                maxHeight < inlineHeight || maxWidth < Core5x5Dimensions.ReferenceWidth ||
+                maxHeight < inlineHeight || maxWidth < AppDimensions.ReferenceWidth ||
                     LocalDensity.current.fontScale > 1f || uiState.hasLoadError ||
                     uiState.hasSetSaveError || uiState.hasSaveError
                 )
@@ -82,7 +82,7 @@ internal fun ActiveWorkoutScreen(
                         .padding(start = Active.Inset, end = Active.Inset, top = Active.TopGap,
                             bottom = if (pinTimer) 0.dp else Home.BrandGap),
                 ) {
-                    Core5x5WorkoutTopBar(
+                    AppWorkoutTopBar(
                         title = workout?.let { "Workout ${it.workout.name}" } ?: "Workout",
                         onBack = onBack,
                         backEnabled = !uiState.isSaving && !uiState.isCompletingSet,
@@ -92,12 +92,12 @@ internal fun ActiveWorkoutScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(Home.BrandGap)) {
                         if (uiState.hasLoadError) {
                             WorkoutError("Unable to load the active workout.")
-                            Core5x5HomeStartButton("Try Again", onRetryLoad, enabled = !uiState.isLoading)
+                            AppHomeStartButton("Try Again", onRetryLoad, enabled = !uiState.isLoading)
                         }
                         when {
                             workout != null -> {
                                 workout.exercises.forEachIndexed { exercisePosition, exercise ->
-                                    Core5x5ExpandedExerciseCard(
+                                    AppExpandedExerciseCard(
                                         name = exercise.displayName(),
                                         prescription = exercise.prescription(weightUnit),
                                         resting = resting,
@@ -105,14 +105,14 @@ internal fun ActiveWorkoutScreen(
                                         editEnabled = uiState.canCompleteSet,
                                     ) {
                                         val nextSet = exercise.setStates.firstOrNull { !it.isCompleted }
-                                        Core5x5SetControls(
+                                        AppSetControls(
                                             sets = exercise.setStates.map { set ->
-                                                Core5x5SetControl(
+                                                AppSetControl(
                                                     position = set.position,
                                                     state = when {
-                                                        set.isCompleted -> Core5x5SetState.Completed
-                                                        set == nextSet -> Core5x5SetState.Active
-                                                        else -> Core5x5SetState.Default
+                                                        set.isCompleted -> AppSetState.Completed
+                                                        set == nextSet -> AppSetState.Active
+                                                        else -> AppSetState.Default
                                                     },
                                                     completionDescription = "${exercise.displayName()}, set ${set.position + 1}, ${exercise.reps} reps",
                                                 )
@@ -133,18 +133,18 @@ internal fun ActiveWorkoutScreen(
                                 if (uiState.hasSetSaveError) WorkoutError("Unable to save the set. Tap it again to retry.")
                                 if (uiState.hasSaveError) WorkoutError("Unable to confirm the workout was saved. Try finishing again.")
                                 val finishLabel = if (uiState.isSaving) "Saving…" else "Finish Workout"
-                                if (resting) Core5x5RestFinishButton(
+                                if (resting) AppRestFinishButton(
                                     label = finishLabel,
                                     onClick = onFinishWorkout,
                                     enabled = uiState.canFinish,
-                                ) else Core5x5HomeStartButton(
+                                ) else AppHomeStartButton(
                                     label = finishLabel,
                                     onClick = onFinishWorkout,
                                     enabled = uiState.canFinish,
                                 )
                             }
                             uiState.isLoading -> CircularProgressIndicator(
-                                modifier = Modifier.size(Core5x5Dimensions.TouchTargetMin),
+                                modifier = Modifier.size(AppDimensions.TouchTargetMin),
                                 color = Home.Action,
                                 strokeWidth = Home.BorderStroke,
                             )
@@ -171,7 +171,7 @@ private fun UnfinishedWorkoutExercise.prescription(weightUnit: WeightUnit): Stri
 @Composable
 private fun WorkoutError(message: String) {
     Text(text = message, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-        style = Home.Eyebrow, color = Core5x5Colors.Destructive)
+        style = Home.Eyebrow, color = AppColors.Destructive)
 }
 
 @Preview(name = "Active workout", widthDp = 390, heightDp = 874)
@@ -202,7 +202,7 @@ private fun WorkoutPreview(rest: Boolean, expired: Boolean = false) {
             }
         },
     )
-    Core5x5Theme {
+    AppTheme {
         ActiveWorkoutScreen(
             uiState = ActiveWorkoutUiState(isLoading = false, unfinishedWorkout = workout,
                 restTimer = RestTimerUiState(isVisible = rest, isExpired = expired, countdown = if (expired) "00:00" else "02:30")),

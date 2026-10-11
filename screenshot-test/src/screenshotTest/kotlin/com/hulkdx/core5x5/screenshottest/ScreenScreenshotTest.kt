@@ -13,15 +13,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
-import com.hulkdx.core5x5.core.ui.components.Core5x5BottomNavigation
-import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HistoryTokens
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
-import com.hulkdx.core5x5.core.ui.theme.Core5x5CompleteTokens
-import com.hulkdx.core5x5.core.ui.theme.Core5x5SettingsTokens
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
+import com.hulkdx.core5x5.core.ui.components.AppBottomNavigation
+import com.hulkdx.core5x5.core.ui.components.AppNavigationItem
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppHistoryTokens
+import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens
+import com.hulkdx.core5x5.core.ui.theme.AppCompleteTokens
+import com.hulkdx.core5x5.core.ui.theme.AppSettingsTokens
+import com.hulkdx.core5x5.core.ui.theme.AppTheme
 import com.hulkdx.core5x5.feature.history.presentation.HistoryError
 import com.hulkdx.core5x5.feature.history.presentation.HistoryScreen
 import com.hulkdx.core5x5.feature.history.presentation.HistoryUiState
@@ -144,8 +144,8 @@ class ScreenScreenshotTest {
     @PreviewTest
     @Preview(name = "Custom rest sheet", widthDp = 390, heightDp = 410)
     @Composable
-    fun ActiveWorkoutEditRest() = Core5x5Theme {
-        Box(Modifier.fillMaxSize().background(com.hulkdx.core5x5.core.ui.theme.Core5x5EditTokens.Sheet)) {
+    fun ActiveWorkoutEditRest() = AppTheme {
+        Box(Modifier.fillMaxSize().background(com.hulkdx.core5x5.core.ui.theme.AppEditTokens.Sheet)) {
             CustomRestContent(150, {}, {}, {})
         }
     }
@@ -226,19 +226,19 @@ class ScreenScreenshotTest {
 
 @Composable
 private fun HistorySnapshot(state: HistoryUiState) = ScreenFrame(
-    navigationItem = Core5x5NavigationItem.HISTORY,
+    navigationItem = AppNavigationItem.HISTORY,
     showTitle = false,
 ) {
     HistoryScreen(uiState = state, onRetryLoad = {})
 }
 
 @Composable
-private fun TodaySnapshot(state: TodayUiState) = ScreenFrame(navigationItem = Core5x5NavigationItem.TODAY, showTitle = false) {
+private fun TodaySnapshot(state: TodayUiState) = ScreenFrame(navigationItem = AppNavigationItem.TODAY, showTitle = false) {
     TodayScreen(uiState = state, onStartWorkout = {}, onResumeWorkout = {}, onRetryLoad = {})
 }
 
 @Composable
-private fun ActiveWorkoutSnapshot(state: ActiveWorkoutUiState) = Core5x5Theme {
+private fun ActiveWorkoutSnapshot(state: ActiveWorkoutUiState) = AppTheme {
     ActiveWorkoutScreen(
         uiState = state,
         onBack = {},
@@ -246,26 +246,26 @@ private fun ActiveWorkoutSnapshot(state: ActiveWorkoutUiState) = Core5x5Theme {
         onRetryLoad = {},
         onToggleSet = { _, _ -> },
         onEditExercise = {},
-        windowInsets = WindowInsets(top = Core5x5HomeTokens.SystemTopReserve, bottom = Core5x5HomeTokens.SystemBottomReserve),
+        windowInsets = WindowInsets(top = AppHomeTokens.SystemTopReserve, bottom = AppHomeTokens.SystemBottomReserve),
     )
 }
 
 @Composable
-private fun WorkoutCompleteSnapshot(state: WorkoutCompleteUiState) = Core5x5Theme {
+private fun WorkoutCompleteSnapshot(state: WorkoutCompleteUiState) = AppTheme {
     WorkoutCompleteScreen(
         uiState = state,
         onRetryLoad = {},
         onBackToToday = {},
         windowInsets = WindowInsets(
-            top = Core5x5CompleteTokens.SystemTopReserve,
-            bottom = Core5x5CompleteTokens.SystemBottomReserve,
+            top = AppCompleteTokens.SystemTopReserve,
+            bottom = AppCompleteTokens.SystemBottomReserve,
         ),
     )
 }
 
 @Composable
 private fun SettingsSnapshot(state: SettingsUiState) = ScreenFrame(
-    navigationItem = Core5x5NavigationItem.SETTINGS,
+    navigationItem = AppNavigationItem.SETTINGS,
     showTitle = false,
 ) {
     SettingsScreen(
@@ -285,31 +285,31 @@ private fun SettingsSnapshot(state: SettingsUiState) = ScreenFrame(
 
 @Composable
 private fun ScreenFrame(
-    navigationItem: Core5x5NavigationItem? = null,
+    navigationItem: AppNavigationItem? = null,
     title: String = "Core5x5",
     showTitle: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val isToday = navigationItem == Core5x5NavigationItem.TODAY
-    val isHistory = navigationItem == Core5x5NavigationItem.HISTORY
-    val isSettings = navigationItem == Core5x5NavigationItem.SETTINGS
+    val isToday = navigationItem == AppNavigationItem.TODAY
+    val isHistory = navigationItem == AppNavigationItem.HISTORY
+    val isSettings = navigationItem == AppNavigationItem.SETTINGS
     val useRevisedNavigation = isToday || isHistory || isSettings
     val background = when {
-        isToday -> Core5x5HomeTokens.Background
-        isHistory -> Core5x5HistoryTokens.Background
-        isSettings -> Core5x5SettingsTokens.Background
-        else -> Core5x5Colors.Background
+        isToday -> AppHomeTokens.Background
+        isHistory -> AppHistoryTokens.Background
+        isSettings -> AppSettingsTokens.Background
+        else -> AppColors.Background
     }
     val navigationBackground = when {
-        isToday || isSettings -> Core5x5HomeTokens.Card
-        isHistory -> Core5x5HistoryTokens.Card
-        else -> Core5x5Colors.Elevated
+        isToday || isSettings -> AppHomeTokens.Card
+        isHistory -> AppHistoryTokens.Card
+        else -> AppColors.Elevated
     }
-    Core5x5Theme {
+    AppTheme {
         Column(modifier = Modifier.fillMaxSize().background(background)) {
             Box(
                 modifier = Modifier.fillMaxWidth().weight(1f).windowInsetsPadding(
-                    WindowInsets(top = if (useRevisedNavigation) Core5x5HomeTokens.SystemTopReserve else Core5x5Dimensions.ReferenceSystemTopReserve),
+                    WindowInsets(top = if (useRevisedNavigation) AppHomeTokens.SystemTopReserve else AppDimensions.ReferenceSystemTopReserve),
                 ),
             ) {
                 if (navigationItem != null) {
@@ -322,9 +322,9 @@ private fun ScreenFrame(
                 Box(
                     modifier = Modifier.fillMaxWidth()
                         .background(navigationBackground)
-                        .windowInsetsPadding(WindowInsets(bottom = if (useRevisedNavigation) Core5x5HomeTokens.SystemBottomReserve else 0.dp)),
+                        .windowInsetsPadding(WindowInsets(bottom = if (useRevisedNavigation) AppHomeTokens.SystemBottomReserve else 0.dp)),
                 ) {
-                    Core5x5BottomNavigation(selectedItem = navigationItem, onItemSelected = {}, useHomeDesign = useRevisedNavigation)
+                    AppBottomNavigation(selectedItem = navigationItem, onItemSelected = {}, useHomeDesign = useRevisedNavigation)
                 }
             }
         }
@@ -332,11 +332,11 @@ private fun ScreenFrame(
 }
 
 @Composable
-private fun ExerciseEditSnapshot() = Core5x5Theme {
+private fun ExerciseEditSnapshot() = AppTheme {
     ExerciseEditScreen(
         state = ExerciseEditUiState(0, "Squat", "Squat", 80.0, WeightUnit.KG, 5, 1, 5, null, 180_000),
         onDismiss = {}, onSave = {}, onNameChanged = {}, onWeightChanged = {}, onSetsChanged = {},
         onRepsChanged = {}, onRestSelected = {}, onOpenCustomRest = {}, onCustomRestChanged = {}, onApplyCustomRest = {},
-        windowInsets = WindowInsets(top = Core5x5HomeTokens.SystemTopReserve, bottom = Core5x5HomeTokens.SystemBottomReserve),
+        windowInsets = WindowInsets(top = AppHomeTokens.SystemTopReserve, bottom = AppHomeTokens.SystemBottomReserve),
     )
 }

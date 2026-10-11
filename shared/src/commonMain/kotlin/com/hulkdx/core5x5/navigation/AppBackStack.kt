@@ -3,7 +3,7 @@ package com.hulkdx.core5x5.navigation
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
-import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
+import com.hulkdx.core5x5.core.ui.components.AppNavigationItem
 
 internal sealed interface AppDestination {
     data object Today : AppDestination
@@ -14,23 +14,23 @@ internal sealed interface AppDestination {
     data class WorkoutDetail(val workoutId: Long) : AppDestination
 }
 
-internal val AppDestination.navigationItem: Core5x5NavigationItem?
+internal val AppDestination.navigationItem: AppNavigationItem?
     get() = when (this) {
-        AppDestination.Today -> Core5x5NavigationItem.TODAY
-        AppDestination.History -> Core5x5NavigationItem.HISTORY
-        AppDestination.Settings -> Core5x5NavigationItem.SETTINGS
+        AppDestination.Today -> AppNavigationItem.TODAY
+        AppDestination.History -> AppNavigationItem.HISTORY
+        AppDestination.Settings -> AppNavigationItem.SETTINGS
         is AppDestination.ActiveWorkout -> null
         is AppDestination.WorkoutComplete -> null
         is AppDestination.WorkoutDetail -> null
     }
 
-internal fun SnapshotStateList<AppDestination>.selectNavigationItem(item: Core5x5NavigationItem) {
+internal fun SnapshotStateList<AppDestination>.selectNavigationItem(item: AppNavigationItem) {
     // Ignore a delayed tab callback after entering the focused workout flow.
     if (lastOrNull()?.navigationItem == null) return
     val destination = when (item) {
-        Core5x5NavigationItem.TODAY -> AppDestination.Today
-        Core5x5NavigationItem.HISTORY -> AppDestination.History
-        Core5x5NavigationItem.SETTINGS -> AppDestination.Settings
+        AppNavigationItem.TODAY -> AppDestination.Today
+        AppNavigationItem.HISTORY -> AppDestination.History
+        AppNavigationItem.SETTINGS -> AppDestination.Settings
     }
     if (lastOrNull() == destination) return
 

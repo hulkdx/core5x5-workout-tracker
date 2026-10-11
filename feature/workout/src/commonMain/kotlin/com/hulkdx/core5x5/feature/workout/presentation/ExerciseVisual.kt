@@ -12,8 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
 import com.hulkdx.core5x5.feature.workout.resources.Res
 import com.hulkdx.core5x5.feature.workout.resources.bench_press
@@ -32,16 +32,16 @@ internal fun ExerciseVisual(exercise: Exercise, compact: Boolean, modifier: Modi
         Exercise.OVERHEAD_PRESS -> Res.drawable.overhead_press
         Exercise.DEADLIFT -> Res.drawable.deadlift
     }
-    val height = if (compact) Core5x5Dimensions.RestVisualHeight else Core5x5Dimensions.ActiveVisualHeight
-    val shape = RoundedCornerShape(Core5x5Dimensions.RadiusLarge)
+    val height = if (compact) AppDimensions.RestVisualHeight else AppDimensions.ActiveVisualHeight
+    val shape = RoundedCornerShape(AppDimensions.RadiusLarge)
     Box(
-        modifier = modifier.fillMaxWidth().height(height).clip(shape).background(Core5x5Colors.Subtle),
+        modifier = modifier.fillMaxWidth().height(height).clip(shape).background(AppColors.Subtle),
         contentAlignment = Alignment.Center,
     ) {
         Image(
             painter = painterResource(resource),
             contentDescription = null,
-            modifier = (if (compact) Modifier.widthIn(max = Core5x5Dimensions.RestImageWidth) else Modifier)
+            modifier = (if (compact) Modifier.widthIn(max = AppDimensions.RestImageWidth) else Modifier)
                 .fillMaxWidth().height(height).clip(shape),
             contentScale = ContentScale.Crop,
         )

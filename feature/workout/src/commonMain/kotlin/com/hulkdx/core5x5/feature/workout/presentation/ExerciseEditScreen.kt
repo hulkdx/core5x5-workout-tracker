@@ -19,8 +19,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hulkdx.core5x5.core.preferences.domain.formatWeight
 import com.hulkdx.core5x5.core.ui.components.*
-import com.hulkdx.core5x5.core.ui.theme.Core5x5EditTokens as Edit
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens as Home
+import com.hulkdx.core5x5.core.ui.theme.AppEditTokens as Edit
+import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +45,7 @@ internal fun ExerciseEditScreen(
             .padding(horizontal = Edit.Inset, vertical = 8.dp)) {
             Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = onDismiss, enabled = enabled, modifier = Modifier.size(48.dp).semantics { contentDescription = "Cancel exercise editing" }) {
-                    Core5x5EditCloseIcon()
+                    AppEditCloseIcon()
                 }
                 Text("Edit ${state.originalName}", Modifier.weight(1f), style = Edit.Title,
                     color = Home.Primary, textAlign = TextAlign.Center)
@@ -58,7 +58,7 @@ internal fun ExerciseEditScreen(
                 style = Edit.Body, color = Home.Secondary, textAlign = TextAlign.Center)
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(Edit.Gap)) {
-                Core5x5EditCard {
+                AppEditCard {
                     Text("Exercise Name", style = Edit.Body, color = Home.Secondary)
                     Spacer(Modifier.height(Edit.NameGap))
                     OutlinedTextField(value = state.name, onValueChange = onNameChanged, enabled = enabled,
@@ -67,7 +67,7 @@ internal fun ExerciseEditScreen(
                         trailingIcon = {
                             TextButton(onClick = { onNameChanged("") }, enabled = enabled && state.name.isNotEmpty(),
                                 modifier = Modifier.semantics { contentDescription = "Clear exercise name" }) {
-                                Core5x5EditCloseIcon()
+                                AppEditCloseIcon()
                             }
                         },
                         colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Home.Action,
@@ -75,23 +75,23 @@ internal fun ExerciseEditScreen(
                             unfocusedTextColor = Home.Primary, cursorColor = Home.Action),
                     )
                 }
-                Core5x5EditCard(compact = true) {
-                    Core5x5EditStepper("Working Weight (${state.unit.symbol})",
+                AppEditCard(compact = true) {
+                    AppEditStepper("Working Weight (${state.unit.symbol})",
                         formatWeight(state.weightKg, state.unit).removeSuffix(" ${state.unit.symbol}"),
                         { onWeightChanged(-1) }, { onWeightChanged(1) }, enabled,
                         canDecrease = state.weightKg > 0, canIncrease = state.weightKg < 1_000_000)
                 }
-                Core5x5EditCard(compact = true) {
-                    Core5x5EditStepper("Sets", state.sets.toString(), { onSetsChanged(-1) }, { onSetsChanged(1) },
+                AppEditCard(compact = true) {
+                    AppEditStepper("Sets", state.sets.toString(), { onSetsChanged(-1) }, { onSetsChanged(1) },
                         enabled, canDecrease = state.sets > state.minimumSets, canIncrease = state.sets < 100)
                 }
-                Core5x5EditCard(compact = true) {
-                    Core5x5EditStepper("Reps", state.reps.toString(), { onRepsChanged(-1) }, { onRepsChanged(1) },
+                AppEditCard(compact = true) {
+                    AppEditStepper("Reps", state.reps.toString(), { onRepsChanged(-1) }, { onRepsChanged(1) },
                         enabled, canDecrease = state.reps > 1, canIncrease = state.reps < 100)
                 }
-                Core5x5EditCard(compact = true) {
+                AppEditCard(compact = true) {
                     val restChoices: @Composable () -> Unit = {
-                    Core5x5RestChoices(selected = if (state.showCustomRest) 2 else when (state.effectiveRestDurationMillis) {
+                    AppRestChoices(selected = if (state.showCustomRest) 2 else when (state.effectiveRestDurationMillis) {
                         0L -> 0
                         180_000L -> 1
                         else -> 2
@@ -108,7 +108,7 @@ internal fun ExerciseEditScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Row(Modifier.width(116.dp), verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Core5x5EditTimerIcon()
+                                    AppEditTimerIcon()
                                     Text("Rest Timer", style = Edit.Body, color = Home.Secondary)
                                 }
                                 Box(Modifier.weight(1f)) { restChoices() }
@@ -128,7 +128,7 @@ internal fun ExerciseEditScreen(
                 Spacer(Modifier.height(Edit.Gap))
             }
             Box(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 12.dp)) {
-                Core5x5HomeStartButton(if (state.isSaving) "Saving…" else "Save Changes", onSave, state.canSave)
+                AppHomeStartButton(if (state.isSaving) "Saving…" else "Save Changes", onSave, state.canSave)
             }
         }
     }
@@ -155,11 +155,11 @@ internal fun CustomRestContent(seconds: Long, onChanged: (Long) -> Unit, onCance
                     input.toLongOrNull()?.takeIf { it in 0..(Long.MAX_VALUE / 1_000 - seconds % 60) / 60 }
                         ?.let { onChanged(it * 60 + seconds % 60) }
                 }, label = { Text("Minutes") }, modifier = Modifier.weight(1f), singleLine = true)
-            } else Core5x5DurationWheel("Minutes", count = ((seconds / 60 + 1).coerceAtLeast(100).coerceAtMost(Int.MAX_VALUE.toLong())).toInt(),
+            } else AppDurationWheel("Minutes", count = ((seconds / 60 + 1).coerceAtLeast(100).coerceAtMost(Int.MAX_VALUE.toLong())).toInt(),
                 selected = (seconds / 60).coerceAtMost(Int.MAX_VALUE.toLong() - 1).toInt(),
                 onSelect = { onChanged(it * 60L + seconds % 60) }, modifier = Modifier.weight(1f),
                 onScrolling = { minutesScrolling = it })
-            Core5x5DurationWheel("Seconds", count = 60, selected = (seconds % 60).toInt(),
+            AppDurationWheel("Seconds", count = 60, selected = (seconds % 60).toInt(),
                 onSelect = { onChanged(seconds / 60 * 60 + it) }, modifier = Modifier.weight(1f), padZero = true,
                 onScrolling = { secondsScrolling = it })
         }
@@ -169,8 +169,8 @@ internal fun CustomRestContent(seconds: Long, onChanged: (Long) -> Unit, onCance
         }
         if (seconds == 0L) EditError("Choose a positive duration, or use Off in the editor.")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(Modifier.weight(1f)) { Core5x5RestFinishButton("Cancel", onCancel, true) }
-            Box(Modifier.weight(1f)) { Core5x5HomeStartButton("Apply", onApply, seconds > 0 && !minutesScrolling && !secondsScrolling) }
+            Box(Modifier.weight(1f)) { AppRestFinishButton("Cancel", onCancel, true) }
+            Box(Modifier.weight(1f)) { AppHomeStartButton("Apply", onApply, seconds > 0 && !minutesScrolling && !secondsScrolling) }
         }
     }
 }
@@ -180,5 +180,5 @@ internal fun restDurationLabel(seconds: Long): String = "${seconds / 60} min ${s
 @Composable
 private fun EditError(message: String) {
     Text(message, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, style = Edit.Body,
-        color = com.hulkdx.core5x5.core.ui.theme.Core5x5Colors.Destructive)
+        color = com.hulkdx.core5x5.core.ui.theme.AppColors.Destructive)
 }

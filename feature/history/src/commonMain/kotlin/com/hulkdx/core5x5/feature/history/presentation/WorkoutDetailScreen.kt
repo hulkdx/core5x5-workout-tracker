@@ -26,16 +26,16 @@ import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutExercise
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutRecord
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSet
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutType
-import com.hulkdx.core5x5.core.ui.components.Core5x5ExerciseRow
-import com.hulkdx.core5x5.core.ui.components.Core5x5Metrics
-import com.hulkdx.core5x5.core.ui.components.Core5x5PrimaryButton
-import com.hulkdx.core5x5.core.ui.components.Core5x5SecondaryButton
-import com.hulkdx.core5x5.core.ui.components.Core5x5WorkoutCard
-import com.hulkdx.core5x5.core.ui.components.Core5x5WorkoutTopBar
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
+import com.hulkdx.core5x5.core.ui.components.AppExerciseRow
+import com.hulkdx.core5x5.core.ui.components.AppMetrics
+import com.hulkdx.core5x5.core.ui.components.AppPrimaryButton
+import com.hulkdx.core5x5.core.ui.components.AppSecondaryButton
+import com.hulkdx.core5x5.core.ui.components.AppWorkoutCard
+import com.hulkdx.core5x5.core.ui.components.AppWorkoutTopBar
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppTheme
+import com.hulkdx.core5x5.core.ui.theme.AppTypography
 
 /** The detail layout is documented in design/specs/workout-detail.md. */
 @Composable
@@ -47,21 +47,21 @@ internal fun WorkoutDetailScreen(
     modifier: Modifier = Modifier,
     windowInsets: WindowInsets = WindowInsets.safeDrawing,
 ) {
-    Surface(modifier = modifier.fillMaxSize(), color = Core5x5Colors.Background) {
+    Surface(modifier = modifier.fillMaxSize(), color = AppColors.Background) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(windowInsets)
                 .verticalScroll(rememberScrollState())
                 .padding(
-                    start = Core5x5Dimensions.ScreenInset,
-                    top = Core5x5Dimensions.ContentGap,
-                    end = Core5x5Dimensions.ScreenInset,
-                    bottom = Core5x5Dimensions.ContentPaddingVertical,
+                    start = AppDimensions.ScreenInset,
+                    top = AppDimensions.ContentGap,
+                    end = AppDimensions.ScreenInset,
+                    bottom = AppDimensions.ContentPaddingVertical,
                 ),
-            verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.ContentGap),
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.ContentGap),
         ) {
-            Core5x5WorkoutTopBar(
+            AppWorkoutTopBar(
                 title = uiState.completedWorkout?.displayName() ?: "Workout details",
                 onBack = onBack,
                 backContentDescription = "Back to History",
@@ -71,8 +71,8 @@ internal fun WorkoutDetailScreen(
                 uiState.isLoading -> Text(
                     text = "Loading saved workout…",
                     modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-                    style = Core5x5Typography.Body,
-                    color = Core5x5Colors.SecondaryText,
+                    style = AppTypography.Body,
+                    color = AppColors.SecondaryText,
                     textAlign = TextAlign.Center,
                 )
                 uiState.completedWorkout != null -> CompletedWorkoutContent(
@@ -94,32 +94,32 @@ private fun CompletedWorkoutContent(
     workout: CompletedWorkoutRecord,
     weightUnit: WeightUnit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.ContentGap)) {
-        Column(verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.TextGap)) {
+    Column(verticalArrangement = Arrangement.spacedBy(AppDimensions.ContentGap)) {
+        Column(verticalArrangement = Arrangement.spacedBy(AppDimensions.TextGap)) {
             Text(
                 text = workout.detailDateLabel(),
-                style = Core5x5Typography.Body,
-                color = Core5x5Colors.PrimaryText,
+                style = AppTypography.Body,
+                color = AppColors.PrimaryText,
             )
             Text(
                 text = "Saved completed session",
-                style = Core5x5Typography.Caption,
-                color = Core5x5Colors.SecondaryText,
+                style = AppTypography.Caption,
+                color = AppColors.SecondaryText,
             )
         }
-        Core5x5Metrics(
+        AppMetrics(
             firstLabel = "Duration",
             firstValue = workout.durationClockLabel(),
             secondLabel = "Completed sets",
             secondValue = "${workout.completedSets} / ${workout.prescribedSets}",
         )
-        Core5x5WorkoutCard(
+        AppWorkoutCard(
             eyebrow = "SAVED EXERCISES",
             title = workout.displayName(),
             indicator = workout.workout.name,
         ) {
             workout.exercises.forEach { exercise ->
-                Core5x5ExerciseRow(
+                AppExerciseRow(
                     name = (exercise.customName ?: exercise.exercise.displayName()),
                     prescription = "${exercise.sets} × ${exercise.reps} · " +
                         "${formatWeight(exercise.weightKg, weightUnit)} · " +
@@ -130,8 +130,8 @@ private fun CompletedWorkoutContent(
         }
         Text(
             text = "Completed sets record the prescribed reps. Actual reps were not stored.",
-            style = Core5x5Typography.Caption,
-            color = Core5x5Colors.SecondaryText,
+            style = AppTypography.Caption,
+            color = AppColors.SecondaryText,
         )
     }
 }
@@ -144,7 +144,7 @@ private fun DetailLoadError(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.ContentGap),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.ContentGap),
     ) {
         Text(
             text = if (error == WorkoutDetailError.NOT_FOUND) {
@@ -153,19 +153,19 @@ private fun DetailLoadError(
                 "Unable to load this saved workout. Try again."
             },
             modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-            style = Core5x5Typography.Body,
-            color = Core5x5Colors.SecondaryText,
+            style = AppTypography.Body,
+            color = AppColors.SecondaryText,
             textAlign = TextAlign.Center,
         )
-        Core5x5PrimaryButton(label = "Try Again", onClick = onRetryLoad)
-        Core5x5SecondaryButton(label = "Back to History", onClick = onBack)
+        AppPrimaryButton(label = "Try Again", onClick = onRetryLoad)
+        AppSecondaryButton(label = "Back to History", onClick = onBack)
     }
 }
 
 @Preview(name = "Workout detail", widthDp = 390, heightDp = 844)
 @Composable
 private fun WorkoutDetailScreenPreview() {
-    Core5x5Theme {
+    AppTheme {
         WorkoutDetailScreen(
             uiState = WorkoutDetailUiState(
                 workoutId = 1L,
@@ -182,7 +182,7 @@ private fun WorkoutDetailScreenPreview() {
 @Preview(name = "Missing workout", widthDp = 320, heightDp = 640)
 @Composable
 private fun WorkoutDetailMissingPreview() {
-    Core5x5Theme {
+    AppTheme {
         WorkoutDetailScreen(
             uiState = WorkoutDetailUiState(
                 workoutId = 1L,

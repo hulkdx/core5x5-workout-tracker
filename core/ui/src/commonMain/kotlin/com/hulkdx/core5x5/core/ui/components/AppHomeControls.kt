@@ -32,12 +32,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens as Home
-import com.hulkdx.core5x5.core.ui.theme.Core5x5RestTokens as Rest
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
+import com.hulkdx.core5x5.core.ui.theme.AppRestTokens as Rest
 
 @Composable
-fun Core5x5WorkoutSwitch(label: String, onClick: () -> Unit, enabled: Boolean, modifier: Modifier = Modifier) {
+fun AppWorkoutSwitch(label: String, onClick: () -> Unit, enabled: Boolean, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.heightIn(min = 48.dp).clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.BottomCenter,
@@ -48,7 +48,7 @@ fun Core5x5WorkoutSwitch(label: String, onClick: () -> Unit, enabled: Boolean, m
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Home.SwitchGap),
             ) {
-                val color = if (enabled) Home.Action else Core5x5Colors.DisabledText
+                val color = if (enabled) Home.Action else AppColors.DisabledText
                 Icon(imageVector = SwitchIcon, contentDescription = null, tint = color, modifier = Modifier.size(Home.IconSize))
                 Text(text = label, style = Home.SwitchLabel, color = color)
             }
@@ -58,7 +58,7 @@ fun Core5x5WorkoutSwitch(label: String, onClick: () -> Unit, enabled: Boolean, m
 
 /** Informational prescription without a trailing action indicator. */
 @Composable
-fun Core5x5HomeExerciseRow(name: String, prescription: String, modifier: Modifier = Modifier) {
+fun AppHomeExerciseRow(name: String, prescription: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxWidth().heightIn(min = Home.RowHeight)
             .padding(horizontal = Home.TextInset, vertical = Home.RowPadding),
@@ -70,7 +70,7 @@ fun Core5x5HomeExerciseRow(name: String, prescription: String, modifier: Modifie
 }
 
 @Composable
-fun Core5x5HomeStartButton(label: String, onClick: () -> Unit, enabled: Boolean) {
+fun AppHomeStartButton(label: String, onClick: () -> Unit, enabled: Boolean) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     Button(
@@ -84,8 +84,8 @@ fun Core5x5HomeStartButton(label: String, onClick: () -> Unit, enabled: Boolean)
         colors = ButtonDefaults.buttonColors(
             containerColor = if (pressed) Home.ActionPressed else Home.Action,
             contentColor = Home.Background,
-            disabledContainerColor = Core5x5Colors.Disabled,
-            disabledContentColor = Core5x5Colors.DisabledText,
+            disabledContainerColor = AppColors.Disabled,
+            disabledContentColor = AppColors.DisabledText,
         ),
     ) {
         Text(text = label, style = Home.Button, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
@@ -93,7 +93,7 @@ fun Core5x5HomeStartButton(label: String, onClick: () -> Unit, enabled: Boolean)
 }
 
 @Composable
-fun Core5x5RestFinishButton(label: String, onClick: () -> Unit, enabled: Boolean) {
+fun AppRestFinishButton(label: String, onClick: () -> Unit, enabled: Boolean) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     Button(
@@ -106,10 +106,10 @@ fun Core5x5RestFinishButton(label: String, onClick: () -> Unit, enabled: Boolean
         elevation = null,
         interactionSource = interactionSource,
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (pressed) Core5x5Colors.Pressed else Home.Card,
+            containerColor = if (pressed) AppColors.Pressed else Home.Card,
             contentColor = Home.Primary,
-            disabledContainerColor = Core5x5Colors.Disabled,
-            disabledContentColor = Core5x5Colors.DisabledText,
+            disabledContainerColor = AppColors.Disabled,
+            disabledContentColor = AppColors.DisabledText,
         ),
     ) {
         Text(text = label, style = Rest.FinishLabel,

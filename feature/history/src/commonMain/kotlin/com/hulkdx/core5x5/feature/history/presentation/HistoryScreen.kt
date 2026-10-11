@@ -27,13 +27,13 @@ import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutExercise
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutRecord
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSet
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutType
-import com.hulkdx.core5x5.core.ui.components.Core5x5HistoryCard
-import com.hulkdx.core5x5.core.ui.components.Core5x5SecondaryButton
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HistoryTokens as History
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
+import com.hulkdx.core5x5.core.ui.components.AppHistoryCard
+import com.hulkdx.core5x5.core.ui.components.AppSecondaryButton
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppHistoryTokens as History
+import com.hulkdx.core5x5.core.ui.theme.AppTheme
+import com.hulkdx.core5x5.core.ui.theme.AppTypography
 
 /** AppNavigation owns safe insets and bottom navigation; this screen owns its content layout. */
 @Composable
@@ -85,7 +85,7 @@ internal fun HistoryScreen(
                             )
                         }
                         items(workouts, key = { "workout:${it.id}" }, contentType = { "workout" }) { workout ->
-                            Core5x5HistoryCard(
+                            AppHistoryCard(
                                 weekday = workout.weekdayLabel(),
                                 day = workout.dayLabel(),
                                 fullDate = workout.detailDateLabel(),
@@ -104,10 +104,10 @@ internal fun HistoryScreen(
 @Composable
 private fun LoadingHistory() {
     Box(
-        modifier = Modifier.fillMaxWidth().padding(vertical = Core5x5Dimensions.ContentPaddingVertical),
+        modifier = Modifier.fillMaxWidth().padding(vertical = AppDimensions.ContentPaddingVertical),
         contentAlignment = Alignment.Center,
     ) {
-        CircularProgressIndicator(color = Core5x5Colors.Action)
+        CircularProgressIndicator(color = AppColors.Action)
     }
 }
 
@@ -116,7 +116,7 @@ private fun EmptyHistory() {
     Text(
         text = "No completed workouts yet. Finish a workout to see it here.",
         modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-        style = Core5x5Typography.Body,
+        style = AppTypography.Body,
         color = History.Secondary,
     )
 }
@@ -125,22 +125,22 @@ private fun EmptyHistory() {
 private fun HistoryLoadError(onRetryLoad: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.ContentGap),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.ContentGap),
     ) {
         Text(
             text = "Unable to load workout history. Try again.",
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-            style = Core5x5Typography.Body,
+            style = AppTypography.Body,
             color = History.Secondary,
         )
-        Core5x5SecondaryButton(label = "Try Again", onClick = onRetryLoad)
+        AppSecondaryButton(label = "Try Again", onClick = onRetryLoad)
     }
 }
 
 @Preview(name = "History populated", widthDp = 390, heightDp = 874)
 @Composable
 private fun HistoryScreenPreview() {
-    Core5x5Theme {
+    AppTheme {
         HistoryScreen(
             uiState = HistoryUiState(isLoading = false, completedWorkouts = previewHistory()),
             onRetryLoad = {},
@@ -152,7 +152,7 @@ private fun HistoryScreenPreview() {
 @Preview(name = "History empty", widthDp = 320, heightDp = 640)
 @Composable
 private fun HistoryEmptyPreview() {
-    Core5x5Theme {
+    AppTheme {
         HistoryScreen(
             uiState = HistoryUiState(isLoading = false),
             onRetryLoad = {},

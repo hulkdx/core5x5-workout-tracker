@@ -29,25 +29,25 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
-import com.hulkdx.core5x5.core.ui.theme.Core5x5ActiveTokens as Active
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens as Home
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
-import com.hulkdx.core5x5.core.ui.theme.Core5x5RestTokens as Rest
+import com.hulkdx.core5x5.core.ui.theme.AppActiveTokens as Active
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
+import com.hulkdx.core5x5.core.ui.theme.AppTypography
+import com.hulkdx.core5x5.core.ui.theme.AppRestTokens as Rest
 
-enum class Core5x5SetState { Default, Active, Completed, Disabled }
+enum class AppSetState { Default, Active, Completed, Disabled }
 
-data class Core5x5SetControl(
+data class AppSetControl(
     val position: Int,
-    val state: Core5x5SetState,
+    val state: AppSetState,
     val completionDescription: String,
 )
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun Core5x5SetControls(
-    sets: List<Core5x5SetControl>,
+fun AppSetControls(
+    sets: List<AppSetControl>,
     onComplete: (Int) -> Unit,
     modifier: Modifier = Modifier,
     refined: Boolean = false,
@@ -58,31 +58,31 @@ fun Core5x5SetControls(
     FlowRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.ContentGap),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.ContentGap),
     ) {
         sets.forEach { set ->
             if (refined) {
                 RefinedSetControl(set, enabled, resting, allowUndo, onComplete)
                 return@forEach
             }
-            val active = set.state == Core5x5SetState.Active
-            val completed = set.state == Core5x5SetState.Completed
-            val disabled = set.state == Core5x5SetState.Disabled
+            val active = set.state == AppSetState.Active
+            val completed = set.state == AppSetState.Completed
+            val disabled = set.state == AppSetState.Disabled
             val size = maxOf(
-                Core5x5Dimensions.SetDiameter,
-                with(LocalDensity.current) { Core5x5Typography.Label.lineHeight.toDp() },
+                AppDimensions.SetDiameter,
+                with(LocalDensity.current) { AppTypography.Label.lineHeight.toDp() },
             )
             val background = when (set.state) {
-                Core5x5SetState.Default -> Core5x5Colors.Elevated
-                Core5x5SetState.Active -> Core5x5Colors.ActionTint
-                Core5x5SetState.Completed -> Core5x5Colors.Action
-                Core5x5SetState.Disabled -> Core5x5Colors.Disabled
+                AppSetState.Default -> AppColors.Elevated
+                AppSetState.Active -> AppColors.ActionTint
+                AppSetState.Completed -> AppColors.Action
+                AppSetState.Disabled -> AppColors.Disabled
             }
             val foreground = when (set.state) {
-                Core5x5SetState.Default -> Core5x5Colors.SecondaryText
-                Core5x5SetState.Active -> Core5x5Colors.Action
-                Core5x5SetState.Completed -> Core5x5Colors.Background
-                Core5x5SetState.Disabled -> Core5x5Colors.DisabledText
+                AppSetState.Default -> AppColors.SecondaryText
+                AppSetState.Active -> AppColors.Action
+                AppSetState.Completed -> AppColors.Background
+                AppSetState.Disabled -> AppColors.DisabledText
             }
             Surface(
                 onClick = { onComplete(set.position) },
@@ -99,13 +99,13 @@ fun Core5x5SetControls(
                 shape = CircleShape,
                 color = background,
                 contentColor = foreground,
-                border = if (active) BorderStroke(Core5x5Dimensions.SetActiveStroke, Core5x5Colors.Action) else null,
+                border = if (active) BorderStroke(AppDimensions.SetActiveStroke, AppColors.Action) else null,
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = if (completed) "✓" else (set.position + 1).toString(),
                         modifier = Modifier.clearAndSetSemantics {},
-                        style = Core5x5Typography.Label,
+                        style = AppTypography.Label,
                     )
                 }
             }
@@ -116,21 +116,21 @@ fun Core5x5SetControls(
 /** Active's smaller circles and Rest's larger circles share non-overlapping minimum 48dp targets. */
 @Composable
 private fun RefinedSetControl(
-    set: Core5x5SetControl,
+    set: AppSetControl,
     enabled: Boolean,
     resting: Boolean,
     allowUndo: Boolean,
     onComplete: (Int) -> Unit,
 ) {
-    val completed = set.state == Core5x5SetState.Completed
-    val current = set.state == Core5x5SetState.Active
-    val disabled = set.state == Core5x5SetState.Disabled || !enabled
+    val completed = set.state == AppSetState.Completed
+    val current = set.state == AppSetState.Active
+    val disabled = set.state == AppSetState.Disabled || !enabled
     val labelStyle = if (resting) Rest.SetLabel else Active.SetLabel
     val visibleSize = maxOf(
         if (resting) Rest.SetDiameter else Active.SetDiameter,
         with(LocalDensity.current) { labelStyle.lineHeight.toDp() },
     )
-    val targetSize = maxOf(Core5x5Dimensions.TouchTargetMin, visibleSize)
+    val targetSize = maxOf(AppDimensions.TouchTargetMin, visibleSize)
     Box(
         modifier = Modifier.size(targetSize)
             .clickable(

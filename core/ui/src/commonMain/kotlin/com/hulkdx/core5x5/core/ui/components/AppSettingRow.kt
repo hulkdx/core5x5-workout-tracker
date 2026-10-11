@@ -16,11 +16,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
-import com.hulkdx.core5x5.core.ui.theme.Core5x5SettingsTokens as Settings
+import com.hulkdx.core5x5.core.ui.theme.AppSettingsTokens as Settings
 
 /** The parent card owns borders/dividers; the entire row supplies the touch target. */
 @Composable
-fun Core5x5SettingRow(
+fun AppSettingRow(
     label: String,
     value: String,
     modifier: Modifier = Modifier,

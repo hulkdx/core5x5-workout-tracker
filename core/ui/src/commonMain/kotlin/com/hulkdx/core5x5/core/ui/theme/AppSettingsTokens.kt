@@ -6,7 +6,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /** settings.* raster estimates from 08. Settings screen.png; see design/specs/settings.md. */
-object Core5x5SettingsTokens {
+object AppSettingsTokens {
     val Background = Color(0xFF091115)
     val Card = Color(0xFF10191E)
     val Primary = Color(0xFFF5F8F7)
@@ -25,8 +25,8 @@ object Core5x5SettingsTokens {
     val ChevronSize = 12.dp
     val BorderStroke = 1.dp
     val BottomPadding = 18.dp
-    val Title = Core5x5Typography.Title.copy(fontSize = 36.sp, lineHeight = 44.sp, fontWeight = FontWeight.Bold)
-    val Section = Core5x5Typography.Caption.copy(fontSize = 12.sp, lineHeight = 18.sp, fontWeight = FontWeight.Medium)
-    val Label = Core5x5Typography.Body.copy(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)
-    val Value = Core5x5Typography.Caption.copy(fontSize = 13.sp, lineHeight = 20.sp)
+    val Title = AppTypography.Title.copy(fontSize = 36.sp, lineHeight = 44.sp, fontWeight = FontWeight.Bold)
+    val Section = AppTypography.Caption.copy(fontSize = 12.sp, lineHeight = 18.sp, fontWeight = FontWeight.Medium)
+    val Label = AppTypography.Body.copy(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)
+    val Value = AppTypography.Caption.copy(fontSize = 13.sp, lineHeight = 20.sp)
 }

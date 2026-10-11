@@ -48,17 +48,17 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
-import com.hulkdx.core5x5.core.ui.components.Core5x5BottomNavigation
-import com.hulkdx.core5x5.core.ui.components.Core5x5PrimaryButton
-import com.hulkdx.core5x5.core.ui.components.Core5x5SecondaryButton
-import com.hulkdx.core5x5.core.ui.components.Core5x5SettingRow
-import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
-import com.hulkdx.core5x5.core.ui.theme.Core5x5SettingsTokens as Settings
+import com.hulkdx.core5x5.core.ui.components.AppBottomNavigation
+import com.hulkdx.core5x5.core.ui.components.AppPrimaryButton
+import com.hulkdx.core5x5.core.ui.components.AppSecondaryButton
+import com.hulkdx.core5x5.core.ui.components.AppSettingRow
+import com.hulkdx.core5x5.core.ui.components.AppNavigationItem
+import com.hulkdx.core5x5.core.ui.theme.AppColors
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens
+import com.hulkdx.core5x5.core.ui.theme.AppTheme
+import com.hulkdx.core5x5.core.ui.theme.AppTypography
+import com.hulkdx.core5x5.core.ui.theme.AppSettingsTokens as Settings
 
 /** AppNavigation owns insets and bottom navigation; this screen owns only its content padding. */
 @Composable
@@ -95,7 +95,7 @@ internal fun SettingsScreen(
             uiState.isLoading -> SettingsMessage("Loading preferences…")
             preferences != null -> {
                 SettingsSection("WORKOUT") {
-                    Core5x5SettingRow(
+                    AppSettingRow(
                         label = "Rest Timer",
                         value = formatRestDuration(preferences.restDurationSeconds),
                         enabled = uiState.canChangePreferences,
@@ -104,7 +104,7 @@ internal fun SettingsScreen(
                 }
                 Spacer(Modifier.height(Settings.SectionGap))
                 SettingsSection("PREFERENCES") {
-                    Core5x5SettingRow(
+                    AppSettingRow(
                         label = "Weight Unit",
                         value = preferences.weightUnit.displayName(),
                         enabled = uiState.canChangePreferences,
@@ -115,17 +115,17 @@ internal fun SettingsScreen(
             else -> {
                 SettingsMessage("Unable to load preferences. Try again.", error = true)
                 Spacer(Modifier.height(Settings.HeadingGap))
-                Core5x5SecondaryButton(label = "Try Again", onClick = onRetryLoad)
+                AppSecondaryButton(label = "Try Again", onClick = onRetryLoad)
             }
         }
         Spacer(Modifier.height(Settings.SectionGap))
         SettingsSection("ABOUT") {
-            Core5x5SettingRow(
+            AppSettingRow(
                 label = "Version",
                 value = uiState.versionName ?: "Unavailable",
             )
             SettingsDivider()
-            Core5x5SettingRow(
+            AppSettingRow(
                 label = "About Core5x5",
                 value = "",
                 onClick = onOpenAbout,
@@ -140,7 +140,7 @@ internal fun SettingsScreen(
                 WeightUnit.entries.forEach { unit ->
                     val selected = uiState.preferences?.weightUnit == unit
                     Row(
-                        modifier = Modifier.fillMaxWidth().heightIn(min = Core5x5Dimensions.SettingHeight)
+                        modifier = Modifier.fillMaxWidth().heightIn(min = AppDimensions.SettingHeight)
                             .selectable(
                                 selected = selected,
                                 enabled = !uiState.isSaving,
@@ -152,22 +152,22 @@ internal fun SettingsScreen(
                         Text(
                             text = unit.displayName(),
                             modifier = Modifier.weight(1f),
-                            style = Core5x5Typography.Body,
-                            color = Core5x5Colors.PrimaryText,
+                            style = AppTypography.Body,
+                            color = AppColors.PrimaryText,
                         )
                         if (selected) {
                             Text(
                                 text = "✓",
                                 modifier = Modifier.clearAndSetSemantics {},
-                                style = Core5x5Typography.Body,
-                                color = Core5x5Colors.Action,
+                                style = AppTypography.Body,
+                                color = AppColors.Action,
                             )
                         }
                     }
                 }
             }
             SaveStatus(uiState)
-            Core5x5SecondaryButton(label = "Cancel", enabled = !uiState.isSaving, onClick = onDismissDialog)
+            AppSecondaryButton(label = "Cancel", enabled = !uiState.isSaving, onClick = onDismissDialog)
         }
         SettingsDialog.REST_DURATION -> SettingsDialogSurface("Rest duration", onDismissDialog) {
             SettingsMessage("Duration in seconds")
@@ -176,19 +176,19 @@ internal fun SettingsScreen(
                 onValueChange = onRestDurationInput,
                 enabled = !uiState.isSaving,
                 singleLine = true,
-                textStyle = Core5x5Typography.Body.copy(color = Core5x5Colors.PrimaryText),
-                cursorBrush = SolidColor(Core5x5Colors.Action),
+                textStyle = AppTypography.Body.copy(color = AppColors.PrimaryText),
+                cursorBrush = SolidColor(AppColors.Action),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { if (uiState.canSaveRestDuration) onSaveRestDuration() }),
                 modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Rest duration in seconds" },
                 decorationBox = { field ->
                     Box(
-                        modifier = Modifier.fillMaxWidth().heightIn(min = Core5x5Dimensions.SettingHeight)
+                        modifier = Modifier.fillMaxWidth().heightIn(min = AppDimensions.SettingHeight)
                             .border(
-                                width = Core5x5Dimensions.BorderStroke,
-                                color = if (uiState.hasInvalidRestDuration) Core5x5Colors.Destructive else Core5x5Colors.Border,
-                                shape = RoundedCornerShape(Core5x5Dimensions.RadiusMedium),
-                            ).padding(Core5x5Dimensions.RestGap),
+                                width = AppDimensions.BorderStroke,
+                                color = if (uiState.hasInvalidRestDuration) AppColors.Destructive else AppColors.Border,
+                                shape = RoundedCornerShape(AppDimensions.RadiusMedium),
+                            ).padding(AppDimensions.RestGap),
                         contentAlignment = Alignment.CenterStart,
                     ) { field() }
                 },
@@ -198,12 +198,12 @@ internal fun SettingsScreen(
             }
             SettingsMessage("Applies to future timers. A running timer keeps its current time.")
             SaveStatus(uiState)
-            Core5x5PrimaryButton(
+            AppPrimaryButton(
                 label = if (uiState.isSaving) "Saving…" else "Save",
                 enabled = uiState.canSaveRestDuration,
                 onClick = onSaveRestDuration,
             )
-            Core5x5SecondaryButton(label = "Cancel", enabled = !uiState.isSaving, onClick = onDismissDialog)
+            AppSecondaryButton(label = "Cancel", enabled = !uiState.isSaving, onClick = onDismissDialog)
         }
         SettingsDialog.ABOUT -> SettingsDialogSurface("About Core5x5", onDismissDialog) {
             SettingsMessage("Core5x5: Workout Tracker")
@@ -212,13 +212,13 @@ internal fun SettingsScreen(
             if (uiState.error == SettingsError.OPEN_REPOSITORY) {
                 SettingsMessage("Unable to open the repository. Try again.", error = true)
             }
-            Core5x5SecondaryButton(label = "Open-source repository", onClick = onOpenRepository)
-            Core5x5SecondaryButton(label = "MIT License", onClick = onOpenLicense)
-            Core5x5PrimaryButton(label = "Close", onClick = onDismissDialog)
+            AppSecondaryButton(label = "Open-source repository", onClick = onOpenRepository)
+            AppSecondaryButton(label = "MIT License", onClick = onOpenLicense)
+            AppPrimaryButton(label = "Close", onClick = onDismissDialog)
         }
         SettingsDialog.LICENSE -> SettingsDialogSurface("License", onDismissDialog) {
-            Text(text = MIT_LICENSE, style = Core5x5Typography.Body, color = Core5x5Colors.PrimaryText)
-            Core5x5SecondaryButton(label = "Back to About", onClick = onOpenAbout)
+            Text(text = MIT_LICENSE, style = AppTypography.Body, color = AppColors.PrimaryText)
+            AppSecondaryButton(label = "Back to About", onClick = onOpenAbout)
         }
         null -> Unit
     }
@@ -229,21 +229,21 @@ private fun SettingsDialogSurface(title: String, onDismiss: () -> Unit, content:
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(
             modifier = Modifier.fillMaxWidth().padding(
-                horizontal = Core5x5Dimensions.ScreenInset,
-                vertical = Core5x5Dimensions.ContentPaddingVertical,
+                horizontal = AppDimensions.ScreenInset,
+                vertical = AppDimensions.ContentPaddingVertical,
             ).imePadding(),
-            shape = RoundedCornerShape(Core5x5Dimensions.RadiusLarge),
-            color = Core5x5Colors.Elevated,
+            shape = RoundedCornerShape(AppDimensions.RadiusLarge),
+            color = AppColors.Elevated,
         ) {
             Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()).padding(Core5x5Dimensions.ScreenInset),
-                verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.RestGap),
+                modifier = Modifier.verticalScroll(rememberScrollState()).padding(AppDimensions.ScreenInset),
+                verticalArrangement = Arrangement.spacedBy(AppDimensions.RestGap),
             ) {
                 Text(
                     text = title,
                     modifier = Modifier.semantics { heading() },
-                    style = Core5x5Typography.Heading,
-                    color = Core5x5Colors.PrimaryText,
+                    style = AppTypography.Heading,
+                    color = AppColors.PrimaryText,
                 )
                 content()
             }
@@ -256,8 +256,8 @@ private fun SettingsMessage(text: String, error: Boolean = false) {
     Text(
         text = text,
         modifier = if (error) Modifier.semantics { liveRegion = LiveRegionMode.Polite } else Modifier,
-        style = Core5x5Typography.Body,
-        color = if (error) Core5x5Colors.Destructive else Core5x5Colors.SecondaryText,
+        style = AppTypography.Body,
+        color = if (error) AppColors.Destructive else AppColors.SecondaryText,
     )
 }
 
@@ -311,10 +311,10 @@ private fun SettingsLargeTextPreview() {
 
 @Composable
 private fun SettingsPreview(preferences: TrainingPreferences = TrainingPreferences()) {
-    Core5x5Theme {
+    AppTheme {
         Column(
             modifier = Modifier.fillMaxSize().background(Settings.Background)
-                .windowInsetsPadding(WindowInsets(top = Core5x5HomeTokens.SystemTopReserve)),
+                .windowInsetsPadding(WindowInsets(top = AppHomeTokens.SystemTopReserve)),
         ) {
             SettingsScreen(
                 uiState = SettingsUiState(isLoading = false, preferences = preferences, versionName = "1.0.0"),
@@ -324,11 +324,11 @@ private fun SettingsPreview(preferences: TrainingPreferences = TrainingPreferenc
                 onDismissDialog = {}, onRetryLoad = {}, onOpenRepository = {},
             )
             Box(
-                modifier = Modifier.fillMaxWidth().background(Core5x5HomeTokens.Card)
-                    .windowInsetsPadding(WindowInsets(bottom = Core5x5HomeTokens.SystemBottomReserve)),
+                modifier = Modifier.fillMaxWidth().background(AppHomeTokens.Card)
+                    .windowInsetsPadding(WindowInsets(bottom = AppHomeTokens.SystemBottomReserve)),
             ) {
-                Core5x5BottomNavigation(
-                    selectedItem = Core5x5NavigationItem.SETTINGS,
+                AppBottomNavigation(
+                    selectedItem = AppNavigationItem.SETTINGS,
                     onItemSelected = {},
                     useHomeDesign = true,
                 )
