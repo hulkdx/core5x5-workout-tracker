@@ -1,91 +1,98 @@
 package com.hulkdx.core5x5.core.ui.components
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
+import com.hulkdx.core5x5.core.ui.theme.Core5x5HistoryTokens as History
 
-/** A full-card target for a saved workout history entry. */
+/** An informational saved-session card with grouped accessibility content. */
 @Composable
 fun Core5x5HistoryCard(
-    badge: String,
+    weekday: String,
+    day: String,
+    fullDate: String,
     title: String,
-    dateAndDuration: String,
     summary: String,
-    onClick: () -> Unit,
+    duration: String,
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick),
-        shape = RoundedCornerShape(Core5x5Dimensions.RadiusLarge),
-        color = Core5x5Colors.Elevated,
+        modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
+        shape = RoundedCornerShape(History.CardRadius),
+        color = History.Card,
+        border = BorderStroke(History.BorderStroke, History.Border),
     ) {
-        Column(
-            modifier = Modifier.padding(Core5x5Dimensions.HistoryPadding),
-            verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.HistoryGap),
+        Row(
+            modifier = Modifier.heightIn(min = History.CardHeight).padding(History.CardPadding),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().heightIn(min = Core5x5Dimensions.HistoryHeadingMinHeight),
-                verticalAlignment = Alignment.CenterVertically,
+            HistoryDateTile(weekday, day, fullDate)
+            Column(
+                modifier = Modifier.weight(1f).padding(start = History.DateContentGap),
             ) {
-                HistoryBadge(badge)
+                Text(title, style = History.Workout, color = History.Primary)
                 Column(
-                    modifier = Modifier.weight(1f).padding(start = Core5x5Dimensions.HistoryBadgeGap),
+                    modifier = Modifier.padding(top = History.TitleSummaryGap),
+                    verticalArrangement = Arrangement.spacedBy(History.TextGap),
                 ) {
-                    Text(text = title, style = Core5x5Typography.Label, color = Core5x5Colors.PrimaryText)
-                    Text(text = dateAndDuration, style = Core5x5Typography.Caption, color = Core5x5Colors.SecondaryText)
+                    Text(summary, style = History.Metadata, color = History.Secondary)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(History.ClockGap),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        HistoryClockIcon()
+                        Text(duration, style = History.Metadata, color = History.Secondary)
+                    }
                 }
-                Text(
-                    text = "›",
-                    modifier = Modifier.clearAndSetSemantics {},
-                    style = Core5x5Typography.Heading,
-                    color = Core5x5Colors.MutedText,
-                )
             }
-            Text(
-                text = summary,
-                modifier = Modifier.fillMaxWidth(),
-                style = Core5x5Typography.Caption,
-                color = Core5x5Colors.SecondaryText,
-            )
         }
     }
 }
 
 @Composable
-private fun HistoryBadge(label: String) {
-    Surface(
-        shape = RoundedCornerShape(Core5x5Dimensions.RadiusSmall),
-        color = Core5x5Colors.Subtle,
-        border = androidx.compose.foundation.BorderStroke(
-            width = Core5x5Dimensions.BorderStroke,
-            color = Core5x5Colors.Border,
-        ),
-    ) {
-        Box(
-            modifier = Modifier.sizeIn(
-                minWidth = Core5x5Dimensions.IndicatorSize,
-                minHeight = Core5x5Dimensions.IndicatorSize,
-            ),
-            contentAlignment = Alignment.Center,
+private fun HistoryDateTile(weekday: String, day: String, fullDate: String) {
+    Surface(shape = RoundedCornerShape(History.DateRadius), color = History.DateTile) {
+        Column(
+            modifier = Modifier
+                .widthIn(min = History.DateWidth)
+                .heightIn(min = History.DateHeight)
+                .padding(horizontal = History.CardPadding, vertical = History.DateGap)
+                .clearAndSetSemantics { contentDescription = fullDate },
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(History.DateGap, Alignment.CenterVertically),
         ) {
-            Text(text = label, style = Core5x5Typography.Label, color = Core5x5Colors.SecondaryText)
+            Text(weekday, style = History.Weekday, color = History.Secondary, textAlign = TextAlign.Center)
+            Text(day, style = History.Day, color = History.Primary, textAlign = TextAlign.Center)
         }
+    }
+}
+
+@Composable
+private fun HistoryClockIcon() {
+    Canvas(Modifier.size(History.ClockSize).clearAndSetSemantics {}) {
+        val stroke = size.width * 0.08f
+        drawCircle(History.Secondary, radius = size.width / 2 - stroke, style = Stroke(stroke))
+        drawLine(History.Secondary, center, Offset(center.x, size.height * 0.24f), stroke, StrokeCap.Round)
+        drawLine(History.Secondary, center, Offset(size.width * 0.69f, size.height * 0.62f), stroke, StrokeCap.Round)
     }
 }

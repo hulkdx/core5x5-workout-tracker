@@ -3,15 +3,17 @@ package com.hulkdx.core5x5.feature.history.presentation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -19,7 +21,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
-import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
+import androidx.compose.ui.unit.dp
 import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutExercise
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutRecord
@@ -29,6 +31,7 @@ import com.hulkdx.core5x5.core.ui.components.Core5x5HistoryCard
 import com.hulkdx.core5x5.core.ui.components.Core5x5SecondaryButton
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
+import com.hulkdx.core5x5.core.ui.theme.Core5x5HistoryTokens as History
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
 
@@ -36,52 +39,61 @@ import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
 @Composable
 internal fun HistoryScreen(
     uiState: HistoryUiState,
-    onWorkoutSelected: (Long) -> Unit,
     onRetryLoad: () -> Unit,
-    weightUnit: WeightUnit = WeightUnit.KG,
     modifier: Modifier = Modifier,
 ) {
-    Surface(modifier = modifier.fillMaxSize(), color = Core5x5Colors.Background) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(
-                    start = Core5x5Dimensions.ScreenInset,
-                    top = Core5x5Dimensions.ContentGap,
-                    end = Core5x5Dimensions.ScreenInset,
-                    bottom = Core5x5Dimensions.ContentPaddingVertical,
-                ),
-            verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.ContentGap),
+    val months = remember(uiState.completedWorkouts) { uiState.completedWorkouts.historyMonths() }
+    Surface(modifier = modifier.fillMaxSize(), color = History.Background) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = History.Inset,
+                top = History.TopGap,
+                end = History.Inset,
+                bottom = History.BottomPadding,
+            ),
+            verticalArrangement = Arrangement.spacedBy(History.CardGap),
         ) {
-            Text(
-                text = "History",
-                modifier = Modifier.semantics { heading() },
-                style = Core5x5Typography.Title,
-                color = Core5x5Colors.PrimaryText,
-            )
-            Text(
-                text = "Past sessions, newest first.",
-                style = Core5x5Typography.Body,
-                color = Core5x5Colors.SecondaryText,
-            )
-
+            item(key = "title", contentType = "title") {
+                Text(
+                    text = "History",
+                    modifier = Modifier.padding(bottom = History.TitleGap - History.CardGap).semantics { heading() },
+                    style = History.Title,
+                    color = History.Primary,
+                )
+            }
             when {
-                uiState.isLoading && uiState.completedWorkouts.isEmpty() -> LoadingHistory()
-                uiState.error != null && uiState.completedWorkouts.isEmpty() -> HistoryLoadError(onRetryLoad)
-                uiState.completedWorkouts.isEmpty() -> EmptyHistory()
+                uiState.isLoading && uiState.completedWorkouts.isEmpty() -> item(key = "loading") { LoadingHistory() }
+                uiState.error != null && uiState.completedWorkouts.isEmpty() -> item(key = "error") { HistoryLoadError(onRetryLoad) }
+                uiState.completedWorkouts.isEmpty() -> item(key = "empty") { EmptyHistory() }
                 else -> {
                     if (uiState.error != null) {
-                        HistoryLoadError(onRetryLoad)
+                        item(key = "error") { HistoryLoadError(onRetryLoad) }
                     }
-                    uiState.completedWorkouts.forEach { workout ->
-                        Core5x5HistoryCard(
-                            badge = workout.workout.name,
-                            title = workout.displayName(),
-                            dateAndDuration = "${workout.dateLabel()} · ${workout.durationLabel()}",
-                            summary = workout.exerciseSummary(weightUnit),
-                            onClick = { onWorkoutSelected(workout.id) },
-                        )
+                    months.entries.forEachIndexed { index, (month, workouts) ->
+                        item(key = "month:$month", contentType = "month") {
+                            Text(
+                                text = month,
+                                modifier = Modifier
+                                    .padding(
+                                        top = if (index == 0) 0.dp else History.MonthGap - History.CardGap,
+                                        bottom = History.MonthCardGap - History.CardGap,
+                                    )
+                                    .semantics { heading() },
+                                style = History.Month,
+                                color = History.Secondary,
+                            )
+                        }
+                        items(workouts, key = { "workout:${it.id}" }, contentType = { "workout" }) { workout ->
+                            Core5x5HistoryCard(
+                                weekday = workout.weekdayLabel(),
+                                day = workout.dayLabel(),
+                                fullDate = workout.detailDateLabel(),
+                                title = workout.displayName(),
+                                summary = workout.sessionSummary(),
+                                duration = workout.durationLabel(),
+                            )
+                        }
                     }
                 }
             }
@@ -105,7 +117,7 @@ private fun EmptyHistory() {
         text = "No completed workouts yet. Finish a workout to see it here.",
         modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
         style = Core5x5Typography.Body,
-        color = Core5x5Colors.SecondaryText,
+        color = History.Secondary,
     )
 }
 
@@ -119,19 +131,18 @@ private fun HistoryLoadError(onRetryLoad: () -> Unit) {
             text = "Unable to load workout history. Try again.",
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             style = Core5x5Typography.Body,
-            color = Core5x5Colors.SecondaryText,
+            color = History.Secondary,
         )
         Core5x5SecondaryButton(label = "Try Again", onClick = onRetryLoad)
     }
 }
 
-@Preview(name = "History populated", widthDp = 390, heightDp = 844)
+@Preview(name = "History populated", widthDp = 390, heightDp = 874)
 @Composable
 private fun HistoryScreenPreview() {
     Core5x5Theme {
         HistoryScreen(
             uiState = HistoryUiState(isLoading = false, completedWorkouts = previewHistory()),
-            onWorkoutSelected = {},
             onRetryLoad = {},
             modifier = Modifier.fillMaxSize(),
         )
@@ -144,7 +155,6 @@ private fun HistoryEmptyPreview() {
     Core5x5Theme {
         HistoryScreen(
             uiState = HistoryUiState(isLoading = false),
-            onWorkoutSelected = {},
             onRetryLoad = {},
             modifier = Modifier.fillMaxSize(),
         )
@@ -159,8 +169,8 @@ private fun previewHistory() = listOf(
         completedAtEpochMillis = 1_727_858_460_000L,
         exercises = listOf(
             previewExercise(CompletedExerciseType.SQUAT, 77.5),
-            previewExercise(CompletedExerciseType.DEADLIFT, 107.5, sets = 1),
             previewExercise(CompletedExerciseType.OVERHEAD_PRESS, 37.5),
+            previewExercise(CompletedExerciseType.DEADLIFT, 107.5, sets = 1),
         ),
     ),
     CompletedWorkoutRecord(
@@ -170,8 +180,8 @@ private fun previewHistory() = listOf(
         completedAtEpochMillis = 1_727_253_840_000L,
         exercises = listOf(
             previewExercise(CompletedExerciseType.SQUAT, 77.5),
-            previewExercise(CompletedExerciseType.BARBELL_ROW, 60.0),
             previewExercise(CompletedExerciseType.BENCH_PRESS, 45.0),
+            previewExercise(CompletedExerciseType.BARBELL_ROW, 60.0),
         ),
     ),
 )

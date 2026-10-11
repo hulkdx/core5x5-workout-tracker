@@ -17,9 +17,11 @@ import com.hulkdx.core5x5.core.ui.components.Core5x5BottomNavigation
 import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
+import com.hulkdx.core5x5.core.ui.theme.Core5x5HistoryTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5CompleteTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
+import com.hulkdx.core5x5.feature.history.presentation.HistoryError
 import com.hulkdx.core5x5.feature.history.presentation.HistoryScreen
 import com.hulkdx.core5x5.feature.history.presentation.HistoryUiState
 import com.hulkdx.core5x5.feature.history.presentation.WorkoutDetailScreen
@@ -177,19 +179,24 @@ class ScreenScreenshotTest {
     )
 
     @PreviewTest
-    @ReferenceScreen
+    @HomeReferenceScreen
     @Composable
-    fun HistoryScaffold() = ScreenFrame(
-        navigationItem = Core5x5NavigationItem.HISTORY,
-        showTitle = false,
-    ) {
-        HistoryScreen(
-            uiState = HistoryUiState(isLoading = false, completedWorkouts = historyRecords()),
-            onWorkoutSelected = {},
-            onRetryLoad = {},
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
+    fun History() = HistorySnapshot(HistoryUiState(isLoading = false, completedWorkouts = historyReferenceRecords()))
+
+    @PreviewTest
+    @Preview(name = "Narrow history, large text", widthDp = 320, heightDp = 640, fontScale = 2f)
+    @Composable
+    fun HistoryNarrow() = HistorySnapshot(HistoryUiState(isLoading = false, completedWorkouts = historyReferenceRecords()))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun HistoryEmpty() = HistorySnapshot(HistoryUiState(isLoading = false))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun HistoryLoadError() = HistorySnapshot(HistoryUiState(isLoading = false, error = HistoryError.LOAD))
 
     @PreviewTest
     @ReferenceScreen
@@ -214,6 +221,14 @@ class ScreenScreenshotTest {
     fun Settings() = SettingsSnapshot(
         SettingsUiState(isLoading = false, preferences = TrainingPreferences(), versionName = "1.0"),
     )
+}
+
+@Composable
+private fun HistorySnapshot(state: HistoryUiState) = ScreenFrame(
+    navigationItem = Core5x5NavigationItem.HISTORY,
+    showTitle = false,
+) {
+    HistoryScreen(uiState = state, onRetryLoad = {})
 }
 
 @Composable
@@ -275,12 +290,23 @@ private fun ScreenFrame(
     content: @Composable () -> Unit,
 ) {
     val isToday = navigationItem == Core5x5NavigationItem.TODAY
-    val background = if (isToday) Core5x5HomeTokens.Background else Core5x5Colors.Background
+    val isHistory = navigationItem == Core5x5NavigationItem.HISTORY
+    val usesRevisedInsets = isToday || isHistory
+    val background = when {
+        isToday -> Core5x5HomeTokens.Background
+        isHistory -> Core5x5HistoryTokens.Background
+        else -> Core5x5Colors.Background
+    }
+    val navigationBackground = when {
+        isToday -> Core5x5HomeTokens.Card
+        isHistory -> Core5x5HistoryTokens.Card
+        else -> Core5x5Colors.Elevated
+    }
     Core5x5Theme {
         Column(modifier = Modifier.fillMaxSize().background(background)) {
             Box(
                 modifier = Modifier.fillMaxWidth().weight(1f).windowInsetsPadding(
-                    WindowInsets(top = if (isToday) Core5x5HomeTokens.SystemTopReserve else Core5x5Dimensions.ReferenceSystemTopReserve),
+                    WindowInsets(top = if (usesRevisedInsets) Core5x5HomeTokens.SystemTopReserve else Core5x5Dimensions.ReferenceSystemTopReserve),
                 ),
             ) {
                 if (navigationItem != null) {
@@ -292,8 +318,8 @@ private fun ScreenFrame(
             if (navigationItem != null) {
                 Box(
                     modifier = Modifier.fillMaxWidth()
-                        .background(if (isToday) Core5x5HomeTokens.Card else Core5x5Colors.Elevated)
-                        .windowInsetsPadding(WindowInsets(bottom = if (isToday) Core5x5HomeTokens.SystemBottomReserve else 0.dp)),
+                        .background(navigationBackground)
+                        .windowInsetsPadding(WindowInsets(bottom = if (usesRevisedInsets) Core5x5HomeTokens.SystemBottomReserve else 0.dp)),
                 ) {
                     Core5x5BottomNavigation(selectedItem = navigationItem, onItemSelected = {})
                 }

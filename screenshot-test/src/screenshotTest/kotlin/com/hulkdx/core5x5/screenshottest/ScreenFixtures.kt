@@ -61,6 +61,33 @@ internal fun historyRecords() = listOf(
     ),
 )
 
+/** Matches the supplied month/card composition using real A/B prescriptions. */
+internal fun historyReferenceRecords() = listOf(
+    Triple(1_791_374_400_000L, 42L, CompletedWorkoutType.A),
+    Triple(1_791_115_200_000L, 38L, CompletedWorkoutType.B),
+    Triple(1_790_942_400_000L, 40L, CompletedWorkoutType.B),
+    Triple(1_790_769_600_000L, 45L, CompletedWorkoutType.A),
+    Triple(1_790_510_400_000L, 39L, CompletedWorkoutType.B),
+    Triple(1_790_337_600_000L, 41L, CompletedWorkoutType.B),
+    Triple(1_790_164_800_000L, 44L, CompletedWorkoutType.A),
+).mapIndexed { index, (completedAt, minutes, workout) ->
+    CompletedWorkoutRecord(
+        id = 7L - index,
+        workout = workout,
+        startedAtEpochMillis = completedAt - minutes * 60_000L,
+        completedAtEpochMillis = completedAt,
+        exercises = if (workout == CompletedWorkoutType.A) listOf(
+            historyExercise(CompletedExerciseType.SQUAT, 77.5),
+            historyExercise(CompletedExerciseType.BENCH_PRESS, 45.0),
+            historyExercise(CompletedExerciseType.BARBELL_ROW, 60.0),
+        ) else listOf(
+            historyExercise(CompletedExerciseType.SQUAT, 77.5),
+            historyExercise(CompletedExerciseType.OVERHEAD_PRESS, 37.5),
+            historyExercise(CompletedExerciseType.DEADLIFT, 107.5, sets = 1),
+        ),
+    )
+}
+
 private fun historyExercise(
     exercise: CompletedExerciseType,
     weightKg: Double,
