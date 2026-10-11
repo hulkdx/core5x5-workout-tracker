@@ -17,10 +17,12 @@ import com.hulkdx.core5x5.core.ui.components.Core5x5BottomNavigation
 import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
+import com.hulkdx.core5x5.core.ui.theme.Core5x5HistoryTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5CompleteTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5SettingsTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
+import com.hulkdx.core5x5.feature.history.presentation.HistoryError
 import com.hulkdx.core5x5.feature.history.presentation.HistoryScreen
 import com.hulkdx.core5x5.feature.history.presentation.HistoryUiState
 import com.hulkdx.core5x5.feature.history.presentation.WorkoutDetailScreen
@@ -178,19 +180,24 @@ class ScreenScreenshotTest {
     )
 
     @PreviewTest
-    @ReferenceScreen
+    @HomeReferenceScreen
     @Composable
-    fun HistoryScaffold() = ScreenFrame(
-        navigationItem = Core5x5NavigationItem.HISTORY,
-        showTitle = false,
-    ) {
-        HistoryScreen(
-            uiState = HistoryUiState(isLoading = false, completedWorkouts = historyRecords()),
-            onWorkoutSelected = {},
-            onRetryLoad = {},
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
+    fun History() = HistorySnapshot(HistoryUiState(isLoading = false, completedWorkouts = historyReferenceRecords()))
+
+    @PreviewTest
+    @Preview(name = "Narrow history, large text", widthDp = 320, heightDp = 640, fontScale = 2f)
+    @Composable
+    fun HistoryNarrow() = HistorySnapshot(HistoryUiState(isLoading = false, completedWorkouts = historyReferenceRecords()))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun HistoryEmpty() = HistorySnapshot(HistoryUiState(isLoading = false))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun HistoryLoadError() = HistorySnapshot(HistoryUiState(isLoading = false, error = HistoryError.LOAD))
 
     @PreviewTest
     @ReferenceScreen
@@ -215,6 +222,14 @@ class ScreenScreenshotTest {
     fun Settings() = SettingsSnapshot(
         SettingsUiState(isLoading = false, preferences = TrainingPreferences(), versionName = "1.0.0"),
     )
+}
+
+@Composable
+private fun HistorySnapshot(state: HistoryUiState) = ScreenFrame(
+    navigationItem = Core5x5NavigationItem.HISTORY,
+    showTitle = false,
+) {
+    HistoryScreen(uiState = state, onRetryLoad = {})
 }
 
 @Composable
@@ -276,12 +291,19 @@ private fun ScreenFrame(
     content: @Composable () -> Unit,
 ) {
     val isToday = navigationItem == Core5x5NavigationItem.TODAY
+    val isHistory = navigationItem == Core5x5NavigationItem.HISTORY
     val isSettings = navigationItem == Core5x5NavigationItem.SETTINGS
-    val useRevisedNavigation = isToday || isSettings
+    val useRevisedNavigation = isToday || isHistory || isSettings
     val background = when {
         isToday -> Core5x5HomeTokens.Background
+        isHistory -> Core5x5HistoryTokens.Background
         isSettings -> Core5x5SettingsTokens.Background
         else -> Core5x5Colors.Background
+    }
+    val navigationBackground = when {
+        isToday || isSettings -> Core5x5HomeTokens.Card
+        isHistory -> Core5x5HistoryTokens.Card
+        else -> Core5x5Colors.Elevated
     }
     Core5x5Theme {
         Column(modifier = Modifier.fillMaxSize().background(background)) {
@@ -299,7 +321,7 @@ private fun ScreenFrame(
             if (navigationItem != null) {
                 Box(
                     modifier = Modifier.fillMaxWidth()
-                        .background(if (useRevisedNavigation) Core5x5HomeTokens.Card else Core5x5Colors.Elevated)
+                        .background(navigationBackground)
                         .windowInsetsPadding(WindowInsets(bottom = if (useRevisedNavigation) Core5x5HomeTokens.SystemBottomReserve else 0.dp)),
                 ) {
                     Core5x5BottomNavigation(selectedItem = navigationItem, onItemSelected = {}, useHomeDesign = useRevisedNavigation)

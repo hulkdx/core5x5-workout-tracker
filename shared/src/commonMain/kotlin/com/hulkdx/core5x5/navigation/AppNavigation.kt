@@ -29,6 +29,7 @@ import com.hulkdx.core5x5.core.ui.components.Core5x5BottomNavigation
 import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Motion
+import com.hulkdx.core5x5.core.ui.theme.Core5x5HistoryTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5SettingsTokens
 import com.hulkdx.core5x5.feature.history.presentation.HistoryRoute
@@ -91,14 +92,10 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
                     ShellScreen(
                         uiState = uiState.copy(title = "History"),
                         showTitle = false,
+                        backgroundColor = Core5x5HistoryTokens.Background,
                         onRetryPreferences = viewModel::loadPreferences,
                     ) {
-                        HistoryRoute(
-                            weightUnit = uiState.weightUnit,
-                            onWorkoutSelected = { workoutId ->
-                                backStack.add(AppDestination.WorkoutDetail(workoutId))
-                            },
-                        )
+                        HistoryRoute()
                     }
                 }
             }
@@ -156,12 +153,19 @@ private fun TopLevelDestination(
     content: @Composable () -> Unit,
 ) {
     val isToday = selectedItem == Core5x5NavigationItem.TODAY
+    val isHistory = selectedItem == Core5x5NavigationItem.HISTORY
     val isSettings = selectedItem == Core5x5NavigationItem.SETTINGS
-    val useRevisedNavigation = isToday || isSettings
+    val useRevisedNavigation = isToday || isHistory || isSettings
     val background = when {
         isToday -> Core5x5HomeTokens.Background
+        isHistory -> Core5x5HistoryTokens.Background
         isSettings -> Core5x5SettingsTokens.Background
         else -> Core5x5Colors.Background
+    }
+    val navigationBackground = when {
+        isToday || isSettings -> Core5x5HomeTokens.Card
+        isHistory -> Core5x5HistoryTokens.Card
+        else -> Core5x5Colors.Elevated
     }
     Column(modifier = Modifier.fillMaxSize().background(background)) {
         Box(
@@ -177,7 +181,7 @@ private fun TopLevelDestination(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(if (useRevisedNavigation) Core5x5HomeTokens.Card else Core5x5Colors.Elevated)
+                .background(navigationBackground)
                 .windowInsetsPadding(
                     WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal),
                 ),

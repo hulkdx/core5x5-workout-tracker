@@ -23,8 +23,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
+import com.hulkdx.core5x5.core.ui.theme.Core5x5HistoryTokens as History
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens as Home
+import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
 
 enum class Core5x5NavigationItem(val label: String) {
     TODAY("Today"),
@@ -38,14 +39,15 @@ fun Core5x5BottomNavigation(
     selectedItem: Core5x5NavigationItem,
     onItemSelected: (Core5x5NavigationItem) -> Unit,
     modifier: Modifier = Modifier,
-    useHomeDesign: Boolean = selectedItem == Core5x5NavigationItem.TODAY,
+    useHomeDesign: Boolean = selectedItem == Core5x5NavigationItem.TODAY || selectedItem == Core5x5NavigationItem.HISTORY,
 ) {
+    val isHistoryDesign = useHomeDesign && selectedItem == Core5x5NavigationItem.HISTORY
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .background(if (useHomeDesign) Home.Card else Core5x5Colors.Elevated)
+            .background(if (isHistoryDesign) History.Card else if (useHomeDesign) Home.Card else Core5x5Colors.Elevated)
             .drawBehind {
-                if (useHomeDesign) drawLine(Home.Border, Offset.Zero, Offset(size.width, 0f), Home.BorderStroke.toPx())
+                if (useHomeDesign) drawLine(if (isHistoryDesign) History.Border else Home.Border, Offset.Zero, Offset(size.width, 0f), Home.BorderStroke.toPx())
             }
             .heightIn(min = if (useHomeDesign) Home.NavigationHeight else Core5x5Dimensions.NavigationHeight)
             .padding(
@@ -64,7 +66,7 @@ fun Core5x5BottomNavigation(
             Core5x5NavigationItem.entries.forEach { item ->
                 val selected = item == selectedItem
                 val color = if (useHomeDesign) {
-                    if (selected) Home.Action else Home.Secondary
+                    if (selected) Home.Action else if (isHistoryDesign) History.Secondary else Home.Secondary
                 } else {
                     if (selected) Core5x5Colors.Action else Core5x5Colors.MutedText
                 }
@@ -86,12 +88,12 @@ fun Core5x5BottomNavigation(
                     Icon(
                         imageVector = if (useHomeDesign) item.homeIcon else item.icon,
                         contentDescription = null,
-                        modifier = Modifier.size(if (useHomeDesign) Home.NavigationIconSize else Core5x5Dimensions.NavigationIconSize),
+                        modifier = Modifier.size(if (isHistoryDesign) History.NavigationIconSize else if (useHomeDesign) Home.NavigationIconSize else Core5x5Dimensions.NavigationIconSize),
                         tint = color,
                     )
                     Text(
                         text = item.label,
-                        style = if (useHomeDesign) Home.Eyebrow else Core5x5Typography.Caption,
+                        style = if (isHistoryDesign) History.Metadata else if (useHomeDesign) Home.Eyebrow else Core5x5Typography.Caption,
                         color = color,
                         textAlign = TextAlign.Center,
                     )

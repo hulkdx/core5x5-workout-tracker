@@ -20,6 +20,32 @@ internal fun CompletedWorkoutRecord.dateLabel(): String = completedAtEpochMillis
 
 internal fun CompletedWorkoutRecord.detailDateLabel(): String = completedAtEpochMillis.toHistoryDetailDate()
 
+internal fun CompletedWorkoutRecord.monthLabel(): String {
+    val date = completedAtEpochMillis.toCivilDate()
+    return "${MONTH_NAMES[date.month - 1].uppercase()} ${date.year}"
+}
+
+internal fun CompletedWorkoutRecord.dayLabel(): String = completedAtEpochMillis.toCivilDate().day.toString()
+
+internal fun CompletedWorkoutRecord.weekdayLabel(): String {
+    val days = completedAtEpochMillis.floorDiv(MILLIS_PER_DAY)
+    val index = ((days % 7L + 7L + 3L) % 7L).toInt()
+    return WEEKDAYS[index]
+}
+
+/** Preserve the completed source's timestamp/ID ordering, including ties. */
+internal fun List<CompletedWorkoutRecord>.historyMonths(): Map<String, List<CompletedWorkoutRecord>> =
+    groupBy { it.monthLabel() }
+
+/** Counts the saved prescription; partial completion remains visible in Detail. */
+internal fun CompletedWorkoutRecord.sessionSummary(): String {
+    val exerciseCount = exercises.size
+    val setCount = prescribedSets
+    val exerciseLabel = if (exerciseCount == 1) "exercise" else "exercises"
+    val setLabel = if (setCount == 1) "set" else "sets"
+    return "$exerciseCount $exerciseLabel  ·  $setCount $setLabel"
+}
+
 internal fun CompletedWorkoutRecord.durationLabel(): String {
     val totalMinutes = durationMillis / 60_000L
     return if (totalMinutes < 60L) {
@@ -84,3 +110,5 @@ private val MONTH_NAMES = listOf(
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December",
 )
+
+private val WEEKDAYS = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
