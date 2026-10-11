@@ -23,7 +23,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import com.hulkdx.core5x5.core.ui.theme.AppColors
 import com.hulkdx.core5x5.core.ui.theme.AppDimensions
-import com.hulkdx.core5x5.core.ui.theme.AppHistoryTokens as History
 import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
 import com.hulkdx.core5x5.core.ui.theme.AppTypography
 
@@ -39,15 +38,14 @@ fun AppBottomNavigation(
     selectedItem: AppNavigationItem,
     onItemSelected: (AppNavigationItem) -> Unit,
     modifier: Modifier = Modifier,
-    useHomeDesign: Boolean = selectedItem == AppNavigationItem.TODAY || selectedItem == AppNavigationItem.HISTORY,
+    useHomeDesign: Boolean = true,
 ) {
-    val isHistoryDesign = useHomeDesign && selectedItem == AppNavigationItem.HISTORY
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .background(if (isHistoryDesign) History.Card else if (useHomeDesign) Home.Card else AppColors.Elevated)
+            .background(if (useHomeDesign) Home.Card else AppColors.Elevated)
             .drawBehind {
-                if (useHomeDesign) drawLine(if (isHistoryDesign) History.Border else Home.Border, Offset.Zero, Offset(size.width, 0f), Home.BorderStroke.toPx())
+                if (useHomeDesign) drawLine(Home.Border, Offset.Zero, Offset(size.width, 0f), Home.BorderStroke.toPx())
             }
             .heightIn(min = if (useHomeDesign) Home.NavigationHeight else AppDimensions.NavigationHeight)
             .padding(
@@ -66,7 +64,7 @@ fun AppBottomNavigation(
             AppNavigationItem.entries.forEach { item ->
                 val selected = item == selectedItem
                 val color = if (useHomeDesign) {
-                    if (selected) Home.Action else if (isHistoryDesign) History.Secondary else Home.Secondary
+                    if (selected) Home.Action else Home.Secondary
                 } else {
                     if (selected) AppColors.Action else AppColors.MutedText
                 }
@@ -88,12 +86,12 @@ fun AppBottomNavigation(
                     Icon(
                         imageVector = if (useHomeDesign) item.homeIcon else item.icon,
                         contentDescription = null,
-                        modifier = Modifier.size(if (isHistoryDesign) History.NavigationIconSize else if (useHomeDesign) Home.NavigationIconSize else AppDimensions.NavigationIconSize),
+                        modifier = Modifier.size(if (useHomeDesign) Home.NavigationIconSize else AppDimensions.NavigationIconSize),
                         tint = color,
                     )
                     Text(
                         text = item.label,
-                        style = if (isHistoryDesign) History.Metadata else if (useHomeDesign) Home.Eyebrow else AppTypography.Caption,
+                        style = if (useHomeDesign) Home.Eyebrow else AppTypography.Caption,
                         color = color,
                         textAlign = TextAlign.Center,
                     )

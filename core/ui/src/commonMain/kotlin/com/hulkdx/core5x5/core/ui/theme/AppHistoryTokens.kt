@@ -33,7 +33,6 @@ object AppHistoryTokens {
     val TitleSummaryGap = 4.dp
     val ClockSize = 14.dp
     val ClockGap = 6.dp
-    val NavigationIconSize = 24.dp
     val Title = AppTypography.Title.copy(fontSize = 34.sp, lineHeight = 42.sp, fontWeight = FontWeight.Bold)
     val Month = AppTypography.Caption.copy(fontSize = 11.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp)
     val Workout = AppTypography.Label.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Bold)

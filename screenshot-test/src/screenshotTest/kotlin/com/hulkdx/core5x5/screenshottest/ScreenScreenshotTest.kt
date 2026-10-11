@@ -301,8 +301,7 @@ private fun ScreenFrame(
         else -> AppColors.Background
     }
     val navigationBackground = when {
-        isToday || isSettings -> AppHomeTokens.Card
-        isHistory -> AppHistoryTokens.Card
+        useRevisedNavigation -> AppHomeTokens.Card
         else -> AppColors.Elevated
     }
     AppTheme {
