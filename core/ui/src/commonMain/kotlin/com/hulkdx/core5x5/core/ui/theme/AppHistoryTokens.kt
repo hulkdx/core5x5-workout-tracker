@@ -5,14 +5,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/** history.* raster estimates from 07 History.png, normalized to width 390. */
+/** history.* geometry from 07 History.png; colors align with Today by user direction. */
 object AppHistoryTokens {
-    val Background = Color(0xFF0B1216)
-    val Card = Color(0xFF10181D)
-    val DateTile = Color(0xFF192229)
-    val Border = Color(0xFF202A30)
-    val Primary = Color(0xFFF5F7F8)
-    val Secondary = Color(0xFFA8B3C0)
+    val Background = AppHomeTokens.Background
+    val Card = AppHomeTokens.Card
+    val DateTile = Color(0xFF1D2022)
+    val Border = AppHomeTokens.Border
+    val Primary = AppHomeTokens.Primary
+    val Secondary = AppHomeTokens.Secondary
+    val Action = AppHomeTokens.Action
     val Inset = 20.dp
     val TopGap = 14.dp
     val TitleGap = 16.dp

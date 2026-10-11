@@ -49,6 +49,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.ui.components.AppBottomNavigation
+import com.hulkdx.core5x5.core.ui.components.AppButtonPalette
 import com.hulkdx.core5x5.core.ui.components.AppPrimaryButton
 import com.hulkdx.core5x5.core.ui.components.AppSecondaryButton
 import com.hulkdx.core5x5.core.ui.components.AppSettingRow
@@ -115,7 +116,7 @@ internal fun SettingsScreen(
             else -> {
                 SettingsMessage("Unable to load preferences. Try again.", error = true)
                 Spacer(Modifier.height(Settings.HeadingGap))
-                AppSecondaryButton(label = "Try Again", onClick = onRetryLoad)
+                AppSecondaryButton(label = "Try Again", onClick = onRetryLoad, palette = AppButtonPalette.Home)
             }
         }
         Spacer(Modifier.height(Settings.SectionGap))
@@ -153,21 +154,21 @@ internal fun SettingsScreen(
                             text = unit.displayName(),
                             modifier = Modifier.weight(1f),
                             style = AppTypography.Body,
-                            color = AppColors.PrimaryText,
+                            color = Settings.Primary,
                         )
                         if (selected) {
                             Text(
                                 text = "✓",
                                 modifier = Modifier.clearAndSetSemantics {},
                                 style = AppTypography.Body,
-                                color = AppColors.Action,
+                                color = Settings.Action,
                             )
                         }
                     }
                 }
             }
             SaveStatus(uiState)
-            AppSecondaryButton(label = "Cancel", enabled = !uiState.isSaving, onClick = onDismissDialog)
+            AppSecondaryButton(label = "Cancel", enabled = !uiState.isSaving, onClick = onDismissDialog, palette = AppButtonPalette.Home)
         }
         SettingsDialog.REST_DURATION -> SettingsDialogSurface("Rest duration", onDismissDialog) {
             SettingsMessage("Duration in seconds")
@@ -176,8 +177,8 @@ internal fun SettingsScreen(
                 onValueChange = onRestDurationInput,
                 enabled = !uiState.isSaving,
                 singleLine = true,
-                textStyle = AppTypography.Body.copy(color = AppColors.PrimaryText),
-                cursorBrush = SolidColor(AppColors.Action),
+                textStyle = AppTypography.Body.copy(color = Settings.Primary),
+                cursorBrush = SolidColor(Settings.Action),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { if (uiState.canSaveRestDuration) onSaveRestDuration() }),
                 modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Rest duration in seconds" },
@@ -186,7 +187,7 @@ internal fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth().heightIn(min = AppDimensions.SettingHeight)
                             .border(
                                 width = AppDimensions.BorderStroke,
-                                color = if (uiState.hasInvalidRestDuration) AppColors.Destructive else AppColors.Border,
+                                color = if (uiState.hasInvalidRestDuration) AppColors.Destructive else Settings.Border,
                                 shape = RoundedCornerShape(AppDimensions.RadiusMedium),
                             ).padding(AppDimensions.RestGap),
                         contentAlignment = Alignment.CenterStart,
@@ -199,11 +200,12 @@ internal fun SettingsScreen(
             SettingsMessage("Applies to future timers. A running timer keeps its current time.")
             SaveStatus(uiState)
             AppPrimaryButton(
+                palette = AppButtonPalette.Home,
                 label = if (uiState.isSaving) "Saving…" else "Save",
                 enabled = uiState.canSaveRestDuration,
                 onClick = onSaveRestDuration,
             )
-            AppSecondaryButton(label = "Cancel", enabled = !uiState.isSaving, onClick = onDismissDialog)
+            AppSecondaryButton(label = "Cancel", enabled = !uiState.isSaving, onClick = onDismissDialog, palette = AppButtonPalette.Home)
         }
         SettingsDialog.ABOUT -> SettingsDialogSurface("About Core5x5", onDismissDialog) {
             SettingsMessage("Core5x5: Workout Tracker")
@@ -212,13 +214,13 @@ internal fun SettingsScreen(
             if (uiState.error == SettingsError.OPEN_REPOSITORY) {
                 SettingsMessage("Unable to open the repository. Try again.", error = true)
             }
-            AppSecondaryButton(label = "Open-source repository", onClick = onOpenRepository)
-            AppSecondaryButton(label = "MIT License", onClick = onOpenLicense)
-            AppPrimaryButton(label = "Close", onClick = onDismissDialog)
+            AppSecondaryButton(label = "Open-source repository", onClick = onOpenRepository, palette = AppButtonPalette.Home)
+            AppSecondaryButton(label = "MIT License", onClick = onOpenLicense, palette = AppButtonPalette.Home)
+            AppPrimaryButton(label = "Close", onClick = onDismissDialog, palette = AppButtonPalette.Home)
         }
         SettingsDialog.LICENSE -> SettingsDialogSurface("License", onDismissDialog) {
-            Text(text = MIT_LICENSE, style = AppTypography.Body, color = AppColors.PrimaryText)
-            AppSecondaryButton(label = "Back to About", onClick = onOpenAbout)
+            Text(text = MIT_LICENSE, style = AppTypography.Body, color = Settings.Primary)
+            AppSecondaryButton(label = "Back to About", onClick = onOpenAbout, palette = AppButtonPalette.Home)
         }
         null -> Unit
     }
@@ -233,7 +235,7 @@ private fun SettingsDialogSurface(title: String, onDismiss: () -> Unit, content:
                 vertical = AppDimensions.ContentPaddingVertical,
             ).imePadding(),
             shape = RoundedCornerShape(AppDimensions.RadiusLarge),
-            color = AppColors.Elevated,
+            color = Settings.Card,
         ) {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()).padding(AppDimensions.ScreenInset),
@@ -243,7 +245,7 @@ private fun SettingsDialogSurface(title: String, onDismiss: () -> Unit, content:
                     text = title,
                     modifier = Modifier.semantics { heading() },
                     style = AppTypography.Heading,
-                    color = AppColors.PrimaryText,
+                    color = Settings.Primary,
                 )
                 content()
             }
@@ -257,7 +259,7 @@ private fun SettingsMessage(text: String, error: Boolean = false) {
         text = text,
         modifier = if (error) Modifier.semantics { liveRegion = LiveRegionMode.Polite } else Modifier,
         style = AppTypography.Body,
-        color = if (error) AppColors.Destructive else AppColors.SecondaryText,
+        color = if (error) AppColors.Destructive else Settings.Secondary,
     )
 }
 

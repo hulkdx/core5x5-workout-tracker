@@ -1,17 +1,17 @@
 package com.hulkdx.core5x5.core.ui.theme
 
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/** settings.* raster estimates from 08. Settings screen.png; see design/specs/settings.md. */
+/** settings.* geometry from 08. Settings screen.png; colors align with Today by user direction. */
 object AppSettingsTokens {
-    val Background = Color(0xFF091115)
-    val Card = Color(0xFF10191E)
-    val Primary = Color(0xFFF5F8F7)
-    val Secondary = Color(0xFFA7B5C9)
-    val Border = Color(0xFF28353D)
+    val Background = AppHomeTokens.Background
+    val Card = AppHomeTokens.Card
+    val Primary = AppHomeTokens.Primary
+    val Secondary = AppHomeTokens.Secondary
+    val Border = AppHomeTokens.Border
+    val Action = AppHomeTokens.Action
     val Inset = 18.dp
     val TopGap = 12.dp
     val TitleGap = 22.dp

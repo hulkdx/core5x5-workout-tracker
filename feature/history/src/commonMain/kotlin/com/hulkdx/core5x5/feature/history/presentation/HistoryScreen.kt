@@ -27,9 +27,9 @@ import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutExercise
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutRecord
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSet
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutType
+import com.hulkdx.core5x5.core.ui.components.AppButtonPalette
 import com.hulkdx.core5x5.core.ui.components.AppHistoryCard
 import com.hulkdx.core5x5.core.ui.components.AppSecondaryButton
-import com.hulkdx.core5x5.core.ui.theme.AppColors
 import com.hulkdx.core5x5.core.ui.theme.AppDimensions
 import com.hulkdx.core5x5.core.ui.theme.AppHistoryTokens as History
 import com.hulkdx.core5x5.core.ui.theme.AppTheme
@@ -107,7 +107,7 @@ private fun LoadingHistory() {
         modifier = Modifier.fillMaxWidth().padding(vertical = AppDimensions.ContentPaddingVertical),
         contentAlignment = Alignment.Center,
     ) {
-        CircularProgressIndicator(color = AppColors.Action)
+        CircularProgressIndicator(color = History.Action)
     }
 }
 
@@ -133,7 +133,7 @@ private fun HistoryLoadError(onRetryLoad: () -> Unit) {
             style = AppTypography.Body,
             color = History.Secondary,
         )
-        AppSecondaryButton(label = "Try Again", onClick = onRetryLoad)
+        AppSecondaryButton(label = "Try Again", onClick = onRetryLoad, palette = AppButtonPalette.Home)
     }
 }
 

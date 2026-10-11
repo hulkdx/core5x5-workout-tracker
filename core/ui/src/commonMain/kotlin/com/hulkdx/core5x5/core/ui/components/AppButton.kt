@@ -14,10 +14,36 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import com.hulkdx.core5x5.core.ui.theme.AppColors
 import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens
 import com.hulkdx.core5x5.core.ui.theme.AppTypography
+
+/** Color overrides preserve the shared button's geometry and interaction behavior. */
+data class AppButtonPalette(
+    val background: Color = AppColors.Background,
+    val surface: Color = AppColors.Elevated,
+    val pressedSurface: Color = AppColors.Pressed,
+    val primaryText: Color = AppColors.PrimaryText,
+    val action: Color = AppColors.Action,
+    val actionPressed: Color = AppColors.ActionPressed,
+    val border: Color = AppColors.Border,
+) {
+    companion object {
+        val Default = AppButtonPalette()
+        val Home = AppButtonPalette(
+            background = AppHomeTokens.Background,
+            surface = AppHomeTokens.Card,
+            pressedSurface = AppHomeTokens.Border,
+            primaryText = AppHomeTokens.Primary,
+            action = AppHomeTokens.Action,
+            actionPressed = AppHomeTokens.ActionPressed,
+            border = AppHomeTokens.Border,
+        )
+    }
+}
 
 @Composable
 fun AppPrimaryButton(
@@ -25,8 +51,9 @@ fun AppPrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    palette: AppButtonPalette = AppButtonPalette.Default,
 ) {
-    AppButton(label, onClick, modifier, enabled, primary = true)
+    AppButton(label, onClick, modifier, enabled, primary = true, palette = palette)
 }
 
 @Composable
@@ -35,8 +62,9 @@ fun AppSecondaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    palette: AppButtonPalette = AppButtonPalette.Default,
 ) {
-    AppButton(label, onClick, modifier, enabled, primary = false)
+    AppButton(label, onClick, modifier, enabled, primary = false, palette = palette)
 }
 
 @Composable
@@ -46,14 +74,15 @@ private fun AppButton(
     modifier: Modifier,
     enabled: Boolean,
     primary: Boolean,
+    palette: AppButtonPalette,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val background = when {
-        primary && pressed -> AppColors.ActionPressed
-        primary -> AppColors.Action
-        pressed -> AppColors.Pressed
-        else -> AppColors.Elevated
+        primary && pressed -> palette.actionPressed
+        primary -> palette.action
+        pressed -> palette.pressedSurface
+        else -> palette.surface
     }
     Button(
         onClick = onClick,
@@ -62,12 +91,12 @@ private fun AppButton(
         shape = RoundedCornerShape(AppDimensions.RadiusMedium),
         colors = ButtonDefaults.buttonColors(
             containerColor = background,
-            contentColor = if (primary) AppColors.Background else AppColors.PrimaryText,
+            contentColor = if (primary) palette.background else palette.primaryText,
             disabledContainerColor = AppColors.Disabled,
             disabledContentColor = AppColors.DisabledText,
         ),
         contentPadding = PaddingValues(AppDimensions.ButtonPadding),
-        border = if (primary) null else BorderStroke(AppDimensions.BorderStroke, AppColors.Border),
+        border = if (primary) null else BorderStroke(AppDimensions.BorderStroke, palette.border),
         elevation = null,
         interactionSource = interactionSource,
     ) {
