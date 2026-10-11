@@ -2,16 +2,18 @@ package com.hulkdx.core5x5.feature.workout.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,22 +23,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
-import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
-import com.hulkdx.core5x5.core.preferences.domain.formatWeight
-import com.hulkdx.core5x5.core.ui.components.Core5x5ExerciseRow
-import com.hulkdx.core5x5.core.ui.components.Core5x5Metrics
+import androidx.compose.ui.unit.dp
+import com.hulkdx.core5x5.core.ui.components.Core5x5CompletionButton
+import com.hulkdx.core5x5.core.ui.components.Core5x5CompletionMetrics
+import com.hulkdx.core5x5.core.ui.components.Core5x5CompletionSuccessIcon
+import com.hulkdx.core5x5.core.ui.components.Core5x5NextWorkoutSummary
 import com.hulkdx.core5x5.core.ui.components.Core5x5PrimaryButton
 import com.hulkdx.core5x5.core.ui.components.Core5x5SecondaryButton
-import com.hulkdx.core5x5.core.ui.components.Core5x5WorkoutCard
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
-import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
 import com.hulkdx.core5x5.feature.workout.domain.CompletedWorkout
@@ -44,6 +44,7 @@ import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutSet
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
+import com.hulkdx.core5x5.core.ui.theme.Core5x5CompleteTokens as Complete
 
 @Composable
 internal fun WorkoutCompleteScreen(
@@ -52,80 +53,90 @@ internal fun WorkoutCompleteScreen(
     onBackToToday: () -> Unit,
     modifier: Modifier = Modifier,
     windowInsets: WindowInsets = WindowInsets.safeDrawing,
-    weightUnit: WeightUnit = WeightUnit.KG,
 ) {
-    Surface(modifier = modifier.fillMaxSize(), color = Core5x5Colors.Background) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(windowInsets)
-                .verticalScroll(rememberScrollState())
-                .padding(
-                    start = Core5x5Dimensions.ScreenInset,
-                    end = Core5x5Dimensions.ScreenInset,
-                    top = Core5x5Dimensions.CompleteExtraTop + Core5x5Dimensions.CompleteGap,
-                    bottom = Core5x5Dimensions.CompletePaddingBottom,
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.CompleteGap),
-        ) {
-            val completed = uiState.completedWorkout
-            val next = uiState.nextWorkout
-            when {
-                uiState.isLoading -> Text(
-                    text = "Loading saved workout…",
-                    style = Core5x5Typography.Body,
-                    color = Core5x5Colors.SecondaryText,
-                )
-                completed != null && next != null -> {
-                    SuccessIcon()
-                    Text(
-                        text = "Workout ${completed.workout.name} complete",
-                        modifier = Modifier.fillMaxWidth().semantics { heading() },
-                        style = Core5x5Typography.Title,
-                        color = Core5x5Colors.PrimaryText,
-                        textAlign = TextAlign.Center,
-                    )
-                    Text(
-                        text = "Workout saved. Your next workout is ready.",
-                        modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-                        style = Core5x5Typography.Body,
-                        color = Core5x5Colors.SecondaryText,
-                        textAlign = TextAlign.Center,
-                    )
-                    Core5x5Metrics(
-                        firstLabel = "Duration",
-                        firstValue = completed.durationMillis.formatWorkoutDuration(),
-                        secondLabel = "Completed sets",
-                        secondValue = "${completed.completedSets} / ${completed.prescribedSets}",
-                    )
-                    Core5x5WorkoutCard(
-                        eyebrow = "NEXT UP",
-                        title = "Workout ${next.workout.name}",
-                        indicator = next.workout.name,
+    Surface(modifier = modifier.fillMaxSize(), color = Complete.Background) {
+        BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(windowInsets)) {
+            val viewportHeight = maxHeight
+            // The minimum viewport height centers short content; tall content grows and scrolls.
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .heightIn(min = viewportHeight)
+                    .padding(horizontal = Complete.Inset)
+                    .padding(bottom = Complete.BottomPadding),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(Complete.ContentGap),
+            ) {
+                val completed = uiState.completedWorkout
+                val next = uiState.nextWorkout
+                Box(
+                    modifier = Modifier.fillMaxWidth().heightIn(
+                        min = (viewportHeight - Complete.BottomPadding - Complete.ButtonHeight - Complete.ContentGap)
+                            .coerceAtLeast(0.dp),
+                    ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = Complete.ContentGap),
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        next.exercises.forEach { exercise ->
-                            Core5x5ExerciseRow(
-                                name = exercise.exercise.displayName(),
-                                prescription = "${exercise.sets} × ${exercise.reps} · ${formatWeight(exercise.weightKg, weightUnit)}",
+                        when {
+                            uiState.isLoading -> Text(
+                                text = "Loading saved workout…",
+                                style = Core5x5Typography.Body,
+                                color = Core5x5Colors.SecondaryText,
+                                textAlign = TextAlign.Center,
                             )
+                            completed != null && next != null -> {
+                                Core5x5CompletionSuccessIcon()
+                                Spacer(Modifier.height(Complete.SuccessTitleGap))
+                                Text(
+                                    text = "Workout Complete",
+                                    modifier = Modifier.fillMaxWidth().semantics { heading() },
+                                    style = Complete.Title,
+                                    color = Core5x5Colors.PrimaryText,
+                                    textAlign = TextAlign.Center,
+                                )
+                                Spacer(Modifier.height(Complete.SubtitleGap))
+                                Text(
+                                    text = "Workout saved. Your next workout is ready.",
+                                    modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
+                                    style = Complete.Subtitle,
+                                    color = Core5x5Colors.SecondaryText,
+                                    textAlign = TextAlign.Center,
+                                )
+                                Spacer(Modifier.height(Complete.MetricsTopGap))
+                                Core5x5CompletionMetrics(
+                                    duration = completed.durationMillis.formatWorkoutDuration(),
+                                    completedSets = "${completed.completedSets} / ${completed.prescribedSets}",
+                                )
+                                Spacer(Modifier.height(Complete.ContentGap))
+                                Core5x5NextWorkoutSummary(
+                                    title = "Workout ${next.workout.name}",
+                                    indicator = next.workout.name,
+                                )
+                            }
+                            else -> {
+                                Text(
+                                    text = if (uiState.error == WorkoutCompleteError.NOT_FOUND) {
+                                        "No saved completed workout was found."
+                                    } else {
+                                        "Unable to load the saved workout. Try again."
+                                    },
+                                    modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
+                                    style = Core5x5Typography.Body,
+                                    color = Core5x5Colors.SecondaryText,
+                                    textAlign = TextAlign.Center,
+                                )
+                                Spacer(Modifier.height(Complete.ContentGap))
+                                Core5x5PrimaryButton(label = "Try Again", onClick = onRetryLoad)
+                            }
                         }
                     }
-                    Core5x5PrimaryButton(label = "Back to Today", onClick = onBackToToday)
                 }
-                else -> {
-                    Text(
-                        text = if (uiState.error == WorkoutCompleteError.NOT_FOUND) {
-                            "No saved completed workout was found."
-                        } else {
-                            "Unable to load the saved workout. Try again."
-                        },
-                        modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-                        style = Core5x5Typography.Body,
-                        color = Core5x5Colors.SecondaryText,
-                        textAlign = TextAlign.Center,
-                    )
-                    Core5x5PrimaryButton(label = "Try Again", onClick = onRetryLoad)
+                if (completed != null && next != null && !uiState.isLoading) {
+                    Core5x5CompletionButton(label = "Back to Today", onClick = onBackToToday)
+                } else {
                     Core5x5SecondaryButton(label = "Back to Today", onClick = onBackToToday)
                 }
             }
@@ -133,29 +144,13 @@ internal fun WorkoutCompleteScreen(
     }
 }
 
-@Composable
-private fun SuccessIcon() {
-    val size = maxOf(
-        Core5x5Dimensions.SuccessSize,
-        with(LocalDensity.current) { Core5x5Typography.Title.lineHeight.toDp() },
-    )
-    Surface(shape = CircleShape, color = Core5x5Colors.Action) {
-        Box(
-            modifier = Modifier.size(size).clearAndSetSemantics {},
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(text = "✓", style = Core5x5Typography.Title, color = Core5x5Colors.Background)
-        }
-    }
-}
-
-@Preview(name = "Completed A", widthDp = 390, heightDp = 844)
+@Preview(name = "Completed A", widthDp = 390, heightDp = 874)
 @Composable
 private fun WorkoutCompleteScreenPreview() {
     CompletionPreview(Workout.A)
 }
 
-@Preview(name = "Partially completed B", widthDp = 390, heightDp = 844)
+@Preview(name = "Partially completed B", widthDp = 390, heightDp = 874)
 @Composable
 private fun WorkoutCompleteBPreview() {
     CompletionPreview(Workout.B, completedSets = 7)
@@ -167,10 +162,10 @@ private fun WorkoutCompleteNarrowPreview() {
     CompletionPreview(Workout.B, completedSets = 7)
 }
 
-@Preview(name = "Larger completion text", widthDp = 390, heightDp = 844)
+@Preview(name = "Larger completion text", widthDp = 390, heightDp = 874)
 @Composable
 private fun WorkoutCompleteLargeTextPreview() {
-    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale = 1.5f)) {
+    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale = 2f)) {
         CompletionPreview(Workout.A)
     }
 }
@@ -196,7 +191,7 @@ private fun CompletionPreview(workout: Workout, completedSets: Int = workout.exe
             onRetryLoad = {},
             onBackToToday = {},
             // The source's mock reserve is used only for reference previews, never device insets.
-            windowInsets = WindowInsets(top = Core5x5Dimensions.ReferenceSystemTopReserve),
+            windowInsets = WindowInsets(top = Complete.SystemTopReserve, bottom = Complete.SystemBottomReserve),
         )
     }
 }

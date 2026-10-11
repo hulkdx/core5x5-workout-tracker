@@ -128,7 +128,6 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
             entry<AppDestination.WorkoutComplete>(clazzContentKey = { "complete:${it.workoutId}" }) { destination ->
                 WorkoutCompleteRoute(
                     workoutId = destination.workoutId,
-                    weightUnit = uiState.weightUnit,
                     onBackToToday = { backStack.removeLastOrNull() },
                 )
             }

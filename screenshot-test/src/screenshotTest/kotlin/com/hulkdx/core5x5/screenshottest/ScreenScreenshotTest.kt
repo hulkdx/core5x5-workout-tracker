@@ -18,6 +18,7 @@ import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
+import com.hulkdx.core5x5.core.ui.theme.Core5x5CompleteTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
 import com.hulkdx.core5x5.feature.history.presentation.HistoryScreen
 import com.hulkdx.core5x5.feature.history.presentation.HistoryUiState
@@ -38,6 +39,7 @@ import com.hulkdx.core5x5.feature.workout.presentation.TodayScreen
 import com.hulkdx.core5x5.feature.workout.presentation.TodayUiState
 import com.hulkdx.core5x5.feature.workout.presentation.WorkoutCompleteScreen
 import com.hulkdx.core5x5.feature.workout.presentation.WorkoutCompleteUiState
+import com.hulkdx.core5x5.feature.workout.presentation.WorkoutCompleteError
 import com.hulkdx.core5x5.shell.ShellScreen
 import com.hulkdx.core5x5.shell.ShellUiState
 
@@ -153,9 +155,26 @@ class ScreenScreenshotTest {
     }
 
     @PreviewTest
-    @ReferenceScreen
+    @HomeReferenceScreen
     @Composable
     fun WorkoutComplete() = WorkoutCompleteSnapshot(completedWorkoutState(Workout.A))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun WorkoutCompleteB() = WorkoutCompleteSnapshot(completedWorkoutState(Workout.B, completedSets = 7))
+
+    @PreviewTest
+    @Preview(name = "Narrow completion, large text", widthDp = 320, heightDp = 640, fontScale = 2f)
+    @Composable
+    fun WorkoutCompleteNarrow() = WorkoutCompleteSnapshot(completedWorkoutState(Workout.B))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun WorkoutCompleteLoadError() = WorkoutCompleteSnapshot(
+        WorkoutCompleteUiState(isLoading = false, error = WorkoutCompleteError.LOAD),
+    )
 
     @PreviewTest
     @ReferenceScreen
@@ -216,13 +235,15 @@ private fun ActiveWorkoutSnapshot(state: ActiveWorkoutUiState) = Core5x5Theme {
 }
 
 @Composable
-private fun WorkoutCompleteSnapshot(state: WorkoutCompleteUiState) = ScreenFrame {
+private fun WorkoutCompleteSnapshot(state: WorkoutCompleteUiState) = Core5x5Theme {
     WorkoutCompleteScreen(
         uiState = state,
         onRetryLoad = {},
         onBackToToday = {},
-        // ScreenFrame already owns the preview's simulated top inset.
-        windowInsets = WindowInsets(0, 0, 0, 0),
+        windowInsets = WindowInsets(
+            top = Core5x5CompleteTokens.SystemTopReserve,
+            bottom = Core5x5CompleteTokens.SystemBottomReserve,
+        ),
     )
 }
 
