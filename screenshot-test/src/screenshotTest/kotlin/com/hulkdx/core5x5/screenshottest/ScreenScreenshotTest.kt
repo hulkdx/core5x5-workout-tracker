@@ -20,6 +20,7 @@ import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HistoryTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5CompleteTokens
+import com.hulkdx.core5x5.core.ui.theme.Core5x5SettingsTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
 import com.hulkdx.core5x5.feature.history.presentation.HistoryError
 import com.hulkdx.core5x5.feature.history.presentation.HistoryScreen
@@ -216,10 +217,10 @@ class ScreenScreenshotTest {
     }
 
     @PreviewTest
-    @ReferenceScreen
+    @HomeReferenceScreen
     @Composable
     fun Settings() = SettingsSnapshot(
-        SettingsUiState(isLoading = false, preferences = TrainingPreferences(), versionName = "1.0"),
+        SettingsUiState(isLoading = false, preferences = TrainingPreferences(), versionName = "1.0.0"),
     )
 }
 
@@ -291,14 +292,16 @@ private fun ScreenFrame(
 ) {
     val isToday = navigationItem == Core5x5NavigationItem.TODAY
     val isHistory = navigationItem == Core5x5NavigationItem.HISTORY
-    val usesRevisedInsets = isToday || isHistory
+    val isSettings = navigationItem == Core5x5NavigationItem.SETTINGS
+    val useRevisedNavigation = isToday || isHistory || isSettings
     val background = when {
         isToday -> Core5x5HomeTokens.Background
         isHistory -> Core5x5HistoryTokens.Background
+        isSettings -> Core5x5SettingsTokens.Background
         else -> Core5x5Colors.Background
     }
     val navigationBackground = when {
-        isToday -> Core5x5HomeTokens.Card
+        isToday || isSettings -> Core5x5HomeTokens.Card
         isHistory -> Core5x5HistoryTokens.Card
         else -> Core5x5Colors.Elevated
     }
@@ -306,7 +309,7 @@ private fun ScreenFrame(
         Column(modifier = Modifier.fillMaxSize().background(background)) {
             Box(
                 modifier = Modifier.fillMaxWidth().weight(1f).windowInsetsPadding(
-                    WindowInsets(top = if (usesRevisedInsets) Core5x5HomeTokens.SystemTopReserve else Core5x5Dimensions.ReferenceSystemTopReserve),
+                    WindowInsets(top = if (useRevisedNavigation) Core5x5HomeTokens.SystemTopReserve else Core5x5Dimensions.ReferenceSystemTopReserve),
                 ),
             ) {
                 if (navigationItem != null) {
@@ -319,9 +322,9 @@ private fun ScreenFrame(
                 Box(
                     modifier = Modifier.fillMaxWidth()
                         .background(navigationBackground)
-                        .windowInsetsPadding(WindowInsets(bottom = if (usesRevisedInsets) Core5x5HomeTokens.SystemBottomReserve else 0.dp)),
+                        .windowInsetsPadding(WindowInsets(bottom = if (useRevisedNavigation) Core5x5HomeTokens.SystemBottomReserve else 0.dp)),
                 ) {
-                    Core5x5BottomNavigation(selectedItem = navigationItem, onItemSelected = {})
+                    Core5x5BottomNavigation(selectedItem = navigationItem, onItemSelected = {}, useHomeDesign = useRevisedNavigation)
                 }
             }
         }

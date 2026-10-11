@@ -31,6 +31,7 @@ import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Motion
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HistoryTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
+import com.hulkdx.core5x5.core.ui.theme.Core5x5SettingsTokens
 import com.hulkdx.core5x5.feature.history.presentation.HistoryRoute
 import com.hulkdx.core5x5.feature.history.presentation.WorkoutDetailRoute
 import com.hulkdx.core5x5.feature.settings.presentation.SettingsRoute
@@ -103,6 +104,7 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
                     ShellScreen(
                         uiState = uiState,
                         showTitle = false,
+                        backgroundColor = Core5x5SettingsTokens.Background,
                         onRetryPreferences = viewModel::loadPreferences,
                     ) {
                         SettingsRoute()
@@ -152,13 +154,16 @@ private fun TopLevelDestination(
 ) {
     val isToday = selectedItem == Core5x5NavigationItem.TODAY
     val isHistory = selectedItem == Core5x5NavigationItem.HISTORY
+    val isSettings = selectedItem == Core5x5NavigationItem.SETTINGS
+    val useRevisedNavigation = isToday || isHistory || isSettings
     val background = when {
         isToday -> Core5x5HomeTokens.Background
         isHistory -> Core5x5HistoryTokens.Background
+        isSettings -> Core5x5SettingsTokens.Background
         else -> Core5x5Colors.Background
     }
     val navigationBackground = when {
-        isToday -> Core5x5HomeTokens.Card
+        isToday || isSettings -> Core5x5HomeTokens.Card
         isHistory -> Core5x5HistoryTokens.Card
         else -> Core5x5Colors.Elevated
     }
@@ -184,6 +189,7 @@ private fun TopLevelDestination(
             Core5x5BottomNavigation(
                 selectedItem = selectedItem,
                 onItemSelected = onItemSelected,
+                useHomeDesign = useRevisedNavigation,
             )
         }
     }

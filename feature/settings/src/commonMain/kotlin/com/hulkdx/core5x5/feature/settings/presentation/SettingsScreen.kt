@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -28,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -52,8 +55,10 @@ import com.hulkdx.core5x5.core.ui.components.Core5x5SettingRow
 import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Dimensions
+import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Theme
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Typography
+import com.hulkdx.core5x5.core.ui.theme.Core5x5SettingsTokens as Settings
 
 /** AppNavigation owns insets and bottom navigation; this screen owns only its content padding. */
 @Composable
@@ -72,50 +77,61 @@ internal fun SettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(
-            start = Core5x5Dimensions.ScreenInset,
-            end = Core5x5Dimensions.ScreenInset,
-            top = Core5x5Dimensions.RestGap,
-            bottom = Core5x5Dimensions.ContentPaddingVertical,
-        ),
-        verticalArrangement = Arrangement.spacedBy(Core5x5Dimensions.RestGap),
+        modifier = modifier.fillMaxSize().background(Settings.Background)
+            .verticalScroll(rememberScrollState()).padding(
+                horizontal = Settings.Inset,
+                vertical = Settings.TopGap,
+            ),
     ) {
         Text(
             text = "Settings",
             modifier = Modifier.semantics { heading() },
-            style = Core5x5Typography.Title,
-            color = Core5x5Colors.PrimaryText,
+            style = Settings.Title,
+            color = Settings.Primary,
         )
+        Spacer(Modifier.height(Settings.TitleGap))
         val preferences = uiState.preferences
         when {
             uiState.isLoading -> SettingsMessage("Loading preferences…")
             preferences != null -> {
-                Core5x5SettingRow(
-                    label = "Rest timer",
-                    value = formatRestDuration(preferences.restDurationSeconds),
-                    enabled = uiState.canChangePreferences,
-                    onClick = onOpenRestDuration,
-                )
-                SettingsDivider()
-                Core5x5SettingRow(
-                    label = "Units",
-                    value = preferences.weightUnit.displayName(),
-                    enabled = uiState.canChangePreferences,
-                    onClick = onOpenUnits,
-                )
-                SettingsDivider()
+                SettingsSection("WORKOUT") {
+                    Core5x5SettingRow(
+                        label = "Rest Timer",
+                        value = formatRestDuration(preferences.restDurationSeconds),
+                        enabled = uiState.canChangePreferences,
+                        onClick = onOpenRestDuration,
+                    )
+                }
+                Spacer(Modifier.height(Settings.SectionGap))
+                SettingsSection("PREFERENCES") {
+                    Core5x5SettingRow(
+                        label = "Weight Unit",
+                        value = preferences.weightUnit.displayName(),
+                        enabled = uiState.canChangePreferences,
+                        onClick = onOpenUnits,
+                    )
+                }
             }
             else -> {
                 SettingsMessage("Unable to load preferences. Try again.", error = true)
+                Spacer(Modifier.height(Settings.HeadingGap))
                 Core5x5SecondaryButton(label = "Try Again", onClick = onRetryLoad)
             }
         }
-        Core5x5SettingRow(
-            label = "About",
-            value = uiState.versionName?.let { "v$it" } ?: "Version unavailable",
-            onClick = onOpenAbout,
-        )
-        SettingsDivider()
+        Spacer(Modifier.height(Settings.SectionGap))
+        SettingsSection("ABOUT") {
+            Core5x5SettingRow(
+                label = "Version",
+                value = uiState.versionName ?: "Unavailable",
+            )
+            SettingsDivider()
+            Core5x5SettingRow(
+                label = "About Core5x5",
+                value = "",
+                onClick = onOpenAbout,
+            )
+        }
+        Spacer(Modifier.height(Settings.BottomPadding))
     }
 
     when (uiState.dialog) {
@@ -252,11 +268,32 @@ private fun SaveStatus(uiState: SettingsUiState) {
 }
 
 @Composable
-private fun SettingsDivider() {
-    HorizontalDivider(thickness = Core5x5Dimensions.BorderStroke, color = Core5x5Colors.Border)
+private fun SettingsSection(title: String, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(Settings.HeadingGap)) {
+        Text(
+            text = title,
+            modifier = Modifier.padding(horizontal = Settings.BorderStroke).semantics { heading() },
+            style = Settings.Section,
+            color = Settings.Secondary,
+        )
+        val shape = RoundedCornerShape(Settings.CardRadius)
+        Column(
+            modifier = Modifier.fillMaxWidth().clip(shape)
+                .background(Settings.Card).border(Settings.BorderStroke, Settings.Border, shape),
+        ) { content() }
+    }
 }
 
-@Preview(name = "Settings kg", widthDp = 390, heightDp = 844)
+@Composable
+private fun SettingsDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = Settings.CardInset),
+        thickness = Settings.BorderStroke,
+        color = Settings.Border,
+    )
+}
+
+@Preview(name = "Settings kg", widthDp = 390, heightDp = 874)
 @Composable
 private fun SettingsScreenPreview() = SettingsPreview()
 
@@ -264,10 +301,10 @@ private fun SettingsScreenPreview() = SettingsPreview()
 @Composable
 private fun SettingsNarrowPreview() = SettingsPreview(TrainingPreferences(weightUnit = WeightUnit.LB, restDurationSeconds = 3_601))
 
-@Preview(name = "Settings larger text", widthDp = 390, heightDp = 844)
+@Preview(name = "Settings larger text", widthDp = 390, heightDp = 874)
 @Composable
 private fun SettingsLargeTextPreview() {
-    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale = 1.5f)) {
+    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale = 2f)) {
         SettingsPreview()
     }
 }
@@ -276,20 +313,26 @@ private fun SettingsLargeTextPreview() {
 private fun SettingsPreview(preferences: TrainingPreferences = TrainingPreferences()) {
     Core5x5Theme {
         Column(
-            modifier = Modifier.fillMaxSize().background(Core5x5Colors.Background)
-                .windowInsetsPadding(WindowInsets(top = Core5x5Dimensions.ReferenceSystemTopReserve)),
+            modifier = Modifier.fillMaxSize().background(Settings.Background)
+                .windowInsetsPadding(WindowInsets(top = Core5x5HomeTokens.SystemTopReserve)),
         ) {
             SettingsScreen(
-                uiState = SettingsUiState(isLoading = false, preferences = preferences, versionName = "1.0"),
+                uiState = SettingsUiState(isLoading = false, preferences = preferences, versionName = "1.0.0"),
                 modifier = Modifier.weight(1f),
                 onOpenUnits = {}, onOpenRestDuration = {}, onOpenAbout = {}, onOpenLicense = {},
                 onSelectUnit = {}, onRestDurationInput = {}, onSaveRestDuration = {},
                 onDismissDialog = {}, onRetryLoad = {}, onOpenRepository = {},
             )
-            Core5x5BottomNavigation(
-                selectedItem = Core5x5NavigationItem.SETTINGS,
-                onItemSelected = {},
-            )
+            Box(
+                modifier = Modifier.fillMaxWidth().background(Core5x5HomeTokens.Card)
+                    .windowInsetsPadding(WindowInsets(bottom = Core5x5HomeTokens.SystemBottomReserve)),
+            ) {
+                Core5x5BottomNavigation(
+                    selectedItem = Core5x5NavigationItem.SETTINGS,
+                    onItemSelected = {},
+                    useHomeDesign = true,
+                )
+            }
         }
     }
 }
