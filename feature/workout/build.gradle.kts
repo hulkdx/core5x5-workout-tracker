@@ -43,7 +43,6 @@ kotlin {
             implementation(libs.compose.ui)
             implementation(libs.compose.ui.backhandler)
             implementation(libs.compose.uiToolingPreview)
-            implementation(libs.compose.components.resources)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.kotlinx.coroutines.core)
@@ -71,8 +70,4 @@ dependencies {
 
 room3 {
     schemaDirectory("$projectDir/schemas")
-}
-
-compose.resources {
-    packageOfResClass = "com.hulkdx.core5x5.feature.workout.resources"
 }
