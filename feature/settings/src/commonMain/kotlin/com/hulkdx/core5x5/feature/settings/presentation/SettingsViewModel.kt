@@ -87,6 +87,16 @@ internal class SettingsViewModel(
         _uiState.value = uiState.value.copy(error = SettingsError.OPEN_REPOSITORY)
     }
 
+    fun onPrivacyPolicyOpenFailed() {
+        _uiState.value = uiState.value.copy(error = SettingsError.OPEN_PRIVACY_POLICY)
+    }
+
+    fun onPrivacyPolicyOpened() {
+        if (uiState.value.error == SettingsError.OPEN_PRIVACY_POLICY) {
+            _uiState.value = uiState.value.copy(error = null)
+        }
+    }
+
     fun dismissDialog() {
         if (uiState.value.isSaving) return
         _uiState.value = uiState.value.copy(dialog = null, error = null, hasInvalidRestDuration = false)

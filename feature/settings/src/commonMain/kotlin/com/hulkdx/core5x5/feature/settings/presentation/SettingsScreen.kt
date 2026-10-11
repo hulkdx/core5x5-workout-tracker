@@ -75,6 +75,7 @@ internal fun SettingsScreen(
     onDismissDialog: () -> Unit,
     onRetryLoad: () -> Unit,
     onOpenRepository: () -> Unit,
+    onOpenPrivacyPolicy: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -131,6 +132,16 @@ internal fun SettingsScreen(
                 value = "",
                 onClick = onOpenAbout,
             )
+            SettingsDivider()
+            AppSettingRow(
+                label = "Privacy Policy",
+                value = "",
+                onClick = onOpenPrivacyPolicy,
+            )
+        }
+        if (uiState.error == SettingsError.OPEN_PRIVACY_POLICY) {
+            Spacer(Modifier.height(Settings.HeadingGap))
+            SettingsMessage("Unable to open the privacy policy. Tap Privacy Policy to try again.", error = true)
         }
         Spacer(Modifier.height(Settings.BottomPadding))
     }
@@ -323,7 +334,7 @@ private fun SettingsPreview(preferences: TrainingPreferences = TrainingPreferenc
                 modifier = Modifier.weight(1f),
                 onOpenUnits = {}, onOpenRestDuration = {}, onOpenAbout = {}, onOpenLicense = {},
                 onSelectUnit = {}, onRestDurationInput = {}, onSaveRestDuration = {},
-                onDismissDialog = {}, onRetryLoad = {}, onOpenRepository = {},
+                onDismissDialog = {}, onRetryLoad = {}, onOpenRepository = {}, onOpenPrivacyPolicy = {},
             )
             Box(
                 modifier = Modifier.fillMaxWidth().background(AppHomeTokens.Card)

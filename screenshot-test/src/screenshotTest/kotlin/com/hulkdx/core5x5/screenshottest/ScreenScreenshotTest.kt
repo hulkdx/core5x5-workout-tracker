@@ -280,6 +280,7 @@ private fun SettingsSnapshot(state: SettingsUiState) = ScreenFrame(
         onDismissDialog = {},
         onRetryLoad = {},
         onOpenRepository = {},
+        onOpenPrivacyPolicy = {},
     )
 }
 

@@ -32,5 +32,13 @@ fun SettingsRoute(modifier: Modifier = Modifier) {
                 viewModel.onRepositoryOpenFailed()
             }
         },
+        onOpenPrivacyPolicy = {
+            try {
+                uriHandler.openUri("https://sabajafarzadeh.com/core5x5/privacy/")
+                viewModel.onPrivacyPolicyOpened()
+            } catch (_: Exception) {
+                viewModel.onPrivacyPolicyOpenFailed()
+            }
+        },
     )
 }

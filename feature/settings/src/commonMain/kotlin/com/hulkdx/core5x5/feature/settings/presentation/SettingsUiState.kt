@@ -19,4 +19,4 @@ internal data class SettingsUiState(
 }
 
 internal enum class SettingsDialog { UNITS, REST_DURATION, ABOUT, LICENSE }
-internal enum class SettingsError { LOAD, SAVE, OPEN_REPOSITORY }
+internal enum class SettingsError { LOAD, SAVE, OPEN_REPOSITORY, OPEN_PRIVACY_POLICY }
