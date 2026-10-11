@@ -30,6 +30,7 @@ import com.hulkdx.core5x5.core.ui.components.Core5x5NavigationItem
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Colors
 import com.hulkdx.core5x5.core.ui.theme.Core5x5Motion
 import com.hulkdx.core5x5.core.ui.theme.Core5x5HomeTokens
+import com.hulkdx.core5x5.core.ui.theme.Core5x5SettingsTokens
 import com.hulkdx.core5x5.feature.history.presentation.HistoryRoute
 import com.hulkdx.core5x5.feature.history.presentation.WorkoutDetailRoute
 import com.hulkdx.core5x5.feature.settings.presentation.SettingsRoute
@@ -106,6 +107,7 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
                     ShellScreen(
                         uiState = uiState,
                         showTitle = false,
+                        backgroundColor = Core5x5SettingsTokens.Background,
                         onRetryPreferences = viewModel::loadPreferences,
                     ) {
                         SettingsRoute()
@@ -154,7 +156,14 @@ private fun TopLevelDestination(
     content: @Composable () -> Unit,
 ) {
     val isToday = selectedItem == Core5x5NavigationItem.TODAY
-    Column(modifier = Modifier.fillMaxSize().background(if (isToday) Core5x5HomeTokens.Background else Core5x5Colors.Background)) {
+    val isSettings = selectedItem == Core5x5NavigationItem.SETTINGS
+    val useRevisedNavigation = isToday || isSettings
+    val background = when {
+        isToday -> Core5x5HomeTokens.Background
+        isSettings -> Core5x5SettingsTokens.Background
+        else -> Core5x5Colors.Background
+    }
+    Column(modifier = Modifier.fillMaxSize().background(background)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -168,7 +177,7 @@ private fun TopLevelDestination(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(if (isToday) Core5x5HomeTokens.Card else Core5x5Colors.Elevated)
+                .background(if (useRevisedNavigation) Core5x5HomeTokens.Card else Core5x5Colors.Elevated)
                 .windowInsetsPadding(
                     WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal),
                 ),
@@ -176,6 +185,7 @@ private fun TopLevelDestination(
             Core5x5BottomNavigation(
                 selectedItem = selectedItem,
                 onItemSelected = onItemSelected,
+                useHomeDesign = useRevisedNavigation,
             )
         }
     }
