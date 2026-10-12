@@ -14,7 +14,6 @@ import kotlinx.coroutines.IO
         UnfinishedWorkoutExerciseEntity::class,
         UnfinishedWorkoutSetEntity::class,
     ],
-    // Keep the schema at version 1 until the first production release.
     version = 1,
     exportSchema = true,
 )
