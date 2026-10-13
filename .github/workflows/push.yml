@@ -13,10 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-        # Is required for version bump
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-java@v6
         with:
@@ -27,7 +24,7 @@ jobs:
         run: echo "RELEASE_DATE=$(date -u +%Y.%m.%d)" >> "$GITHUB_ENV"
 
       - name: Version bump
-        uses: chkfung/android-version-actions@v1.1
+        uses: chkfung/android-version-actions@v1.2.3
         with:
           gradlePath: androidApp/build.gradle.kts
           versionCode: ${{ github.run_number }}
@@ -45,12 +42,12 @@ jobs:
           keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.KEYSTORE_PASSWORD }}
 
-      - name: Store apk artifact
-        uses: actions/upload-artifact@v4
+      - name: Store release bundle artifact
+        uses: actions/upload-artifact@v7
         with:
           name: artifacts
           path: |
-            androidApp/build/outputs/bundle/release/app-release.aab
+            androidApp/build/outputs/bundle/release/androidApp-release.aab
 
 #      - name: Setup authorization with GooglePlay Store
 #        run: echo '${{ secrets.GOOGLE_SERVICES_API }}' > service_account.json
@@ -60,6 +57,6 @@ jobs:
 #        with:
 #          serviceAccountJson: service_account.json
 #          packageName: com.hulkdx.findprofessional
-#          releaseFiles: androidApp/build/outputs/bundle/release/app-release.aab
+#          releaseFiles: androidApp/build/outputs/bundle/release/androidApp-release.aab
 #          track: internal
 #          whatsNewDirectory: .github/whatsNewDirectory
