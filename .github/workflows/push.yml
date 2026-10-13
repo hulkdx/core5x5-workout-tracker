@@ -18,20 +18,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: ${{ env.JAVA_DIST }}
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Version bump setup
-        run: echo "RELEASE_VERSION=$(git rev-list --count origin/main)" >> $GITHUB_ENV
+        run: echo "RELEASE_DATE=$(date -u +%Y.%m.%d)" >> "$GITHUB_ENV"
 
       - name: Version bump
         uses: chkfung/android-version-actions@v1.1
         with:
           gradlePath: androidApp/build.gradle.kts
-          versionCode: ${{ env.RELEASE_VERSION }}
-          versionName: ${{ github.run_number }}
+          versionCode: ${{ github.run_number }}
+          versionName: ${{ env.RELEASE_DATE }}
 
       - name: Build release bundle
         run: ./gradlew bundleRelease
