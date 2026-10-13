@@ -53,10 +53,10 @@ jobs:
 #        run: echo '${{ secrets.GOOGLE_SERVICES_API }}' > service_account.json
 #
 #      - name: Deploy
-#        uses: r0adkll/upload-google-play@v1.0.15
+#        uses: r0adkll/upload-google-play@v1.1.5
 #        with:
 #          serviceAccountJson: service_account.json
-#          packageName: com.hulkdx.findprofessional
+#          packageName: com.hulkdx.core5x5
 #          releaseFiles: androidApp/build/outputs/bundle/release/androidApp-release.aab
 #          track: internal
 #          whatsNewDirectory: .github/whatsNewDirectory
