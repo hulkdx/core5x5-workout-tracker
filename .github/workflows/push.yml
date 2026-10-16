@@ -58,5 +58,5 @@ jobs:
           serviceAccountJson: service_account.json
           packageName: com.hulkdx.core5x5
           releaseFiles: androidApp/build/outputs/bundle/release/androidApp-release.aab
-          track: internal
+          tracks: internal
           whatsNewDirectory: .github/whatsNewDirectory
