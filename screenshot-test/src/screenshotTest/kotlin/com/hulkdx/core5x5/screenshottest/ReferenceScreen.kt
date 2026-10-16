@@ -3,14 +3,23 @@ package com.hulkdx.core5x5.screenshottest
 import android.content.res.Configuration
 import androidx.compose.ui.tooling.preview.Preview
 
-// One normal-size screenshot per screen at the local design handoff's reference viewport.
-@Preview(name = "Reference", widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)
+// Both dimensions are divisible by 8, preserving exact 9:16 pixels at the renderer's 420dpi.
+@Preview(
+    name = "Reference",
+    widthDp = 432,
+    heightDp = 768,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+)
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
 internal annotation class ReferenceScreen
 
-// The revised Home PNG has no wrapper and normalizes to approximately 390 × 874.
-@Preview(name = "Home reference", widthDp = 390, heightDp = 874, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview(
+    name = "Home reference",
+    widthDp = 432,
+    heightDp = 768,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+)
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
 internal annotation class HomeReferenceScreen

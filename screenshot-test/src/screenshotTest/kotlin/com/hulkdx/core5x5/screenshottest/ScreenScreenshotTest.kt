@@ -110,7 +110,7 @@ class ScreenScreenshotTest {
     })
 
     @PreviewTest
-    @Preview(name = "Narrow running rest", widthDp = 320, heightDp = 640, fontScale = 2f)
+    @Preview(name = "Narrow running rest", widthDp = 360, heightDp = 640, fontScale = 2f)
     @Composable
     fun ActiveWorkoutRestNarrow() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
         restTimer = RestTimerUiState(isVisible = true, countdown = "02:30"),
@@ -125,7 +125,7 @@ class ScreenScreenshotTest {
     ))
 
     @PreviewTest
-    @Preview(name = "Narrow large text", widthDp = 320, heightDp = 640, fontScale = 2f)
+    @Preview(name = "Narrow large text", widthDp = 360, heightDp = 640, fontScale = 2f)
     @Composable
     fun ActiveWorkoutNarrow() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
         restTimer = RestTimerUiState(isVisible = true, isExpired = true, countdown = "00:00"),
@@ -137,12 +137,12 @@ class ScreenScreenshotTest {
     fun ActiveWorkoutEdit() = ExerciseEditSnapshot()
 
     @PreviewTest
-    @Preview(name = "Narrow edit, large text", widthDp = 320, heightDp = 640, fontScale = 2f)
+    @Preview(name = "Narrow edit, large text", widthDp = 360, heightDp = 640, fontScale = 2f)
     @Composable
     fun ActiveWorkoutEditNarrow() = ExerciseEditSnapshot()
 
     @PreviewTest
-    @Preview(name = "Custom rest sheet", widthDp = 390, heightDp = 410)
+    @Preview(name = "Custom rest sheet", widthDp = 432, heightDp = 768)
     @Composable
     fun ActiveWorkoutEditRest() = AppTheme {
         Box(Modifier.fillMaxSize().background(com.hulkdx.core5x5.core.ui.theme.AppEditTokens.Sheet)) {
@@ -168,7 +168,7 @@ class ScreenScreenshotTest {
     fun WorkoutCompleteB() = WorkoutCompleteSnapshot(completedWorkoutState(Workout.B, completedSets = 7))
 
     @PreviewTest
-    @Preview(name = "Narrow completion, large text", widthDp = 320, heightDp = 640, fontScale = 2f)
+    @Preview(name = "Narrow completion, large text", widthDp = 360, heightDp = 640, fontScale = 2f)
     @Composable
     fun WorkoutCompleteNarrow() = WorkoutCompleteSnapshot(completedWorkoutState(Workout.B))
 
@@ -185,7 +185,7 @@ class ScreenScreenshotTest {
     fun History() = HistorySnapshot(HistoryUiState(isLoading = false, completedWorkouts = historyReferenceRecords()))
 
     @PreviewTest
-    @Preview(name = "Narrow history, large text", widthDp = 320, heightDp = 640, fontScale = 2f)
+    @Preview(name = "Narrow history, large text", widthDp = 360, heightDp = 640, fontScale = 2f)
     @Composable
     fun HistoryNarrow() = HistorySnapshot(HistoryUiState(isLoading = false, completedWorkouts = historyReferenceRecords()))
 
