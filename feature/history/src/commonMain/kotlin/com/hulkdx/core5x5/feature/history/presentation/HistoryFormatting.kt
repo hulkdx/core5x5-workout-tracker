@@ -1,6 +1,7 @@
 package com.hulkdx.core5x5.feature.history.presentation
 
 import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
+import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutExercise
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutRecord
 import kotlin.math.max
 
@@ -13,6 +14,11 @@ internal fun CompletedExerciseType.displayName(): String = when (this) {
 }
 
 internal fun CompletedWorkoutRecord.displayName(): String = "Workout ${workout.name}"
+
+internal fun CompletedWorkoutExercise.recordedRepsLabel(): String =
+    "Reps: " + setStates.joinToString(" / ") { set ->
+        if (!set.isCompleted) "–" else set.completedReps?.toString() ?: "?"
+    }
 
 internal fun CompletedWorkoutRecord.dateLabel(): String = completedAtEpochMillis.toHistoryDate()
 

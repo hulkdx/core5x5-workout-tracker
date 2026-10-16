@@ -60,7 +60,12 @@ internal interface UnfinishedWorkoutDao {
     suspend fun getSets(workoutId: Long): List<UnfinishedWorkoutSetEntity>
 
     @Query("""
-        UPDATE unfinished_workout_set SET isCompleted = :isCompleted
+        UPDATE unfinished_workout_set SET isCompleted = :isCompleted,
+        completedReps = CASE WHEN :isCompleted THEN COALESCE(completedReps, (
+            SELECT reps FROM unfinished_workout_exercise
+            WHERE workoutId = unfinished_workout_set.workoutId
+            AND position = unfinished_workout_set.exercisePosition
+        )) ELSE NULL END
         WHERE workoutId = (
             SELECT id FROM unfinished_workout WHERE unfinishedSlot = 1 AND completedAtEpochMillis IS NULL
         ) AND exercisePosition = :exercisePosition AND position = :setPosition
@@ -68,7 +73,11 @@ internal interface UnfinishedWorkoutDao {
     suspend fun setSetCompleted(exercisePosition: Int, setPosition: Int, isCompleted: Boolean): Int
 
     @Query("""
-        UPDATE unfinished_workout_set SET isCompleted = 1
+        UPDATE unfinished_workout_set SET isCompleted = 1, completedReps = (
+            SELECT reps FROM unfinished_workout_exercise
+            WHERE workoutId = unfinished_workout_set.workoutId
+            AND position = unfinished_workout_set.exercisePosition
+        )
         WHERE workoutId = :workoutId AND exercisePosition = :exercisePosition AND position = :setPosition
         AND isCompleted = 0 AND workoutId IN (
             SELECT id FROM unfinished_workout WHERE unfinishedSlot = 1 AND completedAtEpochMillis IS NULL
@@ -77,13 +86,32 @@ internal interface UnfinishedWorkoutDao {
     suspend fun completeNewSet(workoutId: Long, exercisePosition: Int, setPosition: Int): Int
 
     @Query("""
-        UPDATE unfinished_workout_set SET isCompleted = 0
+        UPDATE unfinished_workout_set SET isCompleted = 0, completedReps = NULL
         WHERE workoutId = :workoutId AND exercisePosition = :exercisePosition AND position = :setPosition
         AND isCompleted = 1 AND workoutId IN (
             SELECT id FROM unfinished_workout WHERE unfinishedSlot = 1 AND completedAtEpochMillis IS NULL
         )
     """)
     suspend fun markSetIncomplete(workoutId: Long, exercisePosition: Int, setPosition: Int): Int
+
+    @Query("""
+        UPDATE unfinished_workout_set SET completedReps = :completedReps
+        WHERE workoutId = :workoutId AND exercisePosition = :exercisePosition AND position = :setPosition
+        AND isCompleted = 1 AND workoutId IN (
+            SELECT id FROM unfinished_workout WHERE unfinishedSlot = 1 AND completedAtEpochMillis IS NULL
+        )
+    """)
+    suspend fun updateCompletedReps(workoutId: Long, exercisePosition: Int, setPosition: Int, completedReps: Int): Int
+
+    /** Explicit values make retries safe after a committed save loses its acknowledgement. */
+    @Transaction
+    suspend fun setCompletedReps(
+        workoutId: Long, exercisePosition: Int, setPosition: Int, completedReps: Int,
+    ): StoredUnfinishedWorkout? {
+        require(completedReps > 0)
+        if (updateCompletedReps(workoutId, exercisePosition, setPosition, completedReps) != 1) return null
+        return getSession(workoutId)
+    }
 
     /** Undo is an explicit saved value, so retrying a lost acknowledgement cannot re-complete it. */
     @Transaction

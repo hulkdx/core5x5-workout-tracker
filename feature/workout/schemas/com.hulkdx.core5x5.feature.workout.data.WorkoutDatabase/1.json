@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "a9b09477d65547b901220d80f1229ab6",
+    "identityHash": "0551165c28de96aae966e7048a888346",
     "entities": [
       {
         "tableName": "unfinished_workout",
@@ -134,7 +134,7 @@
       },
       {
         "tableName": "unfinished_workout_set",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`workoutId` INTEGER NOT NULL, `exercisePosition` INTEGER NOT NULL, `position` INTEGER NOT NULL, `isCompleted` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`workoutId`, `exercisePosition`, `position`), FOREIGN KEY(`workoutId`, `exercisePosition`) REFERENCES `unfinished_workout_exercise`(`workoutId`, `position`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`workoutId` INTEGER NOT NULL, `exercisePosition` INTEGER NOT NULL, `position` INTEGER NOT NULL, `isCompleted` INTEGER NOT NULL DEFAULT 0, `completedReps` INTEGER, PRIMARY KEY(`workoutId`, `exercisePosition`, `position`), FOREIGN KEY(`workoutId`, `exercisePosition`) REFERENCES `unfinished_workout_exercise`(`workoutId`, `position`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "workoutId",
@@ -160,6 +160,11 @@
             "affinity": "INTEGER",
             "notNull": true,
             "defaultValue": "0"
+          },
+          {
+            "fieldPath": "completedReps",
+            "columnName": "completedReps",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -189,7 +194,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a9b09477d65547b901220d80f1229ab6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0551165c28de96aae966e7048a888346')"
     ]
   }
 }

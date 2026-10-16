@@ -88,6 +88,16 @@ internal class RoomWorkoutRepository(
         setPosition: Int,
     ): UnfinishedWorkout? = dao.undoSetCompletion(workoutId, exercisePosition, setPosition)?.toDomain()
 
+    override suspend fun setCompletedReps(
+        workoutId: Long,
+        exercisePosition: Int,
+        setPosition: Int,
+        completedReps: Int,
+    ): UnfinishedWorkout? {
+        require(completedReps > 0)
+        return dao.setCompletedReps(workoutId, exercisePosition, setPosition, completedReps)?.toDomain()
+    }
+
     override suspend fun completeSetAndStartRest(
         workoutId: Long,
         exercisePosition: Int,
@@ -118,7 +128,7 @@ internal class RoomWorkoutRepository(
                 customName = exercise.customName,
                 restDurationMillis = exercise.restDurationMillis,
                 setStates = sets.filter { it.exercisePosition == exercise.position }.map {
-                    UnfinishedWorkoutSet(it.position, it.isCompleted)
+                    UnfinishedWorkoutSet(it.position, it.isCompleted, it.completedReps)
                 },
             )
         }
@@ -138,7 +148,7 @@ internal class RoomWorkoutRepository(
                     weightKg = exercise.weightKg,
                     customName = exercise.customName,
                     setStates = sets.filter { it.exercisePosition == exercise.position }.map {
-                        CompletedWorkoutSet(it.position, it.isCompleted)
+                        CompletedWorkoutSet(it.position, it.isCompleted, it.completedReps)
                     },
                 )
             },

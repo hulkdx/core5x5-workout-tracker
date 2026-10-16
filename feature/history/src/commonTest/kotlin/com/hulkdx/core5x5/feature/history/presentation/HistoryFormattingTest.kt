@@ -10,6 +10,17 @@ import kotlin.test.assertEquals
 
 internal class HistoryFormattingTest {
     @Test
+    fun recordedRepsDoNotInventUnavailableOrUnrecordedValues() {
+        val exercise = CompletedWorkoutExercise(
+            CompletedExerciseType.SQUAT, 5, 8, 80.0,
+            listOf(CompletedWorkoutSet(0, true, 8), CompletedWorkoutSet(1, true, 3),
+                CompletedWorkoutSet(2, true, 1), CompletedWorkoutSet(3, false), CompletedWorkoutSet(4, true)),
+        )
+        assertEquals("Reps: 8 / 3 / 1 / – / ?", exercise.recordedRepsLabel())
+        assertEquals(4, exercise.completedSets)
+    }
+
+    @Test
     fun datesUseTheSavedUtcCalendarDate() {
         val newYear = record(completedAt = 0L)
         val leapDay = record(completedAt = 1_582_934_400_000L)

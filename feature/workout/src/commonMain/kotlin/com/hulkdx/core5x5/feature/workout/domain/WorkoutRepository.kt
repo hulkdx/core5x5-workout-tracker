@@ -49,6 +49,14 @@ internal interface WorkoutRepository {
         setPosition: Int,
     ): UnfinishedWorkout?
 
+    /** Records a positive count on an already completed set without changing rest or prescriptions. */
+    suspend fun setCompletedReps(
+        workoutId: Long,
+        exercisePosition: Int,
+        setPosition: Int,
+        completedReps: Int,
+    ): UnfinishedWorkout?
+
     /**
      * Atomically completes a set as prescribed and replaces the identified session's rest deadline.
      * Returns its saved snapshot. An already completed set returns the unchanged snapshot;

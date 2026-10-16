@@ -75,6 +75,32 @@ class ScreenScreenshotTest {
     @PreviewTest
     @HomeReferenceScreen
     @Composable
+    fun ActiveWorkoutRepCounts() = ActiveWorkoutSnapshot(activeWorkoutRepReference())
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutCustomReps() = ActiveWorkoutSnapshot(
+        activeWorkoutRepReference(targetReps = 8, recordedReps = listOf(8, 7, 1, null, null)),
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutReset() = ActiveWorkoutSnapshot(
+        activeWorkoutRepReference(recordedReps = listOf(null, 4, 3, 2, 1)),
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutRepCountsRest() = ActiveWorkoutSnapshot(activeWorkoutRepReference().copy(
+        restTimer = RestTimerUiState(isVisible = true, countdown = "02:30"),
+    ))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
     fun ActiveWorkoutRest() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
         restTimer = RestTimerUiState(isVisible = true, countdown = "02:30"),
     ))
@@ -101,7 +127,7 @@ class ScreenScreenshotTest {
             selectedExercisePosition = 1,
             unfinishedWorkout = state.unfinishedWorkout?.let { session ->
                 session.copy(exercises = session.exercises.mapIndexed { index, exercise ->
-                    if (index == 0) exercise.copy(setStates = exercise.setStates.map { it.copy(isCompleted = true) })
+                    if (index == 0) exercise.copy(setStates = exercise.setStates.map { it.copy(isCompleted = true, completedReps = exercise.reps) })
                     else exercise
                 })
             },

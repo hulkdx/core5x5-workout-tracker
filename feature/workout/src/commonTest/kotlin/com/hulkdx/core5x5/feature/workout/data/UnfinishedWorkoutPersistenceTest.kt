@@ -32,6 +32,102 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
     abstract fun deleteDatabase(name: String)
 
     @Test
+    fun actualRepsSurviveEditsReopeningFinalizationAndHistoryReads() = runTest {
+        val name = "actual-reps-reopen.db"
+        deleteDatabase(name)
+        try {
+            val database = openDatabase(name)
+            val saved = try {
+                val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+                val started = repository.startWorkout(Workout.A)
+                repository.editExercise(started.id, 0, ExerciseEdit("Squat", 87.5, 5, 8, null))
+                val completed = requireNotNull(repository.completeSetAndStartRest(started.id, 0, 0, 180_000))
+                assertEquals(8, completed.exercises[0].setStates[0].completedReps)
+                val noClock = RoomWorkoutRepository(database.unfinishedWorkoutDao()) {
+                    error("Recording fewer reps must not read the clock")
+                }
+                val partial = requireNotNull(noClock.setCompletedReps(started.id, 0, 0, 3))
+                assertTrue(partial.exercises[0].setStates[0].isCompleted)
+                assertEquals(completed.restTimer, partial.restTimer)
+                assertEquals(partial, noClock.setCompletedReps(started.id, 0, 0, 3))
+                assertEquals(partial, repository.completeSetAndStartRest(started.id, 0, 0, 240_000))
+                val edited = requireNotNull(repository.editExercise(started.id, 0,
+                    ExerciseEdit("Paused Squat", 90.0, 5, 2, 60_000)))
+                assertEquals(3, edited.exercises[0].setStates[0].completedReps)
+                assertEquals(completed.restTimer, edited.restTimer)
+                edited
+            } finally {
+                database.close()
+            }
+            val reopened = openDatabase(name)
+            try {
+                val repository = RoomWorkoutRepository(reopened.unfinishedWorkoutDao()) { 61_000L }
+                assertEquals(saved, repository.getUnfinishedWorkout())
+                assertTrue(repository.finalizeWorkout(saved.id))
+                val completed = requireNotNull(repository.getCompletedWorkout(saved.id))
+                assertEquals(1, completed.completedSets)
+                assertEquals(3, completed.exercises[0].setStates[0].completedReps)
+                val history = requireNotNull(repository.getCompletedWorkoutById(saved.id))
+                assertEquals(1, history.completedSets)
+                assertEquals(3, history.exercises[0].setStates[0].completedReps)
+                assertEquals(history, repository.getCompletedWorkouts().single())
+                assertNull(repository.setCompletedReps(saved.id, 0, 0, 1))
+            } finally {
+                reopened.close()
+            }
+        } finally {
+            deleteDatabase(name)
+        }
+    }
+
+    @Test
+    fun resettingClearsActualRepsAndPreservesRestUntilInitialRecompletion() = runTest {
+        withDatabase("actual-reps-reset.db") { database ->
+            var now = 1_000L
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { now }
+            val started = repository.startWorkout(Workout.B)
+            assertNull(repository.setCompletedReps(started.id, 2, 0, 1))
+            val completed = requireNotNull(repository.completeSetAndStartRest(started.id, 2, 0, 180_000))
+            repository.setCompletedReps(started.id, 2, 0, 1)
+            val reset = requireNotNull(repository.undoSetCompletion(started.id, 2, 0))
+            assertFalse(reset.exercises[2].setStates[0].isCompleted)
+            assertNull(reset.exercises[2].setStates[0].completedReps)
+            assertEquals(completed.restTimer, reset.restTimer)
+            assertEquals(reset, repository.undoSetCompletion(started.id, 2, 0))
+            assertNull(repository.setCompletedReps(started.id + 1, 2, 0, 1))
+            assertNull(repository.setCompletedReps(started.id, 2, 9, 1))
+            assertFails { repository.setCompletedReps(started.id, 2, 0, 0) }
+            now = 21_000L
+            val recompleted = requireNotNull(repository.completeSetAndStartRest(started.id, 2, 0, 180_000))
+            assertEquals(5, recompleted.exercises[2].setStates[0].completedReps)
+            assertEquals(RestTimer(201_000), recompleted.restTimer)
+        }
+    }
+
+    @Test
+    fun failedRepWriteRollsBackAndCannotChangeACompletedOrLaterSession() = runTest {
+        withDatabase("actual-reps-failure.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+            val started = repository.startWorkout(Workout.A)
+            val completed = requireNotNull(repository.completeSetAndStartRest(started.id, 0, 0, 180_000))
+            database.useWriterConnection { connection ->
+                connection.executeSQL("""
+                    CREATE TRIGGER fail_recorded_reps BEFORE UPDATE OF completedReps ON unfinished_workout_set
+                    BEGIN SELECT RAISE(ABORT, 'disk failure'); END
+                """.trimIndent())
+            }
+            assertFails { repository.setCompletedReps(started.id, 0, 0, 3) }
+            assertEquals(completed, repository.getUnfinishedWorkout())
+            database.useWriterConnection { it.executeSQL("DROP TRIGGER fail_recorded_reps") }
+            assertEquals(3, repository.setCompletedReps(started.id, 0, 0, 3)?.exercises?.get(0)?.setStates?.get(0)?.completedReps)
+            repository.finalizeWorkout(started.id)
+            val later = repository.startWorkout(Workout.B)
+            assertNull(repository.setCompletedReps(started.id, 0, 0, 1))
+            assertEquals(later, repository.getUnfinishedWorkout())
+        }
+    }
+
+    @Test
     fun unfinishedWorkoutSurvivesDatabaseReopen() = runTest {
         for (workout in Workout.entries) {
             val name = "unfinished-${workout.name}.db"
@@ -245,7 +341,7 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
             assertEquals(
                 original.copy(exercises = listOf(
                     original.exercises[0],
-                    original.exercises[1].copy(setStates = List(5) { UnfinishedWorkoutSet(it, it == 2) }),
+                    original.exercises[1].copy(setStates = List(5) { UnfinishedWorkoutSet(it, it == 2, if (it == 2) original.exercises[1].reps else null) }),
                     original.exercises[2],
                 )),
                 repository.getUnfinishedWorkout(),
@@ -266,7 +362,7 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
             assertEquals(
                 original.copy(exercises = listOf(
                     original.exercises[0],
-                    original.exercises[1].copy(setStates = List(5) { UnfinishedWorkoutSet(it, it == 0) }),
+                    original.exercises[1].copy(setStates = List(5) { UnfinishedWorkoutSet(it, it == 0, if (it == 0) original.exercises[1].reps else null) }),
                     original.exercises[2],
                 )),
                 repository.getUnfinishedWorkout(),
@@ -359,7 +455,7 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
                 assertEquals(listOf(true, true), results)
                 assertEquals(
                     original.copy(exercises = listOf(
-                        original.exercises[0].copy(setStates = List(5) { UnfinishedWorkoutSet(it, it < 2) }),
+                        original.exercises[0].copy(setStates = List(5) { UnfinishedWorkoutSet(it, it < 2, if (it < 2) original.exercises[0].reps else null) }),
                         original.exercises[1],
                         original.exercises[2],
                     )),
@@ -950,7 +1046,7 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
                     val saved = requireNotNull(undoRepository.undoSetCompletion(started.id, 2, 0))
                     assertEquals(completed.copy(exercises = completed.exercises.mapIndexed { position, exercise ->
                         if (position != 2) exercise else exercise.copy(setStates = exercise.setStates.map {
-                            if (it.position != 0) it else it.copy(isCompleted = false)
+                            if (it.position != 0) it else it.copy(isCompleted = false, completedReps = null)
                         })
                     }), saved)
                     assertEquals(saved, undoRepository.undoSetCompletion(started.id, 2, 0))

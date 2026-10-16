@@ -19,4 +19,5 @@ internal data class UnfinishedWorkoutSetEntity(
     val exercisePosition: Int,
     val position: Int,
     @ColumnInfo(defaultValue = "0") val isCompleted: Boolean = false,
+    val completedReps: Int? = null,
 )

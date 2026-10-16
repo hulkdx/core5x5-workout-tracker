@@ -107,6 +107,7 @@ internal fun ActiveWorkoutScreen(
                                         val nextSet = exercise.setStates.firstOrNull { !it.isCompleted }
                                         AppSetControls(
                                             sets = exercise.setStates.map { set ->
+                                                val displayedReps = if (set.isCompleted) set.completedReps ?: exercise.reps else exercise.reps
                                                 AppSetControl(
                                                     position = set.position,
                                                     state = when {
@@ -114,14 +115,16 @@ internal fun ActiveWorkoutScreen(
                                                         set == nextSet -> AppSetState.Active
                                                         else -> AppSetState.Default
                                                     },
-                                                    completionDescription = "${exercise.displayName()}, set ${set.position + 1}, ${exercise.reps} reps",
+                                                    completionDescription = "${exercise.displayName()}, set ${set.position + 1}, " +
+                                                        "$displayedReps reps",
+                                                    reps = displayedReps,
                                                 )
                                             },
                                             onComplete = { setPosition -> onToggleSet(exercisePosition, setPosition) },
                                             refined = true,
                                             enabled = uiState.canCompleteSet,
                                             resting = resting,
-                                            allowUndo = true,
+                                            allowCompletedTap = true,
                                         )
                                     }
                                     // Selection is already restored/advanced by the ViewModel.
@@ -197,7 +200,7 @@ private fun WorkoutPreview(rest: Boolean, expired: Boolean = false) {
         restTimer = if (rest) RestTimer(180_000) else null,
         exercises = Workout.A.exercises.mapIndexed { position, exercise ->
             UnfinishedWorkoutExercise(exercise, exercise.sets, exercise.reps, exercise.startingWeightKg).let { prescription ->
-                if (position == 0) prescription.copy(setStates = prescription.setStates.map { it.copy(isCompleted = it.position == 0) })
+                if (position == 0) prescription.copy(setStates = prescription.setStates.map { it.copy(isCompleted = it.position == 0, completedReps = if (it.position == 0) prescription.reps else null) })
                 else prescription
             }
         },

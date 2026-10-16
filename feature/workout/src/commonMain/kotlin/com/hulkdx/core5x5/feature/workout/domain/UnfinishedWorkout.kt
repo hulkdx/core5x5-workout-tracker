@@ -20,8 +20,15 @@ internal data class UnfinishedWorkoutExercise(
     val restDurationMillis: Long? = null,
 )
 
-/** An individual set's zero-based position and saved completion state. */
+/** Null reps means unrecorded; a positive count remains completed even below the target. */
 internal data class UnfinishedWorkoutSet(
     val position: Int,
     val isCompleted: Boolean = false,
-)
+    val completedReps: Int? = null,
+) {
+    fun nextCompletedReps(targetReps: Int): Int? {
+        require(targetReps > 0)
+        if (!isCompleted) return targetReps
+        return ((completedReps ?: targetReps) - 1).takeIf { it > 0 }
+    }
+}

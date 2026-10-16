@@ -123,13 +123,14 @@ private fun CompletedWorkoutContent(
                     name = (exercise.customName ?: exercise.exercise.displayName()),
                     prescription = "${exercise.sets} × ${exercise.reps} · " +
                         "${formatWeight(exercise.weightKg, weightUnit)} · " +
-                        "${exercise.completedSets} / ${exercise.sets} sets complete",
+                        "${exercise.completedSets} / ${exercise.sets} sets complete · " +
+                        exercise.recordedRepsLabel(),
                     isCompleted = exercise.completedSets == exercise.sets,
                 )
             }
         }
         Text(
-            text = "Completed sets record the prescribed reps. Actual reps were not stored.",
+            text = "Set reps show recorded counts; – means unrecorded and ? means unavailable.",
             style = AppTypography.Caption,
             color = AppColors.SecondaryText,
         )

@@ -30,6 +30,7 @@ enum class CompletedExerciseType {
 data class CompletedWorkoutSet(
     val position: Int,
     val isCompleted: Boolean,
+    val completedReps: Int? = null,
 )
 
 data class CompletedWorkoutExercise(
@@ -44,7 +45,7 @@ data class CompletedWorkoutExercise(
         get() = setStates.count { it.isCompleted }
 }
 
-/** Immutable saved-session data; actual reps are intentionally not represented. */
+/** Immutable saved-session prescriptions and recorded per-set reps. */
 data class CompletedWorkoutRecord(
     val id: Long,
     val workout: CompletedWorkoutType,

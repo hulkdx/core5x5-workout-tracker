@@ -97,7 +97,7 @@ private fun historyExercise(
     sets = sets,
     reps = 5,
     weightKg = weightKg,
-    setStates = List(sets) { CompletedWorkoutSet(it, true) },
+    setStates = List(sets) { CompletedWorkoutSet(it, true, completedReps = 5) },
 )
 
 private fun Workout.exerciseSnapshots(completedSets: Int): List<UnfinishedWorkoutExercise> {
@@ -109,7 +109,9 @@ private fun Workout.exerciseSnapshots(completedSets: Int): List<UnfinishedWorkou
             reps = exercise.reps,
             weightKg = exercise.startingWeightKg,
             setStates = List(exercise.sets) { position ->
-                UnfinishedWorkoutSet(position, isCompleted = remainingCompleted-- > 0)
+                val completed = remainingCompleted-- > 0
+                UnfinishedWorkoutSet(position, isCompleted = completed,
+                    completedReps = if (completed) exercise.reps else null)
             },
         )
     }
@@ -122,8 +124,26 @@ internal fun activeWorkoutReference(workout: Workout): ActiveWorkoutUiState =
             session.copy(exercises = session.exercises.mapIndexed { index, exercise ->
                 exercise.copy(
                     weightKg = listOf(80.0, 37.5, 60.0)[index],
-                    setStates = exercise.setStates.map { it.copy(isCompleted = index == 0 && it.position == 0) },
+                    setStates = exercise.setStates.map { it.copy(isCompleted = index == 0 && it.position == 0,
+                        completedReps = if (index == 0 && it.position == 0) exercise.reps else null) },
                 )
             })
         },
     )
+
+/** Snapshot coverage for numeric completion, partial reps, custom targets, and reset. */
+internal fun activeWorkoutRepReference(
+    targetReps: Int = 5,
+    recordedReps: List<Int?> = listOf(5, 4, 3, 2, 1),
+): ActiveWorkoutUiState = activeWorkoutReference(Workout.A).let { state ->
+    state.copy(unfinishedWorkout = requireNotNull(state.unfinishedWorkout).let { session ->
+        session.copy(exercises = session.exercises.mapIndexed { index, exercise ->
+            if (index != 0) exercise else exercise.copy(reps = targetReps,
+                setStates = exercise.setStates.map { set ->
+                    val reps = recordedReps[set.position]
+                    set.copy(isCompleted = reps != null, completedReps = reps)
+                },
+            )
+        })
+    })
+}

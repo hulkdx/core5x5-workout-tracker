@@ -10,25 +10,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.unit.dp
 import com.hulkdx.core5x5.core.ui.theme.AppActiveTokens as Active
 import com.hulkdx.core5x5.core.ui.theme.AppColors
 import com.hulkdx.core5x5.core.ui.theme.AppDimensions
@@ -42,6 +34,7 @@ data class AppSetControl(
     val position: Int,
     val state: AppSetState,
     val completionDescription: String,
+    val reps: Int,
 )
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -53,7 +46,7 @@ fun AppSetControls(
     refined: Boolean = false,
     enabled: Boolean = true,
     resting: Boolean = false,
-    allowUndo: Boolean = false,
+    allowCompletedTap: Boolean = false,
 ) {
     FlowRow(
         modifier = modifier.fillMaxWidth(),
@@ -62,7 +55,7 @@ fun AppSetControls(
     ) {
         sets.forEach { set ->
             if (refined) {
-                RefinedSetControl(set, enabled, resting, allowUndo, onComplete)
+                RefinedSetControl(set, enabled, resting, allowCompletedTap, onComplete)
                 return@forEach
             }
             val active = set.state == AppSetState.Active
@@ -95,7 +88,7 @@ fun AppSetControls(
                         else -> "Incomplete"
                     }
                 },
-                enabled = enabled && (!completed || allowUndo) && !disabled,
+                enabled = enabled && (!completed || allowCompletedTap) && !disabled,
                 shape = CircleShape,
                 color = background,
                 contentColor = foreground,
@@ -103,7 +96,7 @@ fun AppSetControls(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = if (completed) "✓" else (set.position + 1).toString(),
+                        text = set.reps.toString(),
                         modifier = Modifier.clearAndSetSemantics {},
                         style = AppTypography.Label,
                     )
@@ -119,7 +112,7 @@ private fun RefinedSetControl(
     set: AppSetControl,
     enabled: Boolean,
     resting: Boolean,
-    allowUndo: Boolean,
+    allowCompletedTap: Boolean,
     onComplete: (Int) -> Unit,
 ) {
     val completed = set.state == AppSetState.Completed
@@ -134,9 +127,13 @@ private fun RefinedSetControl(
     Box(
         modifier = Modifier.size(targetSize)
             .clickable(
-                enabled = (!completed || allowUndo) && !disabled,
+                enabled = (!completed || allowCompletedTap) && !disabled,
                 role = Role.Button,
-                onClickLabel = if (completed && allowUndo) "Mark set incomplete" else "Complete set",
+                onClickLabel = when {
+                    !completed -> "Complete set with ${set.reps} reps"
+                    set.reps == 1 -> "Reset set to incomplete"
+                    else -> "Record ${set.reps - 1} reps"
+                },
             ) { onComplete(set.position) }
             .semantics {
                 contentDescription = set.completionDescription
@@ -164,13 +161,8 @@ private fun RefinedSetControl(
             },
         ) {
             Box(contentAlignment = Alignment.Center) {
-                if (completed) Icon(
-                    imageVector = CheckIcon,
-                    contentDescription = null,
-                    tint = Home.Background,
-                    modifier = Modifier.size(Home.IconSize),
-                ) else Text(
-                    text = (set.position + 1).toString(),
+                Text(
+                    text = set.reps.toString(),
                     modifier = Modifier.clearAndSetSemantics {},
                     style = labelStyle,
                     color = when {
@@ -183,10 +175,3 @@ private fun RefinedSetControl(
         }
     }
 }
-
-private val CheckIcon = ImageVector.Builder(
-    name = "Completed set", defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f,
-).apply {
-    addPath(pathData = addPathNodes("M5 12l5 5L20 7"), fill = null, stroke = SolidColor(Color.Black),
-        strokeLineWidth = 2.8f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round)
-}.build()

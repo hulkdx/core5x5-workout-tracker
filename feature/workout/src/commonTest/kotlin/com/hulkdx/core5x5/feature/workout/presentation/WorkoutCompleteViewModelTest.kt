@@ -265,6 +265,10 @@ internal class WorkoutCompleteViewModelTest {
             edit: com.hulkdx.core5x5.feature.workout.domain.ExerciseEdit,
         ): UnfinishedWorkout? = error("Editing is not used by this fixture")
 
+        override suspend fun setCompletedReps(
+            workoutId: Long, exercisePosition: Int, setPosition: Int, completedReps: Int,
+        ): UnfinishedWorkout? = error("This screen cannot edit recorded reps")
+
         override suspend fun undoSetCompletion(
             workoutId: Long,
             exercisePosition: Int,
