@@ -88,6 +88,14 @@ internal fun historyReferenceRecords() = listOf(
     )
 }
 
+internal fun historyGraphRecords() = historyReferenceRecords().mapIndexed { index, record ->
+    record.copy(exercises = record.exercises.map { exercise ->
+        if (exercise.exercise == CompletedExerciseType.SQUAT) {
+            exercise.copy(weightKg = listOf(85.0, 82.5, 80.0, 82.5, 80.0, 77.5, 75.0)[index])
+        } else exercise
+    })
+}
+
 private fun historyExercise(
     exercise: CompletedExerciseType,
     weightKg: Double,

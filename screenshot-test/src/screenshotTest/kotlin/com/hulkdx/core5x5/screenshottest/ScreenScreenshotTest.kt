@@ -13,6 +13,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
+import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
 import com.hulkdx.core5x5.core.ui.components.AppBottomNavigation
 import com.hulkdx.core5x5.core.ui.components.AppNavigationItem
 import com.hulkdx.core5x5.core.ui.theme.AppColors
@@ -208,12 +209,57 @@ class ScreenScreenshotTest {
     @PreviewTest
     @HomeReferenceScreen
     @Composable
-    fun History() = HistorySnapshot(HistoryUiState(isLoading = false, completedWorkouts = historyReferenceRecords()))
+    fun History() = HistorySnapshot(HistoryUiState(isLoading = false, completedWorkouts = historyGraphRecords()))
 
     @PreviewTest
     @Preview(name = "Narrow history, large text", widthDp = 360, heightDp = 640, fontScale = 2f)
     @Composable
-    fun HistoryNarrow() = HistorySnapshot(HistoryUiState(isLoading = false, completedWorkouts = historyReferenceRecords()))
+    fun HistoryNarrow() = HistorySnapshot(HistoryUiState(isLoading = false, completedWorkouts = historyGraphRecords()))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun HistoryGraphLb() = HistorySnapshot(
+        HistoryUiState(isLoading = false, completedWorkouts = historyGraphRecords()), WeightUnit.LB,
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun HistoryGraphSingle() = HistorySnapshot(
+        HistoryUiState(isLoading = false, completedWorkouts = historyGraphRecords().take(1)),
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun HistoryGraphFlat() = HistorySnapshot(
+        HistoryUiState(isLoading = false, completedWorkouts = historyReferenceRecords()),
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun HistoryGraphZero() = HistorySnapshot(
+        HistoryUiState(isLoading = false, completedWorkouts = historyGraphRecords().map { workout ->
+            workout.copy(exercises = workout.exercises.map { it.copy(weightKg = 0.0) })
+        }),
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun HistoryGraphNoLift() = HistorySnapshot(
+        HistoryUiState(isLoading = false, completedWorkouts = historyGraphRecords().take(1),
+            selectedExercise = CompletedExerciseType.DEADLIFT),
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun HistoryGraphRefreshError() = HistorySnapshot(
+        HistoryUiState(isLoading = false, completedWorkouts = historyGraphRecords(), error = HistoryError.LOAD),
+    )
 
     @PreviewTest
     @HomeReferenceScreen
@@ -251,11 +297,11 @@ class ScreenScreenshotTest {
 }
 
 @Composable
-private fun HistorySnapshot(state: HistoryUiState) = ScreenFrame(
+private fun HistorySnapshot(state: HistoryUiState, weightUnit: WeightUnit = WeightUnit.KG) = ScreenFrame(
     navigationItem = AppNavigationItem.HISTORY,
     showTitle = false,
 ) {
-    HistoryScreen(uiState = state, onRetryLoad = {})
+    HistoryScreen(uiState = state, onRetryLoad = {}, weightUnit = weightUnit)
 }
 
 @Composable

@@ -59,6 +59,44 @@ internal class HistoryViewModelTest {
     }
 
     @Test
+    fun exerciseSelectionSurvivesInFlightRefreshFailureAndRetry() = runTest(dispatcher) {
+        val viewModel = createHistoryViewModel()
+        dispatcher.scheduler.runCurrent()
+        source.readGate = CompletableDeferred()
+        viewModel.loadHistory()
+        dispatcher.scheduler.runCurrent()
+        viewModel.selectExercise(CompletedExerciseType.DEADLIFT)
+        source.failure = IllegalStateException("read failed")
+        source.readGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(CompletedExerciseType.DEADLIFT, viewModel.uiState.value.selectedExercise)
+        assertEquals(HistoryError.LOAD, viewModel.uiState.value.error)
+
+        source.failure = null
+        source.history = listOf(record(2L, CompletedWorkoutType.B))
+        viewModel.loadHistory()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(CompletedExerciseType.DEADLIFT, viewModel.uiState.value.selectedExercise)
+        assertEquals(source.history, viewModel.uiState.value.completedWorkouts)
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun successfulInFlightRefreshKeepsNewExerciseSelection() = runTest(dispatcher) {
+        source.readGate = CompletableDeferred()
+        val viewModel = createHistoryViewModel()
+        dispatcher.scheduler.runCurrent()
+        viewModel.selectExercise(CompletedExerciseType.BENCH_PRESS)
+        source.history = listOf(record(1L, CompletedWorkoutType.A))
+        source.readGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+
+        assertEquals(CompletedExerciseType.BENCH_PRESS, viewModel.uiState.value.selectedExercise)
+        assertEquals(source.history, viewModel.uiState.value.completedWorkouts)
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
     fun emptyHistoryIsAReadyState() = runTest(dispatcher) {
         val viewModel = createHistoryViewModel()
         dispatcher.scheduler.runCurrent()
