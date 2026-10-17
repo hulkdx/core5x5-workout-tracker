@@ -78,7 +78,7 @@ private fun Long.toHistoryDate(): String {
     return "${MONTHS[date.month - 1]} ${date.day}"
 }
 
-private fun Long.toHistoryDetailDate(): String {
+internal fun Long.toHistoryDetailDate(): String {
     val date = toCivilDate()
     return "${MONTH_NAMES[date.month - 1]} ${date.day}, ${date.year}"
 }

@@ -2,6 +2,7 @@ package com.hulkdx.core5x5.feature.history.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -21,14 +22,19 @@ internal class HistoryViewModel(
         loadHistory()
     }
 
+    fun selectExercise(exercise: CompletedExerciseType) {
+        _uiState.value = uiState.value.copy(selectedExercise = exercise)
+    }
+
     fun loadHistory() {
         if (loadJob?.isActive == true) return
         _uiState.value = uiState.value.copy(isLoading = true, error = null)
         loadJob = viewModelScope.launch {
             try {
+                val workouts = source.getCompletedWorkouts()
                 _uiState.value = uiState.value.copy(
                     isLoading = false,
-                    completedWorkouts = source.getCompletedWorkouts(),
+                    completedWorkouts = workouts,
                     error = null,
                 )
             } catch (cancelled: CancellationException) {

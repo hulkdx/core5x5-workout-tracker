@@ -95,7 +95,7 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
                         backgroundColor = AppHistoryTokens.Background,
                         onRetryPreferences = viewModel::loadPreferences,
                     ) {
-                        HistoryRoute()
+                        HistoryRoute(weightUnit = uiState.weightUnit)
                     }
                 }
             }
