@@ -19,8 +19,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.hulkdx.core5x5.core.ui.theme.AppColors
 import com.hulkdx.core5x5.core.ui.theme.AppDimensions
 import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
@@ -40,6 +44,16 @@ fun AppBottomNavigation(
     modifier: Modifier = Modifier,
     useHomeDesign: Boolean = true,
 ) {
+    val labelStyle = if (useHomeDesign) Home.Eyebrow else AppTypography.Caption
+    val textMeasurer = rememberTextMeasurer()
+    val labelWidth = with(LocalDensity.current) {
+        val widestLabel = AppNavigationItem.entries.maxOf { item ->
+            textMeasurer.measure(AnnotatedString(item.label), labelStyle, softWrap = false).size.width
+        }
+        // Leave one pixel for rounding when side padding divides the available space.
+        (widestLabel + 1).toDp()
+    }
+    val preferredItemWidth = maxOf(AppDimensions.NavigationItemWidth, labelWidth)
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
@@ -47,18 +61,23 @@ fun AppBottomNavigation(
             .drawBehind {
                 if (useHomeDesign) drawLine(Home.Border, Offset.Zero, Offset(size.width, 0f), Home.BorderStroke.toPx())
             }
-            .heightIn(min = if (useHomeDesign) Home.NavigationHeight else AppDimensions.NavigationHeight)
-            .padding(
-                horizontal = if (useHomeDesign) Home.NavigationPaddingHorizontal else AppDimensions.NavigationPaddingHorizontal,
-                vertical = if (useHomeDesign) Home.NavigationPadding else AppDimensions.NavigationPaddingVertical,
-            ),
+            .heightIn(min = if (useHomeDesign) Home.NavigationHeight else AppDimensions.NavigationHeight),
     ) {
+        val horizontalPadding = minOf(
+            if (useHomeDesign) Home.NavigationPaddingHorizontal else AppDimensions.NavigationPaddingHorizontal,
+            ((maxWidth - preferredItemWidth * AppNavigationItem.entries.size) / 2).coerceAtLeast(0.dp),
+        )
         val itemWidth = minOf(
-            AppDimensions.NavigationItemWidth,
-            maxWidth / AppNavigationItem.entries.size,
+            preferredItemWidth,
+            (maxWidth - horizontalPadding * 2) / AppNavigationItem.entries.size,
         )
         Row(
-            modifier = Modifier.fillMaxWidth().selectableGroup(),
+            modifier = Modifier.fillMaxWidth()
+                .padding(
+                    horizontal = horizontalPadding,
+                    vertical = if (useHomeDesign) Home.NavigationPadding else AppDimensions.NavigationPaddingVertical,
+                )
+                .selectableGroup(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             AppNavigationItem.entries.forEach { item ->
@@ -91,7 +110,7 @@ fun AppBottomNavigation(
                     )
                     Text(
                         text = item.label,
-                        style = if (useHomeDesign) Home.Eyebrow else AppTypography.Caption,
+                        style = labelStyle,
                         color = color,
                         textAlign = TextAlign.Center,
                     )

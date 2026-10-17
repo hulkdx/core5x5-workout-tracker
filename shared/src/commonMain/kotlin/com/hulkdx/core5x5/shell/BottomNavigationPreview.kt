@@ -9,7 +9,7 @@ import com.hulkdx.core5x5.core.ui.components.AppBottomNavigation
 import com.hulkdx.core5x5.core.ui.components.AppNavigationItem
 import com.hulkdx.core5x5.core.ui.theme.AppTheme
 
-// Navigation-only previews exclude system insets. Reference dimensions come from design/tokens.json.
+// Navigation-only previews exclude system insets.
 @Preview(name = "Today navigation", widthDp = 390, heightDp = 74)
 @Composable
 private fun TodayNavigationPreview() {
@@ -28,11 +28,11 @@ private fun SettingsNavigationPreview() {
     NavigationPreview(AppNavigationItem.SETTINGS)
 }
 
-@Preview(name = "Narrow navigation, larger text", widthDp = 320, heightDp = 74)
+@Preview(name = "Narrow navigation, larger text", widthDp = 320, heightDp = 110)
 @Composable
 private fun NarrowNavigationPreview() {
     val density = LocalDensity.current
-    CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 1.5f)) {
+    CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 2f)) {
         NavigationPreview(AppNavigationItem.SETTINGS)
     }
 }

@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -214,6 +216,22 @@ class ScreenScreenshotTest {
     @Preview(name = "Narrow history, large text", widthDp = 360, heightDp = 640, fontScale = 2f)
     @Composable
     fun HistoryNarrow() = HistorySnapshot(HistoryUiState(isLoading = false, completedWorkouts = historyReferenceRecords()))
+
+    @PreviewTest
+    @Preview(name = "320dp navigation, large text", widthDp = 360, heightDp = 640, fontScale = 2f)
+    @Composable
+    fun BottomNavigationNarrow() = AppTheme {
+        Box(
+            modifier = Modifier.fillMaxSize().background(AppHomeTokens.Background),
+            contentAlignment = Alignment.BottomCenter,
+        ) {
+            AppBottomNavigation(
+                selectedItem = AppNavigationItem.SETTINGS,
+                onItemSelected = {},
+                modifier = Modifier.width(320.dp),
+            )
+        }
+    }
 
     @PreviewTest
     @HomeReferenceScreen
