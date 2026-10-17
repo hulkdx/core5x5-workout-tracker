@@ -9,7 +9,9 @@ struct SnapshotContentView: UIViewControllerRepresentable {
         let scene = ProcessInfo.processInfo.environment["CORE5X5_SNAPSHOT_SCENE"] ?? "todayA"
         weak var snapshotController: UIViewController?
         let controller = SnapshotViewControllerKt.SnapshotViewController(scene: scene) {
-            snapshotController?.view.accessibilityIdentifier = "snapshot-ready"
+            guard let view = snapshotController?.view, let window = view.window else { return }
+            view.accessibilityValue = String(describing: window.safeAreaInsets.bottom)
+            view.accessibilityIdentifier = "snapshot-ready"
         }
         snapshotController = controller
         controller.overrideUserInterfaceStyle = .dark

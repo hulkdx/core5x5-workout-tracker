@@ -8,6 +8,7 @@ struct Core5x5App: App {
             SnapshotContentView()
                 .ignoresSafeArea()
                 .preferredColorScheme(.dark)
+                .statusBarHidden(true)
             #else
             ContentView()
             #endif

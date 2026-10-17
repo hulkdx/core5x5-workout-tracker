@@ -25,7 +25,9 @@ kotlin {
 
     sourceSets {
         if (providers.gradleProperty("iosSnapshots").orNull == "true") {
-            getByName("iosMain").kotlin.srcDir("src/iosSnapshot/kotlin")
+            matching { it.name == "iosMain" }.configureEach {
+                kotlin.srcDir("src/iosSnapshot/kotlin")
+            }
         }
         commonMain.dependencies {
             implementation(project(":core:preferences"))

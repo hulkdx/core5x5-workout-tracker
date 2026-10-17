@@ -1,4 +1,5 @@
 import SnapshotTesting
+import UIKit
 import XCTest
 
 @MainActor
@@ -30,15 +31,35 @@ final class ScreenSnapshotTests: XCTestCase {
         app.launch()
         defer { app.terminate() }
 
+        let root = app.otherElements["snapshot-ready"]
         XCTAssertTrue(
-            app.otherElements["snapshot-ready"].waitForExistence(timeout: 15),
+            root.waitForExistence(timeout: 15),
             "Compose did not present the \(scene) fixture",
             file: file,
             line: line
         )
 
         // XCTest captures the displayed Metal surface; CALayer.render would miss Compose content.
-        let image = app.screenshot().image
+        let screenshot = app.screenshot().image
+        guard let pixels = screenshot.cgImage,
+              let value = root.value as? String,
+              let bottomInset = Double(value), bottomInset > 0,
+              app.frame.height > 0 else {
+            XCTFail("Missing screenshot or native bottom safe inset", file: file, line: line)
+            return
+        }
+        // The OS home indicator can fade independently of app idleness. Exclude only
+        // its native safe-area strip; the app still lays out with the real inset.
+        let pixelsPerPoint = Double(pixels.height) / app.frame.height
+        let bounds = CGRect(
+            x: 0, y: 0, width: pixels.width,
+            height: pixels.height - Int((bottomInset * pixelsPerPoint).rounded(.up))
+        )
+        guard let content = pixels.cropping(to: bounds) else {
+            XCTFail("Could not exclude the system home-indicator strip", file: file, line: line)
+            return
+        }
+        let image = UIImage(cgImage: content, scale: screenshot.scale, orientation: screenshot.imageOrientation)
         let recording = ProcessInfo.processInfo.environment["CORE5X5_RECORD_SNAPSHOTS"] == "YES"
         withSnapshotTesting(record: recording ? .all : .never) {
             assertSnapshot(of: image, as: .image, file: file, testName: testName, line: line)
