@@ -24,6 +24,11 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
+        if (providers.gradleProperty("iosSnapshots").orNull == "true") {
+            matching { it.name == "iosMain" }.configureEach {
+                kotlin.srcDir("src/iosSnapshot/kotlin")
+            }
+        }
         commonMain.dependencies {
             implementation(project(":core:preferences"))
             implementation(project(":core:ui"))
