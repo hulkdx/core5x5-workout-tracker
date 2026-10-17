@@ -20,16 +20,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import com.hulkdx.core5x5.core.ui.theme.AppActiveTokens as Active
 import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
-import com.hulkdx.core5x5.core.ui.theme.AppRestTokens as Rest
 
 @Composable
 fun AppExpandedExerciseCard(
     name: String,
     prescription: String,
     modifier: Modifier = Modifier,
-    resting: Boolean = false,
     onEdit: (() -> Unit)? = null,
     editEnabled: Boolean = true,
+    dimEditWhenDisabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
@@ -38,11 +37,11 @@ fun AppExpandedExerciseCard(
         color = Home.Card,
         border = BorderStroke(Home.BorderStroke, Home.Border),
     ) {
-        val exerciseStyle = if (resting) Rest.Exercise else Active.Exercise
-        val metadataStyle = if (resting) Rest.Metadata else Active.Metadata
+        val exerciseStyle = Active.Exercise
+        val metadataStyle = Active.Metadata
         Column(modifier = Modifier.padding(
             horizontal = Active.CardPaddingHorizontal,
-            vertical = if (resting) Rest.CardPaddingVertical else Active.CardPaddingVertical,
+            vertical = Active.CardPaddingVertical,
         )) {
             val headerHeight = with(LocalDensity.current) {
                 exerciseStyle.lineHeight.toDp() + metadataStyle.lineHeight.toDp()
@@ -54,10 +53,11 @@ fun AppExpandedExerciseCard(
                 }
                 if (onEdit != null) TextButton(onClick = onEdit, enabled = editEnabled,
                     modifier = Modifier.heightIn(min = com.hulkdx.core5x5.core.ui.theme.AppDimensions.TouchTargetMin)) {
-                    Text("Edit", style = Home.SwitchLabel, color = if (editEnabled) Home.Action else Home.Secondary)
+                    Text("Edit", style = Home.SwitchLabel,
+                        color = if (editEnabled || !dimEditWhenDisabled) Home.Action else Home.Secondary)
                 }
             }
-            Spacer(Modifier.height(if (resting) Rest.SetGap else Active.SetGap))
+            Spacer(Modifier.height(Active.SetGap))
             content()
         }
     }

@@ -10,8 +10,8 @@ object AppCompleteTokens {
     val Background = Color(0xFF0A1013)
     val Card = Color(0xFF151B20)
     val Border = Color(0xFF303C43)
-    val Action = Color(0xFF61DE8F)
-    val ActionPressed = Color(0xFF4FCF76)
+    val Action = AppColors.Action
+    val ActionPressed = AppColors.ActionPressed
     val SystemTopReserve = 44.dp
     val SystemBottomReserve = 20.dp
     val Inset = 20.dp

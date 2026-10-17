@@ -70,7 +70,12 @@ fun AppHomeExerciseRow(name: String, prescription: String, modifier: Modifier = 
 }
 
 @Composable
-fun AppHomeStartButton(label: String, onClick: () -> Unit, enabled: Boolean) {
+fun AppHomeStartButton(
+    label: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    dimWhenDisabled: Boolean = true,
+) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     Button(
@@ -84,8 +89,8 @@ fun AppHomeStartButton(label: String, onClick: () -> Unit, enabled: Boolean) {
         colors = ButtonDefaults.buttonColors(
             containerColor = if (pressed) Home.ActionPressed else Home.Action,
             contentColor = Home.Background,
-            disabledContainerColor = AppColors.Disabled,
-            disabledContentColor = AppColors.DisabledText,
+            disabledContainerColor = if (dimWhenDisabled) AppColors.Disabled else Home.Action,
+            disabledContentColor = if (dimWhenDisabled) AppColors.DisabledText else Home.Background,
         ),
     ) {
         Text(text = label, style = Home.Button, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
@@ -93,7 +98,12 @@ fun AppHomeStartButton(label: String, onClick: () -> Unit, enabled: Boolean) {
 }
 
 @Composable
-fun AppRestFinishButton(label: String, onClick: () -> Unit, enabled: Boolean) {
+fun AppRestFinishButton(
+    label: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    dimWhenDisabled: Boolean = true,
+) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     Button(
@@ -108,8 +118,8 @@ fun AppRestFinishButton(label: String, onClick: () -> Unit, enabled: Boolean) {
         colors = ButtonDefaults.buttonColors(
             containerColor = if (pressed) AppColors.Pressed else Home.Card,
             contentColor = Home.Primary,
-            disabledContainerColor = AppColors.Disabled,
-            disabledContentColor = AppColors.DisabledText,
+            disabledContainerColor = if (dimWhenDisabled) AppColors.Disabled else Home.Card,
+            disabledContentColor = if (dimWhenDisabled) AppColors.DisabledText else Home.Primary,
         ),
     ) {
         Text(text = label, style = Rest.FinishLabel,

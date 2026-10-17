@@ -23,8 +23,9 @@ object AppColors {
     val SecondaryText = Color(0xFF9BA6AD)
     val MutedText = Color(0xFF68747A)
     val DisabledText = Color(0xFF59656C)
-    val Action = Color(0xFF67E38B)
-    val ActionPressed = Color(0xFF4FCF76)
+    // Shared green accents for every screen, including completion and legacy controls.
+    val Action = Color(0xFF35E575)
+    val ActionPressed = Color(0xFF2FCC67)
     val ActionTint = Color(0xFF183823)
     val Border = Color(0xFF273137)
     val Destructive = Color(0xFFF06C6C)

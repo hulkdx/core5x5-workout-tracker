@@ -26,7 +26,6 @@ import com.hulkdx.core5x5.core.ui.theme.AppColors
 import com.hulkdx.core5x5.core.ui.theme.AppDimensions
 import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
 import com.hulkdx.core5x5.core.ui.theme.AppTypography
-import com.hulkdx.core5x5.core.ui.theme.AppRestTokens as Rest
 
 enum class AppSetState { Default, Active, Completed, Disabled }
 
@@ -45,7 +44,6 @@ fun AppSetControls(
     modifier: Modifier = Modifier,
     refined: Boolean = false,
     enabled: Boolean = true,
-    resting: Boolean = false,
     allowCompletedTap: Boolean = false,
 ) {
     FlowRow(
@@ -55,7 +53,7 @@ fun AppSetControls(
     ) {
         sets.forEach { set ->
             if (refined) {
-                RefinedSetControl(set, enabled, resting, allowCompletedTap, onComplete)
+                RefinedSetControl(set, enabled, allowCompletedTap, onComplete)
                 return@forEach
             }
             val active = set.state == AppSetState.Active
@@ -106,21 +104,20 @@ fun AppSetControls(
     }
 }
 
-/** Active's smaller circles and Rest's larger circles share non-overlapping minimum 48dp targets. */
+/** Set geometry stays stable through rest transitions, with non-overlapping minimum 48dp targets. */
 @Composable
 private fun RefinedSetControl(
     set: AppSetControl,
     enabled: Boolean,
-    resting: Boolean,
     allowCompletedTap: Boolean,
     onComplete: (Int) -> Unit,
 ) {
     val completed = set.state == AppSetState.Completed
     val current = set.state == AppSetState.Active
     val disabled = set.state == AppSetState.Disabled || !enabled
-    val labelStyle = if (resting) Rest.SetLabel else Active.SetLabel
+    val labelStyle = Active.SetLabel
     val visibleSize = maxOf(
-        if (resting) Rest.SetDiameter else Active.SetDiameter,
+        Active.SetDiameter,
         with(LocalDensity.current) { labelStyle.lineHeight.toDp() },
     )
     val targetSize = maxOf(AppDimensions.TouchTargetMin, visibleSize)

@@ -6,12 +6,6 @@ import androidx.compose.ui.unit.sp
 
 /** rest.* raster estimates from 03. ActiveWorkout - Rest Screen.png at width 390. */
 object AppRestTokens {
-    val CardPaddingVertical = 18.dp
-    val SetGap = 16.dp
-    val SetDiameter = 48.dp
-    val Exercise = AppActiveTokens.Exercise.copy(fontSize = 24.sp, lineHeight = 30.sp)
-    val Metadata = AppActiveTokens.Metadata.copy(fontSize = 17.sp, lineHeight = 24.sp)
-    val SetLabel = AppActiveTokens.SetLabel.copy(fontSize = 20.sp, lineHeight = 26.sp)
     val TimerHeight = 122.dp
     val TimerPadding = 16.dp
     val TimerLabelGap = 4.dp

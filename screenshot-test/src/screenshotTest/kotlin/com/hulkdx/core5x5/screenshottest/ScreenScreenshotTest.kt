@@ -78,6 +78,50 @@ class ScreenScreenshotTest {
     @PreviewTest
     @HomeReferenceScreen
     @Composable
+    fun ActiveWorkoutBeforeFirstTap() = ActiveWorkoutSnapshot(
+        activeWorkoutRepReference(recordedReps = listOf(null, null, null, null, null)),
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutAfterFirstTap() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
+        restTimer = RestTimerUiState(isVisible = true, countdown = "03:00"),
+    ))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutSetSaving() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
+        isCompletingSet = true,
+    ))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutRestSetSaving() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
+        isCompletingSet = true,
+        restTimer = RestTimerUiState(isVisible = true, countdown = "02:30"),
+    ))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutFinishing() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
+        isSaving = true,
+    ))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutRestFinishing() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
+        isSaving = true,
+        restTimer = RestTimerUiState(isVisible = true, countdown = "02:30"),
+    ))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
     fun ActiveWorkoutRepCounts() = ActiveWorkoutSnapshot(activeWorkoutRepReference())
 
     @PreviewTest
@@ -119,6 +163,13 @@ class ScreenScreenshotTest {
     @HomeReferenceScreen
     @Composable
     fun ActiveWorkoutRestExpired() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
+        restTimer = RestTimerUiState(isVisible = true, isExpired = true),
+    ))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutRestExpiredB() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.B).copy(
         restTimer = RestTimerUiState(isVisible = true, isExpired = true),
     ))
 

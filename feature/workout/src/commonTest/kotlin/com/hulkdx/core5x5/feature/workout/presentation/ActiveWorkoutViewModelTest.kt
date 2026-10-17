@@ -364,6 +364,7 @@ internal class ActiveWorkoutViewModelTest {
         assertFalse(viewModel.uiState.value.restTimer.isVisible)
         assertEquals(listOf(Triple(original.id, 0, 0)), repository.completedSetRequests)
         assertTrue(repository.finalizedIds.isEmpty())
+        assertNull(viewModel.uiState.value.requestedCompletedWorkoutId)
 
         repository.setSaveGate?.complete(Unit)
         dispatcher.scheduler.runCurrent()
@@ -375,12 +376,36 @@ internal class ActiveWorkoutViewModelTest {
         assertEquals("03:00", viewModel.uiState.value.restTimer.countdown)
         assertEquals(0, viewModel.uiState.value.selectedExercisePosition)
         assertTrue(viewModel.uiState.value.canFinish)
+        assertNull(viewModel.uiState.value.requestedCompletedWorkoutId)
 
         repository.now += 15_000
         viewModel.completeSet(0, 0)
         dispatcher.scheduler.runCurrent()
         assertEquals(1, repository.completedSetRequests.size)
         assertEquals(saved.restTimer, viewModel.uiState.value.unfinishedWorkout?.restTimer)
+    }
+
+    @Test
+    fun setTapCyclesAndExerciseSelectionNeverRequestCompletionNavigation() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.B))
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+
+        // Deadlift's single set advances selection immediately; reductions and reset stay in Active.
+        repeat(7) {
+            viewModel.toggleSet(2, 0)
+            dispatcher.scheduler.runCurrent()
+            assertNull(viewModel.uiState.value.requestedCompletedWorkoutId)
+            assertNull(viewModel.uiState.value.exerciseEdit)
+            assertEquals(Workout.B, viewModel.uiState.value.unfinishedWorkout?.workout)
+            assertTrue(repository.finalizedIds.isEmpty())
+        }
+
+        viewModel.selectExercise(0)
+        viewModel.toggleSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+        assertNull(viewModel.uiState.value.requestedCompletedWorkoutId)
+        assertTrue(repository.finalizedIds.isEmpty())
     }
 
     @Test

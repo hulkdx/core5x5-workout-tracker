@@ -1,8 +1,8 @@
 package com.hulkdx.core5x5.feature.workout.presentation
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,8 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,7 +28,6 @@ import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.preferences.domain.formatWeight
 import com.hulkdx.core5x5.core.ui.components.AppExpandedExerciseCard
 import com.hulkdx.core5x5.core.ui.components.AppHomeStartButton
-import com.hulkdx.core5x5.core.ui.components.AppRestFinishButton
 import com.hulkdx.core5x5.core.ui.components.AppSetControl
 import com.hulkdx.core5x5.core.ui.components.AppSetControls
 import com.hulkdx.core5x5.core.ui.components.AppSetState
@@ -61,12 +59,10 @@ internal fun ActiveWorkoutScreen(
     val resting = uiState.restTimer.isVisible
     Surface(modifier = modifier.fillMaxSize(), color = Home.Background) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize().windowInsetsPadding(windowInsets)) {
-            val cardHeight = (if (resting) Rest.CardPaddingVertical else Active.CardPaddingVertical) * 2 +
-                (if (resting) Rest.SetGap else Active.SetGap) + Home.TextGap +
-                (if (resting) Rest.SetDiameter else Active.SetDiameter).coerceAtLeast(AppDimensions.TouchTargetMin) +
+            val cardHeight = Active.CardPaddingVertical * 2 + Active.SetGap + Home.TextGap +
+                Active.SetDiameter.coerceAtLeast(AppDimensions.TouchTargetMin) +
                 with(LocalDensity.current) {
-                    if (resting) Rest.Exercise.lineHeight.toDp() + Rest.Metadata.lineHeight.toDp()
-                    else Active.Exercise.lineHeight.toDp() + Active.Metadata.lineHeight.toDp()
+                    Active.Exercise.lineHeight.toDp() + Active.Metadata.lineHeight.toDp()
                 }
             val count = workout?.exercises?.size ?: 0
             val inlineHeight = Active.TopGap + Active.TopBarHeight + cardHeight * count.toFloat() +
@@ -77,81 +73,116 @@ internal fun ActiveWorkoutScreen(
                     uiState.hasSetSaveError || uiState.hasSaveError
                 )
             Column(modifier = Modifier.fillMaxSize()) {
-                Column(
-                    modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
-                        .padding(start = Active.Inset, end = Active.Inset, top = Active.TopGap,
-                            bottom = if (pinTimer) 0.dp else Home.BrandGap),
+                LazyColumn(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentPadding = PaddingValues(start = Active.Inset, end = Active.Inset,
+                        top = Active.TopGap, bottom = if (pinTimer) 0.dp else Home.BrandGap),
                 ) {
-                    AppWorkoutTopBar(
-                        title = workout?.let { "Workout ${it.workout.name}" } ?: "Workout",
-                        onBack = onBack,
-                        backEnabled = !uiState.isSaving && !uiState.isCompletingSet,
-                        refined = true,
-                    )
-                    Spacer(Modifier.height(Active.TopGap))
-                    Column(verticalArrangement = Arrangement.spacedBy(Home.BrandGap)) {
-                        if (uiState.hasLoadError) {
-                            WorkoutError("Unable to load the active workout.")
-                            AppHomeStartButton("Try Again", onRetryLoad, enabled = !uiState.isLoading)
+                    item(key = "header", contentType = "header") {
+                        Column {
+                            AppWorkoutTopBar(
+                                title = workout?.let { "Workout ${it.workout.name}" } ?: "Workout",
+                                onBack = onBack,
+                                backEnabled = !uiState.isSaving && !uiState.isCompletingSet,
+                                refined = true,
+                            )
+                            Spacer(Modifier.height(Active.TopGap))
                         }
-                        when {
-                            workout != null -> {
-                                workout.exercises.forEachIndexed { exercisePosition, exercise ->
-                                    AppExpandedExerciseCard(
-                                        name = exercise.displayName(),
-                                        prescription = exercise.prescription(weightUnit),
-                                        resting = resting,
-                                        onEdit = onEditExercise?.let { edit -> { edit(exercisePosition) } },
-                                        editEnabled = uiState.canCompleteSet,
-                                    ) {
-                                        val nextSet = exercise.setStates.firstOrNull { !it.isCompleted }
-                                        AppSetControls(
-                                            sets = exercise.setStates.map { set ->
-                                                val displayedReps = if (set.isCompleted) set.completedReps ?: exercise.reps else exercise.reps
-                                                AppSetControl(
-                                                    position = set.position,
-                                                    state = when {
-                                                        set.isCompleted -> AppSetState.Completed
-                                                        set == nextSet -> AppSetState.Active
-                                                        else -> AppSetState.Default
-                                                    },
-                                                    completionDescription = "${exercise.displayName()}, set ${set.position + 1}, " +
-                                                        "$displayedReps reps",
-                                                    reps = displayedReps,
-                                                )
-                                            },
-                                            onComplete = { setPosition -> onToggleSet(exercisePosition, setPosition) },
-                                            refined = true,
-                                            enabled = uiState.canCompleteSet,
-                                            resting = resting,
-                                            allowCompletedTap = true,
-                                        )
-                                    }
-                                    // Selection is already restored/advanced by the ViewModel.
-                                    if (resting && !pinTimer && exercisePosition == uiState.selectedExercisePosition) {
-                                        RestTimerScreen(uiState.restTimer)
+                    }
+                    if (uiState.hasLoadError) {
+                        item(key = "load-error", contentType = "load-error") {
+                            Column {
+                                WorkoutError("Unable to load the active workout.")
+                                Spacer(Modifier.height(Home.BrandGap))
+                                AppHomeStartButton("Try Again", onRetryLoad, enabled = !uiState.isLoading)
+                                Spacer(Modifier.height(Home.BrandGap))
+                            }
+                        }
+                    }
+                    when {
+                        workout != null -> {
+                            workout.exercises.forEachIndexed { exercisePosition, exercise ->
+                                item(key = "exercise:$exercisePosition", contentType = "exercise") {
+                                    Column {
+                                        AppExpandedExerciseCard(
+                                            name = exercise.displayName(),
+                                            prescription = exercise.prescription(weightUnit),
+                                            onEdit = onEditExercise?.let { edit -> { edit(exercisePosition) } },
+                                            editEnabled = uiState.canCompleteSet,
+                                            dimEditWhenDisabled = !uiState.isCompletingSet,
+                                        ) {
+                                            val nextSet = exercise.setStates.firstOrNull { !it.isCompleted }
+                                            AppSetControls(
+                                                sets = exercise.setStates.map { set ->
+                                                    val displayedReps = if (set.isCompleted) set.completedReps ?: exercise.reps else exercise.reps
+                                                    AppSetControl(
+                                                        position = set.position,
+                                                        state = when {
+                                                            set.isCompleted -> AppSetState.Completed
+                                                            set == nextSet -> AppSetState.Active
+                                                            else -> AppSetState.Default
+                                                        },
+                                                        completionDescription = "${exercise.displayName()}, set ${set.position + 1}, " +
+                                                            "$displayedReps reps",
+                                                        reps = displayedReps,
+                                                    )
+                                                },
+                                                onComplete = { setPosition -> onToggleSet(exercisePosition, setPosition) },
+                                                refined = true,
+                                                enabled = uiState.canCompleteSet,
+                                                allowCompletedTap = true,
+                                            )
+                                        }
+                                        Spacer(Modifier.height(Home.BrandGap))
                                     }
                                 }
-                                if (uiState.hasEditLoadError) WorkoutError("Unable to open the editor. Tap Edit to retry.")
-                                if (uiState.hasSetSaveError) WorkoutError("Unable to save the set. Tap it again to retry.")
-                                if (uiState.hasSaveError) WorkoutError("Unable to confirm the workout was saved. Try finishing again.")
+                                // Stable exercise keys preserve the scroll anchor when rest moves.
+                                if (resting && !pinTimer && exercisePosition == uiState.selectedExercisePosition) {
+                                    item(key = "rest", contentType = "rest") {
+                                        Column {
+                                            RestTimerScreen(uiState.restTimer)
+                                            Spacer(Modifier.height(Home.BrandGap))
+                                        }
+                                    }
+                                }
+                            }
+                            if (uiState.hasEditLoadError) item(key = "edit-error", contentType = "error") {
+                                Column {
+                                    WorkoutError("Unable to open the editor. Tap Edit to retry.")
+                                    Spacer(Modifier.height(Home.BrandGap))
+                                }
+                            }
+                            if (uiState.hasSetSaveError) item(key = "set-error", contentType = "error") {
+                                Column {
+                                    WorkoutError("Unable to save the set. Tap it again to retry.")
+                                    Spacer(Modifier.height(Home.BrandGap))
+                                }
+                            }
+                            if (uiState.hasSaveError) item(key = "finish-error", contentType = "error") {
+                                Column {
+                                    WorkoutError("Unable to confirm the workout was saved. Try finishing again.")
+                                    Spacer(Modifier.height(Home.BrandGap))
+                                }
+                            }
+                            item(key = "finish", contentType = "finish") {
                                 val finishLabel = if (uiState.isSaving) "Saving…" else "Finish Workout"
-                                if (resting) AppRestFinishButton(
+                                AppHomeStartButton(
                                     label = finishLabel,
                                     onClick = onFinishWorkout,
                                     enabled = uiState.canFinish,
-                                ) else AppHomeStartButton(
-                                    label = finishLabel,
-                                    onClick = onFinishWorkout,
-                                    enabled = uiState.canFinish,
+                                    dimWhenDisabled = false,
                                 )
                             }
-                            uiState.isLoading -> CircularProgressIndicator(
+                        }
+                        uiState.isLoading -> item(key = "loading", contentType = "loading") {
+                            CircularProgressIndicator(
                                 modifier = Modifier.size(AppDimensions.TouchTargetMin),
                                 color = Home.Action,
                                 strokeWidth = Home.BorderStroke,
                             )
-                            !uiState.hasLoadError -> Text(text = "No unfinished workout.", style = Active.Metadata, color = Home.Secondary)
+                        }
+                        !uiState.hasLoadError -> item(key = "empty", contentType = "empty") {
+                            Text(text = "No unfinished workout.", style = Active.Metadata, color = Home.Secondary)
                         }
                     }
                 }
