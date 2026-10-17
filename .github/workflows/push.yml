@@ -4,6 +4,11 @@ on:
   push:
     branches: [ main ]
 
+# Keep only the newest run for this Play package, including build and publishing.
+concurrency:
+  group: google-play-com.hulkdx.core5x5
+  cancel-in-progress: true
+
 env:
   JAVA_VERSION: 21
   JAVA_DIST: "zulu"
