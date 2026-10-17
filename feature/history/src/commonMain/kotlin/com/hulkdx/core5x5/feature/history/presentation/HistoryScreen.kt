@@ -22,6 +22,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutExercise
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutRecord
@@ -41,6 +42,8 @@ internal fun HistoryScreen(
     uiState: HistoryUiState,
     onRetryLoad: () -> Unit,
     modifier: Modifier = Modifier,
+    weightUnit: WeightUnit = WeightUnit.KG,
+    onExerciseSelected: (CompletedExerciseType) -> Unit = {},
 ) {
     val months = remember(uiState.completedWorkouts) { uiState.completedWorkouts.historyMonths() }
     Surface(modifier = modifier.fillMaxSize(), color = History.Background) {
@@ -69,6 +72,15 @@ internal fun HistoryScreen(
                 else -> {
                     if (uiState.error != null) {
                         item(key = "error") { HistoryLoadError(onRetryLoad) }
+                    }
+                    item(key = "weight-graph", contentType = "graph") {
+                        HistoryWeightGraph(
+                            workouts = uiState.completedWorkouts,
+                            selectedExercise = uiState.selectedExercise,
+                            weightUnit = weightUnit,
+                            onExerciseSelected = onExerciseSelected,
+                            modifier = Modifier.padding(bottom = History.TitleGap - History.CardGap),
+                        )
                     }
                     months.entries.forEachIndexed { index, (month, workouts) ->
                         item(key = "month:$month", contentType = "month") {

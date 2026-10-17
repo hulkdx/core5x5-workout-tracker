@@ -95,7 +95,7 @@ internal fun AppNavigation(viewModel: ShellViewModel = koinViewModel()) {
                         backgroundColor = AppHistoryTokens.Background,
                         onRetryPreferences = viewModel::loadPreferences,
                     ) {
-                        HistoryRoute()
+                        HistoryRoute(weightUnit = uiState.weightUnit)
                     }
                 }
             }
@@ -147,7 +147,7 @@ private fun navigationFade() =
 
 /** Keeps an outgoing tab's insets and bottom-bar space intact throughout its transition. */
 @Composable
-private fun TopLevelDestination(
+internal fun TopLevelDestination(
     selectedItem: AppNavigationItem,
     onItemSelected: (AppNavigationItem) -> Unit,
     content: @Composable () -> Unit,
