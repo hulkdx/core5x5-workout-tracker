@@ -480,6 +480,9 @@ internal class TodayViewModelTest {
         TodayViewModel(repository).also { newStore().put("today", it) }
 
     private class FakeWorkoutRepository : WorkoutRepository {
+        override suspend fun switchWorkout(workoutId: Long, workout: Workout): UnfinishedWorkout? =
+            error("Today switches its preview before a session starts")
+
         var active: UnfinishedWorkout? = null
         var nextWorkout = Workout.A
         var nextPrescription: WorkoutPrescription? = null

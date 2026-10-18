@@ -10,6 +10,8 @@ internal data class ActiveWorkoutUiState(
     val hasSaveError: Boolean = false,
     val isCompletingSet: Boolean = false,
     val hasSetSaveError: Boolean = false,
+    val isSwitchingWorkout: Boolean = false,
+    val hasSwitchError: Boolean = false,
     val selectedExercisePosition: Int = 0,
     val restTimer: RestTimerUiState = RestTimerUiState(),
     val exerciseEdit: ExerciseEditUiState? = null,
@@ -17,10 +19,17 @@ internal data class ActiveWorkoutUiState(
     /** Navigation is requested only after the identified session is read back as completed. */
     val requestedCompletedWorkoutId: Long? = null,
 ) {
+    val canSwitchWorkout: Boolean
+        get() = canModifyWorkout
+
     val canFinish: Boolean
         get() = canCompleteSet
 
     val canCompleteSet: Boolean
-        get() = !isLoading && !hasLoadError && !isSaving && !isCompletingSet &&
+        get() = canModifyWorkout && !hasSwitchError
+
+    // A failed switch may already have committed. Confirm its program before logging by position.
+    private val canModifyWorkout: Boolean
+        get() = !isLoading && !hasLoadError && !isSaving && !isCompletingSet && !isSwitchingWorkout &&
             unfinishedWorkout != null && requestedCompletedWorkoutId == null && exerciseEdit == null
 }

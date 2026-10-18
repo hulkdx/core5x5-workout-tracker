@@ -20,6 +20,13 @@ internal interface WorkoutRepository {
     suspend fun startWorkout(workout: Workout): UnfinishedWorkout
 
     /**
+     * Selects an explicit program on the identified active session, clearing all set progress/rest.
+     * Preserves session identity/start time and shared exercise prescriptions. Returns null for
+     * stale/completed IDs; repeating the selected program preserves any subsequently logged sets.
+     */
+    suspend fun switchWorkout(workoutId: Long, workout: Workout): UnfinishedWorkout?
+
+    /**
      * Completes the identified unfinished session, preserving its logged sets.
      * Returns false if it does not exist or was already completed, leaving all sessions unchanged.
      */

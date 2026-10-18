@@ -73,6 +73,9 @@ internal class RoomWorkoutRepository(
     override suspend fun finalizeWorkout(workoutId: Long): Boolean =
         dao.finalizeWorkout(workoutId, nowEpochMillis()) == 1
 
+    override suspend fun switchWorkout(workoutId: Long, workout: Workout): UnfinishedWorkout? =
+        dao.switchWorkout(workoutId, workout)?.toDomain()
+
     override suspend fun setSetCompleted(
         exercisePosition: Int,
         setPosition: Int,

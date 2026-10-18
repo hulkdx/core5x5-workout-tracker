@@ -226,6 +226,9 @@ internal class WorkoutCompleteViewModelTest {
         WorkoutCompleteViewModel(id, repository).also { newStore().put("completion", it) }
 
     private class FakeWorkoutRepository : WorkoutRepository {
+        override suspend fun switchWorkout(workoutId: Long, workout: Workout): UnfinishedWorkout? =
+            error("Summary cannot change a saved program")
+
         val completed = mutableMapOf<Long, CompletedWorkout>()
         var prescription = WorkoutPrescription(Workout.B)
         var readError: Exception? = null

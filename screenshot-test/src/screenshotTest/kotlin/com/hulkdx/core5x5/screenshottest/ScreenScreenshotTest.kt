@@ -85,6 +85,31 @@ class ScreenScreenshotTest {
     @PreviewTest
     @HomeReferenceScreen
     @Composable
+    fun ActiveWorkoutSwitchB() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.B).let { state ->
+        state.copy(unfinishedWorkout = state.unfinishedWorkout?.let { workout ->
+            workout.copy(exercises = workout.exercises.map { exercise ->
+                exercise.copy(setStates = exercise.setStates.map { it.copy(isCompleted = false, completedReps = null) })
+            })
+        })
+    })
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutSwitchSaving() = ActiveWorkoutSnapshot(
+        activeWorkoutRepReference(recordedReps = listOf(null, null, null, null, null)).copy(isSwitchingWorkout = true),
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkoutSwitchError() = ActiveWorkoutSnapshot(
+        activeWorkoutRepReference(recordedReps = listOf(null, null, null, null, null)).copy(hasSwitchError = true),
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
     fun ActiveWorkoutAfterFirstTap() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A).copy(
         restTimer = RestTimerUiState(isVisible = true, countdown = "03:00"),
     ))

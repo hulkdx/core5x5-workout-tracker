@@ -60,6 +60,44 @@ internal interface UnfinishedWorkoutDao {
     suspend fun getSets(workoutId: Long): List<UnfinishedWorkoutSetEntity>
 
     @Query("""
+        UPDATE unfinished_workout SET workout = :workout, restDeadlineEpochMillis = NULL
+        WHERE id = :workoutId AND unfinishedSlot = 1 AND completedAtEpochMillis IS NULL
+    """)
+    suspend fun updateWorkoutProgram(workoutId: Long, workout: Workout): Int
+
+    // The exercise foreign key cascades to its set rows when switching programs.
+    @Query("DELETE FROM unfinished_workout_exercise WHERE workoutId = :workoutId AND position = :position")
+    suspend fun removeExercise(workoutId: Long, position: Int)
+
+    @Query("UPDATE unfinished_workout_set SET isCompleted = 0, completedReps = NULL WHERE workoutId = :workoutId")
+    suspend fun resetWorkoutSets(workoutId: Long)
+
+    /** Reset all progress/rest atomically while preserving shared exercise prescriptions. */
+    @Transaction
+    suspend fun switchWorkout(workoutId: Long, workout: Workout): StoredUnfinishedWorkout? {
+        val stored = getSession(workoutId) ?: return null
+        if (stored.session.completedAtEpochMillis != null || stored.session.unfinishedSlot != 1) return null
+        // An explicit target makes retries after a lost acknowledgement idempotent.
+        if (stored.session.workout == workout) return stored
+        val savedWeights = getLatestCompletedExercises().associate { it.exercise to it.weightKg }
+        resetWorkoutSets(workoutId)
+        workout.exercises.forEachIndexed { position, exercise ->
+            val previous = stored.exercises.firstOrNull { it.position == position }
+            if (previous?.exercise != exercise) {
+                removeExercise(workoutId, position)
+                val replacement = UnfinishedWorkoutExerciseEntity(
+                    workoutId, position, exercise, exercise.sets, exercise.reps,
+                    savedWeights[exercise] ?: exercise.startingWeightKg,
+                )
+                insertExercises(listOf(replacement))
+                insertSets(List(replacement.sets) { UnfinishedWorkoutSetEntity(workoutId, position, it) })
+            }
+        }
+        check(updateWorkoutProgram(workoutId, workout) == 1)
+        return getSession(workoutId)
+    }
+
+    @Query("""
         UPDATE unfinished_workout_set SET isCompleted = :isCompleted,
         completedReps = CASE WHEN :isCompleted THEN COALESCE(completedReps, (
             SELECT reps FROM unfinished_workout_exercise

@@ -101,6 +101,39 @@ internal class ActiveWorkoutViewModel(
         completeSet(state.selectedExercisePosition, nextSet.position)
     }
 
+    fun switchWorkout() {
+        val state = uiState.value
+        if (operationInProgress || !state.canSwitchWorkout) return
+        val current = state.unfinishedWorkout ?: return
+        val target = current.workout.nextWorkout()
+        operationInProgress = true
+        _uiState.value = state.copy(isSwitchingWorkout = true, hasSwitchError = false)
+        viewModelScope.launch {
+            try {
+                val saved = repository.switchWorkout(current.id, target)
+                if (saved == null || saved.id != current.id || saved.workout != target) {
+                    _uiState.value = uiState.value.copy(hasSwitchError = true)
+                } else {
+                    _uiState.value = uiState.value.copy(
+                        unfinishedWorkout = saved,
+                        selectedExercisePosition = saved.nextExercisePosition(),
+                        hasSetSaveError = false,
+                        hasSaveError = false,
+                        hasEditLoadError = false,
+                    )
+                    updateCountdown()
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _uiState.value = uiState.value.copy(hasSwitchError = true)
+            } finally {
+                operationInProgress = false
+                _uiState.value = uiState.value.copy(isSwitchingWorkout = false)
+            }
+        }
+    }
+
     fun completeSet(exercisePosition: Int, setPosition: Int) {
         val exercise = uiState.value.unfinishedWorkout?.exercises?.getOrNull(exercisePosition) ?: return
         if (exercise.setStates.firstOrNull { it.position == setPosition }?.isCompleted != false) return

@@ -926,6 +926,196 @@ internal class ActiveWorkoutViewModelTest {
         assertFalse(viewModel.uiState.value.hasSetSaveError)
     }
 
+    @Test
+    fun switchesBothProgramsWithoutNavigatingOrChangingSessionIdentity() = runTest(dispatcher) {
+        val original = session(Workout.A).copy(startedAtEpochMillis = 123L)
+        val repository = FakeWorkoutRepository(original)
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+
+        for (target in listOf(Workout.B, Workout.A)) {
+            assertTrue(viewModel.uiState.value.canSwitchWorkout)
+            viewModel.switchWorkout()
+            assertTrue(viewModel.uiState.value.isSwitchingWorkout)
+            assertFalse(viewModel.uiState.value.canCompleteSet)
+            assertFalse(viewModel.uiState.value.canFinish)
+            dispatcher.scheduler.runCurrent()
+            val saved = requireNotNull(viewModel.uiState.value.unfinishedWorkout)
+            assertEquals(target, saved.workout)
+            assertEquals(target.exercises, saved.exercises.map { it.exercise })
+            assertEquals(original.id, saved.id)
+            assertEquals(original.startedAtEpochMillis, saved.startedAtEpochMillis)
+            assertEquals(if (target == Workout.B) 11 else 15, saved.exercises.sumOf { it.sets })
+            assertFalse(viewModel.uiState.value.isSwitchingWorkout)
+            assertFalse(viewModel.uiState.value.hasSwitchError)
+            assertNull(viewModel.uiState.value.requestedCompletedWorkoutId)
+        }
+        assertEquals(listOf(1L to Workout.B, 1L to Workout.A), repository.switchRequests)
+        viewModel.loadWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.A, viewModel.uiState.value.unfinishedWorkout?.workout)
+        assertTrue(repository.finalizedIds.isEmpty())
+    }
+
+    @Test
+    fun switchingBlocksDuplicatesSetWritesEditsAndFinishing() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A)).apply { switchGate = CompletableDeferred() }
+        val viewModel = createViewModel(repository)
+        viewModel.switchWorkout() // Constructor load is still pending.
+        assertTrue(repository.switchRequests.isEmpty())
+        dispatcher.scheduler.runCurrent()
+        viewModel.switchWorkout()
+        viewModel.switchWorkout()
+        viewModel.toggleSet(0, 0)
+        viewModel.openExerciseEdit(0, WeightUnit.KG)
+        viewModel.finishWorkout()
+        viewModel.loadWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(listOf(1L to Workout.B), repository.switchRequests)
+        assertTrue(repository.completedSetRequests.isEmpty())
+        assertTrue(repository.finalizedIds.isEmpty())
+        assertNull(viewModel.uiState.value.exerciseEdit)
+        repository.switchGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.canCompleteSet)
+    }
+
+    @Test
+    fun switchRemainsAvailableWithLoggedSetsAndRestAndResetsEveryExercise() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A))
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.openExerciseEdit(0, WeightUnit.KG)
+        dispatcher.scheduler.runCurrent()
+        viewModel.switchWorkout()
+        assertFalse(viewModel.uiState.value.canSwitchWorkout)
+        viewModel.dismissExerciseEdit()
+        viewModel.toggleSet(0, 0)
+        dispatcher.scheduler.runCurrent()
+        viewModel.toggleSet(0, 0) // A partial-rep set must also be reset.
+        dispatcher.scheduler.runCurrent()
+        viewModel.toggleSet(1, 2)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.restTimer.isVisible)
+        assertTrue(viewModel.uiState.value.canSwitchWorkout)
+        viewModel.switchWorkout()
+        dispatcher.scheduler.runCurrent()
+        val switched = requireNotNull(viewModel.uiState.value.unfinishedWorkout)
+        assertEquals(Workout.B, switched.workout)
+        assertTrue(switched.exercises.all { exercise ->
+            exercise.setStates.all { !it.isCompleted && it.completedReps == null }
+        })
+        assertNull(switched.restTimer)
+        assertFalse(viewModel.uiState.value.restTimer.isVisible)
+        assertEquals(0, viewModel.uiState.value.selectedExercisePosition)
+        assertTrue(viewModel.uiState.value.canSwitchWorkout)
+        assertEquals(listOf(1L to Workout.B), repository.switchRequests)
+    }
+
+    @Test
+    fun failedSwitchPreservesTheDisplayedWorkoutAndRetriesTheSameTarget() = runTest(dispatcher) {
+        val original = session(Workout.A).let { workout ->
+            workout.copy(restTimer = RestTimer(181_000), exercises = workout.exercises.mapIndexed { index, exercise ->
+                if (index != 0) exercise else exercise.copy(setStates = exercise.setStates.map { set ->
+                    if (set.position != 0) set else set.copy(isCompleted = true, completedReps = 3)
+                })
+            })
+        }
+        val repository = FakeWorkoutRepository(original).apply { switchError = IllegalStateException("Unavailable") }
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.switchWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertSame(original, viewModel.uiState.value.unfinishedWorkout)
+        assertTrue(viewModel.uiState.value.hasSwitchError)
+        assertTrue(viewModel.uiState.value.canSwitchWorkout)
+        assertFalse(viewModel.uiState.value.canCompleteSet)
+        assertFalse(viewModel.uiState.value.canFinish)
+        repository.switchError = null
+        viewModel.switchWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.B, viewModel.uiState.value.unfinishedWorkout?.workout)
+        assertFalse(viewModel.uiState.value.hasSwitchError)
+        assertEquals(listOf(1L to Workout.B, 1L to Workout.B), repository.switchRequests)
+    }
+
+    @Test
+    fun switchIsAvailableAfterAllSetsAreLoggedAndRestHasExpiredInEitherProgram() = runTest(dispatcher) {
+        for (program in Workout.entries) {
+            val original = session(program).let { workout ->
+                workout.copy(restTimer = RestTimer(500), exercises = workout.exercises.map { exercise ->
+                    exercise.copy(setStates = exercise.setStates.map { it.copy(isCompleted = true, completedReps = exercise.reps) })
+                })
+            }
+            val repository = FakeWorkoutRepository(original)
+            val viewModel = createViewModel(repository)
+            dispatcher.scheduler.runCurrent()
+            assertTrue(viewModel.uiState.value.restTimer.isExpired)
+            assertTrue(viewModel.uiState.value.canSwitchWorkout)
+            viewModel.switchWorkout()
+            dispatcher.scheduler.runCurrent()
+            val switched = requireNotNull(viewModel.uiState.value.unfinishedWorkout)
+            assertEquals(program.nextWorkout(), switched.workout)
+            assertTrue(switched.exercises.all { exercise ->
+                exercise.setStates.all { !it.isCompleted && it.completedReps == null }
+            })
+            assertNull(switched.restTimer)
+            assertFalse(viewModel.uiState.value.restTimer.isVisible)
+        }
+    }
+
+    @Test
+    fun lostSwitchAcknowledgementRetriesWithoutSwitchingBack() = runTest(dispatcher) {
+        val original = session(Workout.A)
+        val repository = FakeWorkoutRepository(original).apply { afterSwitchError = IllegalStateException("Lost reply") }
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.switchWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertSame(original, viewModel.uiState.value.unfinishedWorkout)
+        assertEquals(Workout.B, repository.savedWorkout?.workout)
+        viewModel.toggleSet(1, 0)
+        viewModel.finishWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(repository.completedSetRequests.isEmpty())
+        assertTrue(repository.finalizedIds.isEmpty())
+        repository.afterSwitchError = null
+        viewModel.switchWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.B, viewModel.uiState.value.unfinishedWorkout?.workout)
+        assertFalse(viewModel.uiState.value.hasSwitchError)
+    }
+
+    @Test
+    fun staleSwitchCannotReplaceTheScreenWithANewerSession() = runTest(dispatcher) {
+        val original = session(Workout.A)
+        val repository = FakeWorkoutRepository(original)
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        val later = session(Workout.B, id = 2L)
+        repository.savedWorkout = later
+        viewModel.switchWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.hasSwitchError)
+        assertSame(original, viewModel.uiState.value.unfinishedWorkout)
+        assertSame(later, repository.savedWorkout)
+    }
+
+    @Test
+    fun ownerCleanupCancelsTheSwitchWithoutReportingASaveError() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A)).apply { switchGate = CompletableDeferred() }
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.switchWorkout()
+        dispatcher.scheduler.runCurrent()
+        store.clear()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(repository.switchCancelled)
+        assertFalse(viewModel.uiState.value.isSwitchingWorkout)
+        assertFalse(viewModel.uiState.value.hasSwitchError)
+        assertEquals(Workout.A, repository.savedWorkout?.workout)
+    }
+
     private fun createViewModel(
         repository: FakeWorkoutRepository,
         preferences: FakeTrainingPreferencesRepository = FakeTrainingPreferencesRepository(),
@@ -1090,6 +1280,34 @@ internal class ActiveWorkoutViewModelTest {
     }
 
     private class FakeWorkoutRepository(var savedWorkout: UnfinishedWorkout?) : WorkoutRepository {
+        val switchRequests = mutableListOf<Pair<Long, Workout>>()
+        var switchGate: CompletableDeferred<Unit>? = null
+        var switchError: Exception? = null
+        var afterSwitchError: Exception? = null
+        var switchCancelled = false
+
+        override suspend fun switchWorkout(workoutId: Long, workout: Workout): UnfinishedWorkout? {
+            switchRequests += workoutId to workout
+            try {
+                switchGate?.await()
+            } catch (cancelled: CancellationException) {
+                switchCancelled = true
+                throw cancelled
+            }
+            switchError?.let { throw it }
+            val active = savedWorkout?.takeIf { it.id == workoutId } ?: return null
+            if (active.workout == workout) return active
+            val saved = active.copy(workout = workout, restTimer = null, exercises = workout.exercises.map { exercise ->
+                active.exercises.firstOrNull { it.exercise == exercise }?.let { shared ->
+                    shared.copy(setStates = shared.setStates.map { it.copy(isCompleted = false, completedReps = null) })
+                }
+                    ?: UnfinishedWorkoutExercise(exercise, exercise.sets, exercise.reps, exercise.startingWeightKg)
+            })
+            savedWorkout = saved
+            afterSwitchError?.let { throw it }
+            return saved
+        }
+
         var editCount = 0
         var editGate: CompletableDeferred<Unit>? = null
         var editError: Exception? = null

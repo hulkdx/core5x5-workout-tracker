@@ -1,5 +1,6 @@
 package com.hulkdx.core5x5.feature.workout.presentation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,6 +18,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -31,6 +33,7 @@ import com.hulkdx.core5x5.core.ui.components.AppHomeStartButton
 import com.hulkdx.core5x5.core.ui.components.AppSetControl
 import com.hulkdx.core5x5.core.ui.components.AppSetControls
 import com.hulkdx.core5x5.core.ui.components.AppSetState
+import com.hulkdx.core5x5.core.ui.components.AppWorkoutSwitch
 import com.hulkdx.core5x5.core.ui.components.AppWorkoutTopBar
 import com.hulkdx.core5x5.core.ui.theme.AppActiveTokens as Active
 import com.hulkdx.core5x5.core.ui.theme.AppColors
@@ -51,6 +54,7 @@ internal fun ActiveWorkoutScreen(
     onRetryLoad: () -> Unit,
     onToggleSet: (Int, Int) -> Unit,
     onEditExercise: ((Int) -> Unit)? = null,
+    onSwitchWorkout: () -> Unit = {},
     modifier: Modifier = Modifier,
     weightUnit: WeightUnit = WeightUnit.KG,
     windowInsets: WindowInsets = WindowInsets.safeDrawing,
@@ -65,12 +69,12 @@ internal fun ActiveWorkoutScreen(
                     Active.Exercise.lineHeight.toDp() + Active.Metadata.lineHeight.toDp()
                 }
             val count = workout?.exercises?.size ?: 0
-            val inlineHeight = Active.TopGap + Active.TopBarHeight + cardHeight * count.toFloat() +
+            val inlineHeight = Active.TopGap + Active.TopBarHeight + AppDimensions.TouchTargetMin + cardHeight * count.toFloat() +
                 Home.BrandGap * (count + 3).toFloat() + Home.ButtonHeight + Rest.TimerHeight
             val pinTimer = resting && (
                 maxHeight < inlineHeight || maxWidth < AppDimensions.ReferenceWidth ||
                     LocalDensity.current.fontScale > 1f || uiState.hasLoadError ||
-                    uiState.hasSetSaveError || uiState.hasSaveError
+                    uiState.hasSetSaveError || uiState.hasSaveError || uiState.hasSwitchError
                 )
             Column(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(
@@ -83,9 +87,19 @@ internal fun ActiveWorkoutScreen(
                             AppWorkoutTopBar(
                                 title = workout?.let { "Workout ${it.workout.name}" } ?: "Workout",
                                 onBack = onBack,
-                                backEnabled = !uiState.isSaving && !uiState.isCompletingSet,
+                                backEnabled = !uiState.isSaving && !uiState.isCompletingSet && !uiState.isSwitchingWorkout,
                                 refined = true,
                             )
+                            if (workout != null) {
+                                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                                    AppWorkoutSwitch(
+                                        label = if (uiState.isSwitchingWorkout) "Switching…"
+                                            else "Switch to ${workout.workout.nextWorkout().name}",
+                                        onClick = onSwitchWorkout,
+                                        enabled = uiState.canSwitchWorkout,
+                                    )
+                                }
+                            }
                             Spacer(Modifier.height(Active.TopGap))
                         }
                     }
@@ -101,6 +115,12 @@ internal fun ActiveWorkoutScreen(
                     }
                     when {
                         workout != null -> {
+                            if (uiState.hasSwitchError) item(key = "switch-error", contentType = "error") {
+                                Column {
+                                    WorkoutError("Unable to confirm the workout switch. Tap Switch to retry before logging sets.")
+                                    Spacer(Modifier.height(Home.BrandGap))
+                                }
+                            }
                             workout.exercises.forEachIndexed { exercisePosition, exercise ->
                                 item(key = "exercise:$exercisePosition", contentType = "exercise") {
                                     Column {

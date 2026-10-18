@@ -32,6 +32,163 @@ internal abstract class UnfinishedWorkoutPersistenceTest {
     abstract fun deleteDatabase(name: String)
 
     @Test
+    fun switchingPreservesIdentitySharedEditsHistoryAndCarriedWeightsAfterReopening() = runTest {
+        val name = "switch-reopen.db"
+        deleteDatabase(name)
+        try {
+            val database = openDatabase(name)
+            val switched = try {
+                val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+                val historyA = repository.startWorkout(Workout.A)
+                repository.editExercise(historyA.id, 1, ExerciseEdit("Bench Press", 40.0, 5, 5, null))
+                repository.editExercise(historyA.id, 2, ExerciseEdit("Barbell Row", 50.0, 5, 5, null))
+                repository.finalizeWorkout(historyA.id)
+                val historyB = repository.startWorkout(Workout.B)
+                repository.editExercise(historyB.id, 1, ExerciseEdit("Overhead Press", 35.0, 5, 5, null))
+                repository.editExercise(historyB.id, 2, ExerciseEdit("Deadlift", 90.0, 1, 5, null))
+                repository.finalizeWorkout(historyB.id)
+                val completedBefore = repository.getCompletedWorkouts()
+                val original = repository.startWorkout(Workout.A)
+                val edited = requireNotNull(repository.editExercise(original.id, 0,
+                    ExerciseEdit("Paused Squat", 80.0, 4, 8, 0)))
+                val noClock = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { error("Switch must preserve start time") }
+                val selectedB = requireNotNull(noClock.switchWorkout(original.id, Workout.B))
+                assertEquals(original.id, selectedB.id)
+                assertEquals(original.startedAtEpochMillis, selectedB.startedAtEpochMillis)
+                assertEquals(edited.exercises[0], selectedB.exercises[0])
+                assertEquals(Workout.B.exercises, selectedB.exercises.map { it.exercise })
+                assertEquals(listOf(80.0, 35.0, 90.0), selectedB.exercises.map { it.weightKg })
+                assertEquals(1, selectedB.exercises[2].setStates.size)
+                assertEquals(selectedB, noClock.switchWorkout(original.id, Workout.B))
+                val loggedB = requireNotNull(repository.completeSetAndStartRest(original.id, 2, 0, 180_000))
+                assertEquals(loggedB, noClock.switchWorkout(original.id, Workout.B))
+                val selectedA = requireNotNull(noClock.switchWorkout(original.id, Workout.A))
+                assertEquals(edited.exercises[0], selectedA.exercises[0])
+                assertEquals(listOf(80.0, 40.0, 50.0), selectedA.exercises.map { it.weightKg })
+                assertTrue(selectedA.exercises.all { exercise -> exercise.setStates.none { it.isCompleted } })
+                assertEquals(5, selectedA.exercises[2].setStates.size)
+                assertEquals(completedBefore, repository.getCompletedWorkouts())
+                assertEquals(Workout.A, repository.getNextWorkout())
+                requireNotNull(noClock.switchWorkout(original.id, Workout.B))
+            } finally {
+                database.close()
+            }
+            val reopened = openDatabase(name)
+            try {
+                val repository = RoomWorkoutRepository(reopened.unfinishedWorkoutDao()) { 5_000L }
+                assertEquals(switched, repository.getUnfinishedWorkout())
+                assertEquals(switched, repository.startWorkout(Workout.A))
+                assertTrue(repository.finalizeWorkout(switched.id))
+                assertEquals(Workout.B, repository.getCompletedWorkout(switched.id)?.workout)
+                assertEquals(Workout.A, repository.getNextWorkout())
+            } finally {
+                reopened.close()
+            }
+        } finally {
+            deleteDatabase(name)
+        }
+    }
+
+    @Test
+    fun switchingResetsSharedAndReplacedExerciseProgressAndRunningOrExpiredRest() = runTest {
+        withDatabase("switch-reset.db") { database ->
+            var now = 1_000L
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { now }
+            val original = repository.startWorkout(Workout.A)
+            val edited = requireNotNull(repository.editExercise(original.id, 0,
+                ExerciseEdit("Paused Squat", 80.0, 4, 8, null)))
+            repository.completeSetAndStartRest(original.id, 0, 0, 180_000)
+            repository.setCompletedReps(original.id, 0, 0, 3)
+            repository.completeSetAndStartRest(original.id, 1, 2, 180_000)
+            val selectedB = requireNotNull(repository.switchWorkout(original.id, Workout.B))
+            assertEquals(edited.exercises[0], selectedB.exercises[0])
+            assertEquals(Workout.B.exercises, selectedB.exercises.map { it.exercise })
+            assertTrue(selectedB.exercises.all { exercise ->
+                exercise.setStates.all { !it.isCompleted && it.completedReps == null }
+            })
+            assertNull(selectedB.restTimer)
+            assertEquals(selectedB, repository.getUnfinishedWorkout())
+
+            repository.completeSetAndStartRest(original.id, 0, 1, 180_000)
+            val logged = requireNotNull(repository.completeSetAndStartRest(original.id, 2, 0, 180_000))
+            now = 1_000_000L
+            assertTrue(requireNotNull(logged.restTimer).deadlineEpochMillis < now)
+            val selectedA = requireNotNull(repository.switchWorkout(original.id, Workout.A))
+            assertEquals(edited.exercises[0], selectedA.exercises[0])
+            assertEquals(Workout.A.exercises, selectedA.exercises.map { it.exercise })
+            assertTrue(selectedA.exercises.all { exercise ->
+                exercise.setStates.all { !it.isCompleted && it.completedReps == null }
+            })
+            assertNull(selectedA.restTimer)
+            assertEquals(0, database.unfinishedWorkoutDao().getSets(original.id).count { it.isCompleted })
+        }
+    }
+
+    @Test
+    fun switchingRejectsInactiveIdsAndResetsLoggedSetsWithRestOff() = runTest {
+        withDatabase("switch-guards.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+            assertNull(repository.switchWorkout(999L, Workout.B))
+            val original = repository.startWorkout(Workout.A)
+            repository.finalizeWorkout(original.id)
+            val completed = repository.getCompletedWorkout(original.id)
+            val later = repository.startWorkout(Workout.A)
+            assertNull(repository.switchWorkout(original.id, Workout.B))
+            assertEquals(completed, repository.getCompletedWorkout(original.id))
+            assertEquals(later, repository.getUnfinishedWorkout())
+            repository.editExercise(later.id, 2, ExerciseEdit("Barbell Row", 20.0, 5, 5, 0))
+            val restOff = requireNotNull(repository.completeSetAndStartRest(later.id, 2, 4, 180_000))
+            assertNull(restOff.restTimer)
+            val switched = requireNotNull(repository.switchWorkout(later.id, Workout.B))
+            assertTrue(switched.exercises.all { exercise ->
+                exercise.setStates.all { !it.isCompleted && it.completedReps == null }
+            })
+            assertEquals(completed, repository.getCompletedWorkout(original.id))
+        }
+    }
+
+    @Test
+    fun switchInsertionFailureRollsBackProgramExercisesAndSets() = runTest {
+        withDatabase("switch-rollback.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+            val started = repository.startWorkout(Workout.A)
+            repository.completeSetAndStartRest(started.id, 0, 0, 180_000)
+            val original = requireNotNull(repository.setCompletedReps(started.id, 0, 0, 3))
+            database.useWriterConnection { connection ->
+                connection.executeSQL("CREATE TRIGGER reject_switch BEFORE INSERT ON unfinished_workout_set WHEN NEW.exercisePosition = 2 BEGIN SELECT RAISE(ABORT, 'Test failure'); END")
+            }
+            assertFails { repository.switchWorkout(original.id, Workout.B) }
+            assertEquals(original, repository.getUnfinishedWorkout())
+            database.useWriterConnection { it.executeSQL("DROP TRIGGER reject_switch") }
+            assertEquals(Workout.B, repository.switchWorkout(original.id, Workout.B)?.workout)
+        }
+    }
+
+    @Test
+    fun concurrentExplicitSwitchesAcrossDatabaseInstancesDoNotToggleBack() = runTest {
+        withDatabase("switch-concurrent.db") { database ->
+            val original = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }.startWorkout(Workout.A)
+            val other = openDatabase("switch-concurrent.db")
+            try {
+                val results = listOf(database, other).map { source ->
+                    async(Dispatchers.Default) {
+                        RoomWorkoutRepository(source.unfinishedWorkoutDao()).switchWorkout(original.id, Workout.B)
+                    }
+                }.awaitAll()
+                results.forEach { saved ->
+                    assertEquals(original.id, saved?.id)
+                    assertEquals(Workout.B, saved?.workout)
+                    assertEquals(11, saved?.exercises?.sumOf { it.sets })
+                }
+                assertEquals(results[0], results[1])
+                assertEquals(results[0], RoomWorkoutRepository(database.unfinishedWorkoutDao()).getUnfinishedWorkout())
+            } finally {
+                other.close()
+            }
+        }
+    }
+
+    @Test
     fun actualRepsSurviveEditsReopeningFinalizationAndHistoryReads() = runTest {
         val name = "actual-reps-reopen.db"
         deleteDatabase(name)
