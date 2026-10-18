@@ -3,14 +3,14 @@ package com.hulkdx.core5x5.feature.history.presentation
 import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutRecord
 
-internal data class HistoryWeightPoint(
+data class HistoryWeightPoint(
     val workoutId: Long,
     val completedAtEpochMillis: Long,
     val weightKg: Double,
 )
 
 /** Saved weight used in sessions with logged sets, including partial-rep sets. */
-internal fun List<CompletedWorkoutRecord>.weightHistory(
+fun List<CompletedWorkoutRecord>.weightHistory(
     exercise: CompletedExerciseType,
 ): List<HistoryWeightPoint> = sortedWith(
     compareBy<CompletedWorkoutRecord> { it.completedAtEpochMillis }.thenBy { it.id },
@@ -23,7 +23,7 @@ internal fun List<CompletedWorkoutRecord>.weightHistory(
 }
 
 /** Proportional elapsed time; a single instant is centered rather than divided by zero. */
-internal fun List<HistoryWeightPoint>.timeFraction(index: Int): Float {
+fun List<HistoryWeightPoint>.timeFraction(index: Int): Float {
     val start = first().completedAtEpochMillis.toDouble()
     val span = last().completedAtEpochMillis.toDouble() - start
     return if (span == 0.0) 0.5f else ((this[index].completedAtEpochMillis.toDouble() - start) / span).toFloat()

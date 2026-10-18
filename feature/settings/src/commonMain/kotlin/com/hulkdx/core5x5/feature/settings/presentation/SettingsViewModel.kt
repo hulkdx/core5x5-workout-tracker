@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-internal class SettingsViewModel(
+class SettingsViewModel(
     private val repository: TrainingPreferencesRepository,
     appMetadata: AppMetadata,
 ) : ViewModel() {

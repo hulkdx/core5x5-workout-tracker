@@ -5,7 +5,7 @@ import com.hulkdx.core5x5.feature.settings.domain.AppMetadata
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-internal actual val settingsPlatformModule: Module = module {
+actual val settingsPlatformModule: Module = module {
     single<AppMetadata> {
         val context: Context = get()
         AppMetadata {

@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
 
-internal fun workoutDatabaseBuilder(context: Context): RoomDatabase.Builder<WorkoutDatabase> {
+fun workoutDatabaseBuilder(context: Context): RoomDatabase.Builder<WorkoutDatabase> {
     val appContext = context.applicationContext
     return Room.databaseBuilder<WorkoutDatabase>(
         context = appContext,

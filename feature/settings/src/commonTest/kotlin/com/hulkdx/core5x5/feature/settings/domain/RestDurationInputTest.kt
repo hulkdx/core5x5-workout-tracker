@@ -5,7 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-internal class RestDurationInputTest {
+class RestDurationInputTest {
     @Test
     fun positiveWholeSecondsIncludeValuesLongerThanOneHour() {
         for (seconds in listOf(1L, 180L, 3_601L, 86_400L, TrainingPreferences.MAX_REST_DURATION_SECONDS)) {

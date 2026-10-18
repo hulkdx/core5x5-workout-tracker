@@ -1,13 +1,12 @@
 package com.hulkdx.core5x5.feature.workout.presentation
 
-import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -17,10 +16,10 @@ fun ActiveWorkoutRoute(
     workoutId: Long,
     onBack: () -> Unit,
     onWorkoutCompleted: (Long) -> Unit,
-    weightUnit: WeightUnit = WeightUnit.KG,
 ) {
     val viewModel: ActiveWorkoutViewModel = koinViewModel(parameters = { parametersOf(workoutId) })
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val weightUnit = uiState.weightUnit
 
     LifecycleResumeEffect(viewModel) {
         viewModel.onResume()
@@ -51,6 +50,7 @@ fun ActiveWorkoutRoute(
         onBack = onBack,
         onFinishWorkout = viewModel::finishWorkout,
         onRetryLoad = viewModel::loadWorkout,
+        onRetryPreferences = viewModel::retryPreferences,
         onToggleSet = viewModel::toggleSet,
         onSwitchWorkout = viewModel::switchWorkout,
         onEditExercise = { viewModel.openExerciseEdit(it, weightUnit) },

@@ -2,25 +2,47 @@ package com.hulkdx.core5x5.feature.workout.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutRepository
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-internal class TodayViewModel(
+class TodayViewModel(
     private val repository: WorkoutRepository,
+    private val preferences: TrainingPreferencesRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(TodayUiState())
     val uiState: StateFlow<TodayUiState> = _uiState.asStateFlow()
     private var operationInProgress = false
     private var selectedWorkout: Workout? = null
 
+    private var preferencesJob: Job? = null
+
     init {
+        retryPreferences()
         loadWorkout()
+    }
+
+    /** Subscribe once per owner; only an explicit retry restarts a failed observation. */
+    fun retryPreferences() {
+        if (preferencesJob?.isActive == true) return
+        preferencesJob = viewModelScope.launch {
+            try {
+                preferences.preferences.collect { preferences ->
+                    _uiState.value = uiState.value.copy(weightUnit = preferences.weightUnit, hasPreferencesError = false)
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _uiState.value = uiState.value.copy(hasPreferencesError = true)
+            }
+        }
     }
 
     fun loadWorkout() {

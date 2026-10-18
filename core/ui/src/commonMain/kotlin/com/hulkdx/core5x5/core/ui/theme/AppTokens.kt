@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.sp
 
 /** Implementation motion correction documented in design/DESIGN_SYSTEM.md. */
 object AppMotion {
-    const val NavigationFadeDurationMillis = 180 // motion.navigation.fadeDurationMillis
+    const val NavigationDurationMillis = 200
 }
 
 /** Measured dark tokens from the workspace's design/tokens.json. */

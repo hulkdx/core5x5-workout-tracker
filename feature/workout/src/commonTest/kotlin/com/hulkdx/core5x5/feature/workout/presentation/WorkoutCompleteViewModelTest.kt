@@ -34,7 +34,7 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class WorkoutCompleteViewModelTest {
+class WorkoutCompleteViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val repository = FakeWorkoutRepository()
     private val stores = mutableListOf<ViewModelStore>()

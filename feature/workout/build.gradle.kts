@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
@@ -37,6 +38,8 @@ kotlin {
             }
         }
         commonMain.dependencies {
+            implementation(project(":core:navigation"))
+            implementation(libs.kotlinx.serialization.core)
             implementation(project(":core:training"))
             implementation(project(":core:preferences"))
             implementation(libs.androidx.room.runtime)
@@ -58,6 +61,13 @@ kotlin {
         getByName("androidDeviceTest").dependencies {
             implementation(libs.androidx.testExt.junit)
             implementation(libs.androidx.test.runner)
+            implementation(libs.androidx.espresso.core)
+            implementation(libs.compose.uiTestJunit4)
+            implementation(libs.compose.uiTestManifest)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.navigation3.ui)
+            implementation(libs.androidx.lifecycle.viewmodelNavigation3)
+            implementation(libs.koin.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -5,6 +5,6 @@ import com.hulkdx.core5x5.core.preferences.data.PreferencesStorage
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-internal actual val preferencesPlatformModule: Module = module {
+actual val preferencesPlatformModule: Module = module {
     single<PreferencesStorage> { AndroidPreferencesStorage(get()) }
 }

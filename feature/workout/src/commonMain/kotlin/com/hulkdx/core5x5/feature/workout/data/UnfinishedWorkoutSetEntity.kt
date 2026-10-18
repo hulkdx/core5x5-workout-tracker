@@ -14,7 +14,7 @@ import androidx.room3.ForeignKey
         onDelete = ForeignKey.CASCADE,
     )],
 )
-internal data class UnfinishedWorkoutSetEntity(
+data class UnfinishedWorkoutSetEntity(
     val workoutId: Long,
     val exercisePosition: Int,
     val position: Int,

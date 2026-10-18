@@ -19,7 +19,7 @@ import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutType
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutRepository
 import kotlin.time.Clock
 
-internal class RoomWorkoutRepository(
+class RoomWorkoutRepository(
     private val dao: UnfinishedWorkoutDao,
     private val nowEpochMillis: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) : WorkoutRepository, CompletedWorkoutSource {

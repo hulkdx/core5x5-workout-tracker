@@ -29,6 +29,7 @@ import com.hulkdx.core5x5.core.preferences.domain.formatWeight
 import com.hulkdx.core5x5.core.ui.components.AppHomeExerciseRow
 import com.hulkdx.core5x5.core.ui.components.AppHomeStartButton
 import com.hulkdx.core5x5.core.ui.components.AppWorkoutSwitch
+import com.hulkdx.core5x5.core.ui.components.WeightUnitError
 import com.hulkdx.core5x5.core.ui.theme.AppColors
 import com.hulkdx.core5x5.core.ui.theme.AppTheme
 import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
@@ -37,14 +38,15 @@ import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
 
 @Composable
-internal fun TodayScreen(
+fun TodayScreen(
     uiState: TodayUiState,
     modifier: Modifier = Modifier,
     onStartWorkout: () -> Unit,
     onResumeWorkout: () -> Unit,
     onRetryLoad: () -> Unit,
     onSwitchWorkout: () -> Unit = {},
-    weightUnit: WeightUnit = WeightUnit.KG,
+    weightUnit: WeightUnit = uiState.weightUnit,
+    onRetryPreferences: () -> Unit = {},
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = Home.Background) {
         Column(
@@ -52,6 +54,11 @@ internal fun TodayScreen(
                 .padding(top = Home.TopGap, bottom = Home.BrandGap),
             verticalArrangement = Arrangement.spacedBy(Home.BrandGap),
         ) {
+            if (uiState.hasPreferencesError) {
+                Box(Modifier.fillMaxWidth().padding(horizontal = Home.Inset)) {
+                    WeightUnitError(weightUnit, onRetryPreferences)
+                }
+            }
             Text(
                 text = "Core5x5",
                 style = Home.Brand,

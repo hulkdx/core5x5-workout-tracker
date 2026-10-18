@@ -2,7 +2,6 @@ package com.hulkdx.core5x5.feature.workout.presentation
 
 import androidx.lifecycle.ViewModelStore
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
-import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.feature.workout.domain.CompletedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
@@ -13,15 +12,6 @@ import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutRepository
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -30,9 +20,17 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class ActiveWorkoutViewModelTest {
+class ActiveWorkoutViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val store = ViewModelStore()
 
@@ -1116,6 +1114,44 @@ internal class ActiveWorkoutViewModelTest {
         assertEquals(Workout.A, repository.savedWorkout?.workout)
     }
 
+    @Test
+    fun activeWorkoutObservesUnitsAndKeepsThemThroughReloadWithoutRestartingTheSubscription() = runTest(dispatcher) {
+        val preferences = FakeTrainingPreferencesRepository()
+        val viewModel = createViewModel(FakeWorkoutRepository(session(Workout.A)), preferences)
+        dispatcher.scheduler.runCurrent()
+        preferences.setWeightUnit(WeightUnit.LB)
+        dispatcher.scheduler.runCurrent()
+        viewModel.loadWorkout()
+        viewModel.retryPreferences()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(WeightUnit.LB, viewModel.uiState.value.weightUnit)
+        assertEquals(1, preferences.observations)
+        store.clear()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(0, preferences.values.subscriptionCount.value)
+    }
+
+    @Test
+    fun activePreferenceErrorsRetryWithoutLosingTheIdentifiedWorkoutOrEditor() = runTest(dispatcher) {
+        val preferences = FakeTrainingPreferencesRepository().apply { loadError = IllegalStateException("unavailable") }
+        val viewModel = createViewModel(FakeWorkoutRepository(session(Workout.A)), preferences)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.hasPreferencesError)
+        viewModel.openExerciseEdit(0, WeightUnit.KG)
+        dispatcher.scheduler.runCurrent()
+        val editor = viewModel.uiState.value.exerciseEdit
+        assertTrue(editor != null)
+
+        preferences.loadError = null
+        preferences.setWeightUnit(WeightUnit.LB)
+        viewModel.retryPreferences()
+        dispatcher.scheduler.runCurrent()
+        assertFalse(viewModel.uiState.value.hasPreferencesError)
+        assertEquals(WeightUnit.LB, viewModel.uiState.value.weightUnit)
+        assertEquals(editor, viewModel.uiState.value.exerciseEdit)
+        assertEquals(1L, viewModel.uiState.value.unfinishedWorkout?.id)
+    }
+
     private fun createViewModel(
         repository: FakeWorkoutRepository,
         preferences: FakeTrainingPreferencesRepository = FakeTrainingPreferencesRepository(),
@@ -1126,29 +1162,6 @@ internal class ActiveWorkoutViewModelTest {
     )
             .also { store.put("active-workout", it) }
 
-    private class FakeTrainingPreferencesRepository(
-        var value: TrainingPreferences = TrainingPreferences(),
-    ) : TrainingPreferencesRepository {
-        val values = MutableStateFlow(value)
-        var readError: Exception? = null
-
-        override val preferences = values
-
-        override suspend fun getPreferences(): TrainingPreferences {
-            readError?.let { throw it }
-            return value
-        }
-
-        override suspend fun setWeightUnit(unit: WeightUnit) {
-            value = value.copy(weightUnit = unit)
-            values.value = value
-        }
-
-        override suspend fun setRestDurationSeconds(seconds: Long) {
-            value = value.copy(restDurationSeconds = seconds)
-            values.value = value
-        }
-    }
 
     @Test
     fun editCancelAndCustomRestCancelNeverPersistDrafts() = runTest(dispatcher) {

@@ -9,7 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-internal class HistoryWeightSeriesTest {
+class HistoryWeightSeriesTest {
     @Test
     fun usesSavedWeightsAcrossProgramsInTimestampThenIdOrder() {
         val newest = record(3, 300, 82.5).copy(workout = CompletedWorkoutType.B)

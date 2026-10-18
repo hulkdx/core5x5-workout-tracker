@@ -1,7 +1,7 @@
 package com.hulkdx.core5x5.feature.workout.domain
 
 /** A completed session reloaded from storage, including its original prescriptions and logged sets. */
-internal data class CompletedWorkout(
+data class CompletedWorkout(
     val id: Long,
     val workout: Workout,
     val startedAtEpochMillis: Long,

@@ -14,7 +14,7 @@ import com.hulkdx.core5x5.feature.workout.domain.Exercise
         onDelete = ForeignKey.CASCADE,
     )],
 )
-internal data class UnfinishedWorkoutExerciseEntity(
+data class UnfinishedWorkoutExerciseEntity(
     val workoutId: Long,
     val position: Int,
     val exercise: Exercise,
@@ -25,7 +25,7 @@ internal data class UnfinishedWorkoutExerciseEntity(
     val restDurationMillis: Long? = null,
 )
 
-internal data class StoredUnfinishedWorkout(
+data class StoredUnfinishedWorkout(
     val session: UnfinishedWorkoutEntity,
     val exercises: List<UnfinishedWorkoutExerciseEntity>,
     val sets: List<UnfinishedWorkoutSetEntity>,

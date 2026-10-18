@@ -10,4 +10,4 @@ val settingsModule = module {
     viewModel { SettingsViewModel(repository = get(), appMetadata = get()) }
 }
 
-internal expect val settingsPlatformModule: Module
+expect val settingsPlatformModule: Module

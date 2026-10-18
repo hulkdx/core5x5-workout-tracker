@@ -7,6 +7,7 @@ import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.feature.workout.domain.RestTimerRules
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutRepository
+import kotlin.time.Clock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -15,9 +16,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
 
-internal class ActiveWorkoutViewModel(
+class ActiveWorkoutViewModel(
     private val repository: WorkoutRepository,
     private val preferences: TrainingPreferencesRepository,
     private val workoutId: Long? = null,
@@ -30,8 +30,27 @@ internal class ActiveWorkoutViewModel(
     private var countdownJob: Job? = null
     private var reloadOnResume = false
 
+    private var preferencesJob: Job? = null
+
     init {
+        retryPreferences()
         loadWorkout()
+    }
+
+    /** Subscribe once per owner; only an explicit retry restarts a failed observation. */
+    fun retryPreferences() {
+        if (preferencesJob?.isActive == true) return
+        preferencesJob = viewModelScope.launch {
+            try {
+                preferences.preferences.collect { preferences ->
+                    _uiState.value = uiState.value.copy(weightUnit = preferences.weightUnit, hasPreferencesError = false)
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _uiState.value = uiState.value.copy(hasPreferencesError = true)
+            }
+        }
     }
 
     fun loadWorkout() {
@@ -50,6 +69,8 @@ internal class ActiveWorkoutViewModel(
                 val identified = active?.takeIf { workoutId == null || it.id == workoutId }
                 _uiState.value = ActiveWorkoutUiState(
                     isLoading = false,
+                    weightUnit = uiState.value.weightUnit,
+                    hasPreferencesError = uiState.value.hasPreferencesError,
                     unfinishedWorkout = identified,
                     selectedExercisePosition = if (identified != null && identified.id == previous.unfinishedWorkout?.id) {
                         previous.selectedExercisePosition.coerceIn(0, identified.exercises.lastIndex.coerceAtLeast(0))

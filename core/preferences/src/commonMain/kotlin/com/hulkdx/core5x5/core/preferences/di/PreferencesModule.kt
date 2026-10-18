@@ -10,4 +10,4 @@ val preferencesModule = module {
     single<TrainingPreferencesRepository> { PersistedTrainingPreferencesRepository(get()) }
 }
 
-internal expect val preferencesPlatformModule: Module
+expect val preferencesPlatformModule: Module

@@ -47,7 +47,7 @@ import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
 import com.hulkdx.core5x5.core.ui.theme.AppCompleteTokens as Complete
 
 @Composable
-internal fun WorkoutCompleteScreen(
+fun WorkoutCompleteScreen(
     uiState: WorkoutCompleteUiState,
     onRetryLoad: () -> Unit,
     onBackToToday: () -> Unit,

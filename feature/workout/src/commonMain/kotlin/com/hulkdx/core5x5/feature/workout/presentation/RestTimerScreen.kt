@@ -9,7 +9,7 @@ import com.hulkdx.core5x5.core.ui.theme.AppDimensions
 import com.hulkdx.core5x5.core.ui.theme.AppTheme
 
 @Composable
-internal fun RestTimerScreen(
+fun RestTimerScreen(
     uiState: RestTimerUiState,
     modifier: Modifier = Modifier,
     compact: Boolean = false,

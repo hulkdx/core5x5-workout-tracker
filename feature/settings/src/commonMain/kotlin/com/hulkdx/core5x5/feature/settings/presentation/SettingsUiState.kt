@@ -3,7 +3,7 @@ package com.hulkdx.core5x5.feature.settings.presentation
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.feature.settings.domain.parseRestDurationSeconds
 
-internal data class SettingsUiState(
+data class SettingsUiState(
     val isLoading: Boolean = true,
     val preferences: TrainingPreferences? = null,
     val versionName: String? = null,
@@ -18,5 +18,5 @@ internal data class SettingsUiState(
         get() = canChangePreferences && parseRestDurationSeconds(restDurationInput) != null
 }
 
-internal enum class SettingsDialog { UNITS, REST_DURATION, ABOUT, LICENSE }
-internal enum class SettingsError { LOAD, SAVE, OPEN_REPOSITORY, OPEN_PRIVACY_POLICY }
+enum class SettingsDialog { UNITS, REST_DURATION, ABOUT, LICENSE }
+enum class SettingsError { LOAD, SAVE, OPEN_REPOSITORY, OPEN_PRIVACY_POLICY }

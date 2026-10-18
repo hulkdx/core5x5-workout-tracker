@@ -1,7 +1,7 @@
 package com.hulkdx.core5x5.feature.workout.domain
 
 /** Session-local values; canonical exercise identity is never replaced. */
-internal data class ExerciseEdit(
+data class ExerciseEdit(
     val name: String,
     val weightKg: Double,
     val sets: Int,

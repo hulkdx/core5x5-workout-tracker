@@ -17,7 +17,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class PersistedTrainingPreferencesRepositoryTest {
+class PersistedTrainingPreferencesRepositoryTest {
     @Test
     fun absentPreferencesLoadKgAndThreeMinutesWithoutCreatingStorage() = runTest {
         val storage = MemoryPreferencesStorage()

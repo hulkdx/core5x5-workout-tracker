@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
-internal class RestTimerRulesTest {
+class RestTimerRulesTest {
     @Test
     fun idleRestDoesNotReadTheClockOrStartFromAnExtension() {
         val rules = RestTimerRules { error("Idle rest must not read the clock.") }

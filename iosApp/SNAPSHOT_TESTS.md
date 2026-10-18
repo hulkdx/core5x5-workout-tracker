@@ -56,7 +56,7 @@ yet included.
 
 The `Snapshot` configuration uses the separate `com.hulkdx.core5x5.snapshots`
 bundle ID and compiles `src/iosSnapshot/kotlin` in Shared and the three features
-only when `-PiosSnapshots=true` is present. Each feature constructs its internal
+only when `-PiosSnapshots=true` is present. Each feature constructs its own
 screen state in its own module. Shared wraps top-level screens in the production
 navigation container, using native safe insets. These fixtures start no Koin
 graph, database, preferences, ViewModel, or real timer. Normal Debug and Release

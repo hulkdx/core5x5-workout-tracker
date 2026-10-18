@@ -25,8 +25,8 @@ val workoutModule = module {
             restTimerRules = get(),
         )
     }
-    viewModel { TodayViewModel(get()) }
+    viewModel { TodayViewModel(repository = get(), preferences = get()) }
     viewModel { parameters -> WorkoutCompleteViewModel(workoutId = parameters.get(), repository = get()) }
 }
 
-internal expect val workoutPlatformModule: Module
+expect val workoutPlatformModule: Module

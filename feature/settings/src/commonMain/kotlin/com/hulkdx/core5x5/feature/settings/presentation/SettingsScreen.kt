@@ -46,6 +46,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.hulkdx.core5x5.core.navigation.TopLevelTab
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.ui.components.AppBottomNavigation
@@ -53,17 +54,16 @@ import com.hulkdx.core5x5.core.ui.components.AppButtonPalette
 import com.hulkdx.core5x5.core.ui.components.AppPrimaryButton
 import com.hulkdx.core5x5.core.ui.components.AppSecondaryButton
 import com.hulkdx.core5x5.core.ui.components.AppSettingRow
-import com.hulkdx.core5x5.core.ui.components.AppNavigationItem
 import com.hulkdx.core5x5.core.ui.theme.AppColors
 import com.hulkdx.core5x5.core.ui.theme.AppDimensions
 import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens
+import com.hulkdx.core5x5.core.ui.theme.AppSettingsTokens as Settings
 import com.hulkdx.core5x5.core.ui.theme.AppTheme
 import com.hulkdx.core5x5.core.ui.theme.AppTypography
-import com.hulkdx.core5x5.core.ui.theme.AppSettingsTokens as Settings
 
-/** AppNavigation owns insets and bottom navigation; this screen owns only its content padding. */
+/** The route's TopLevelScreenLayout owns insets and bottom navigation. */
 @Composable
-internal fun SettingsScreen(
+fun SettingsScreen(
     uiState: SettingsUiState,
     onOpenUnits: () -> Unit,
     onOpenRestDuration: () -> Unit,
@@ -341,7 +341,7 @@ private fun SettingsPreview(preferences: TrainingPreferences = TrainingPreferenc
                     .windowInsetsPadding(WindowInsets(bottom = AppHomeTokens.SystemBottomReserve)),
             ) {
                 AppBottomNavigation(
-                    selectedItem = AppNavigationItem.SETTINGS,
+                    selectedItem = TopLevelTab.SETTINGS,
                     onItemSelected = {},
                     useHomeDesign = true,
                 )

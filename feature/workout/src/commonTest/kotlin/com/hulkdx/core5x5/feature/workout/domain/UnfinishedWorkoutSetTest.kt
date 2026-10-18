@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
-internal class UnfinishedWorkoutSetTest {
+class UnfinishedWorkoutSetTest {
     @Test
     fun singleTapCycleUsesTheConfiguredTargetAndResetsAfterOne() {
         for (target in listOf(1, 5, 8, 100)) {

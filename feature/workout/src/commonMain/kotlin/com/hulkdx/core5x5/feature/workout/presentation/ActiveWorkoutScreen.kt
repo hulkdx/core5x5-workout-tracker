@@ -34,6 +34,7 @@ import com.hulkdx.core5x5.core.ui.components.AppSetControl
 import com.hulkdx.core5x5.core.ui.components.AppSetControls
 import com.hulkdx.core5x5.core.ui.components.AppSetState
 import com.hulkdx.core5x5.core.ui.components.AppWorkoutSwitch
+import com.hulkdx.core5x5.core.ui.components.WeightUnitError
 import com.hulkdx.core5x5.core.ui.components.AppWorkoutTopBar
 import com.hulkdx.core5x5.core.ui.theme.AppActiveTokens as Active
 import com.hulkdx.core5x5.core.ui.theme.AppColors
@@ -47,7 +48,7 @@ import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 
 @Composable
-internal fun ActiveWorkoutScreen(
+fun ActiveWorkoutScreen(
     uiState: ActiveWorkoutUiState,
     onBack: () -> Unit,
     onFinishWorkout: () -> Unit,
@@ -56,8 +57,9 @@ internal fun ActiveWorkoutScreen(
     onEditExercise: ((Int) -> Unit)? = null,
     onSwitchWorkout: () -> Unit = {},
     modifier: Modifier = Modifier,
-    weightUnit: WeightUnit = WeightUnit.KG,
+    weightUnit: WeightUnit = uiState.weightUnit,
     windowInsets: WindowInsets = WindowInsets.safeDrawing,
+    onRetryPreferences: () -> Unit = {},
 ) {
     val workout = uiState.unfinishedWorkout
     val resting = uiState.restTimer.isVisible
@@ -74,7 +76,7 @@ internal fun ActiveWorkoutScreen(
             val pinTimer = resting && (
                 maxHeight < inlineHeight || maxWidth < AppDimensions.ReferenceWidth ||
                     LocalDensity.current.fontScale > 1f || uiState.hasLoadError ||
-                    uiState.hasSetSaveError || uiState.hasSaveError || uiState.hasSwitchError
+                    uiState.hasSetSaveError || uiState.hasSaveError || uiState.hasSwitchError || uiState.hasPreferencesError
                 )
             Column(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(
@@ -102,6 +104,9 @@ internal fun ActiveWorkoutScreen(
                             }
                             Spacer(Modifier.height(Active.TopGap))
                         }
+                    }
+                    if (uiState.hasPreferencesError) {
+                        item(key = "preferences-error") { WeightUnitError(weightUnit, onRetryPreferences) }
                     }
                     if (uiState.hasLoadError) {
                         item(key = "load-error", contentType = "load-error") {

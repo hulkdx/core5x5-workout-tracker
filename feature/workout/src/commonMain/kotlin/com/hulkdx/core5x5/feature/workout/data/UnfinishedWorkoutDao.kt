@@ -11,7 +11,7 @@ import androidx.room3.Transaction
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 
 @Dao
-internal interface UnfinishedWorkoutDao {
+interface UnfinishedWorkoutDao {
     // Preserve an existing session rather than silently replacing it.
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(workout: UnfinishedWorkoutEntity): Long
@@ -287,7 +287,7 @@ internal interface UnfinishedWorkoutDao {
     }
 }
 
-internal data class StoredPrescriptionHistory(
+data class StoredPrescriptionHistory(
     val lastCompletedWorkout: Workout?,
     val exercises: List<UnfinishedWorkoutExerciseEntity>,
 )

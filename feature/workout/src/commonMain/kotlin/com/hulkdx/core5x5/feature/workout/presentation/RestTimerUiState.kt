@@ -2,13 +2,13 @@ package com.hulkdx.core5x5.feature.workout.presentation
 
 import com.hulkdx.core5x5.feature.workout.domain.RestTimerState
 
-internal data class RestTimerUiState(
+data class RestTimerUiState(
     val isVisible: Boolean = false,
     val isExpired: Boolean = false,
     val countdown: String = "00:00",
 )
 
-internal fun RestTimerState.toUiState(): RestTimerUiState = when (this) {
+fun RestTimerState.toUiState(): RestTimerUiState = when (this) {
     RestTimerState.Idle -> RestTimerUiState()
     RestTimerState.Expired -> RestTimerUiState(isVisible = true, isExpired = true)
     is RestTimerState.Running -> {

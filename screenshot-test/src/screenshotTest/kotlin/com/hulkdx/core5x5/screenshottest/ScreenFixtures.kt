@@ -14,14 +14,14 @@ import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
 import com.hulkdx.core5x5.feature.workout.presentation.ActiveWorkoutUiState
 import com.hulkdx.core5x5.feature.workout.presentation.WorkoutCompleteUiState
 
-internal fun unfinishedWorkout(workout: Workout) = UnfinishedWorkout(
+fun unfinishedWorkout(workout: Workout) = UnfinishedWorkout(
     workout = workout,
     startedAtEpochMillis = 0L,
     exercises = workout.exerciseSnapshots(completedSets = 2),
     id = 1L,
 )
 
-internal fun completedWorkoutState(
+fun completedWorkoutState(
     workout: Workout,
     completedSets: Int = workout.exercises.sumOf { it.sets },
 ) = WorkoutCompleteUiState(
@@ -36,7 +36,7 @@ internal fun completedWorkoutState(
     nextWorkout = WorkoutPrescription(workout.nextWorkout()),
 )
 
-internal fun historyRecords() = listOf(
+fun historyRecords() = listOf(
     CompletedWorkoutRecord(
         id = 4L,
         workout = CompletedWorkoutType.B,
@@ -62,7 +62,7 @@ internal fun historyRecords() = listOf(
 )
 
 /** Matches the supplied month/card composition using real A/B prescriptions. */
-internal fun historyReferenceRecords() = listOf(
+fun historyReferenceRecords() = listOf(
     Triple(1_791_374_400_000L, 42L, CompletedWorkoutType.A),
     Triple(1_791_115_200_000L, 38L, CompletedWorkoutType.B),
     Triple(1_790_942_400_000L, 40L, CompletedWorkoutType.B),
@@ -88,7 +88,7 @@ internal fun historyReferenceRecords() = listOf(
     )
 }
 
-internal fun historyGraphRecords() = historyReferenceRecords().mapIndexed { index, record ->
+fun historyGraphRecords() = historyReferenceRecords().mapIndexed { index, record ->
     record.copy(exercises = record.exercises.map { exercise ->
         if (exercise.exercise == CompletedExerciseType.SQUAT) {
             exercise.copy(weightKg = listOf(85.0, 82.5, 80.0, 82.5, 80.0, 77.5, 75.0)[index])
@@ -125,7 +125,7 @@ private fun Workout.exerciseSnapshots(completedSets: Int): List<UnfinishedWorkou
     }
 }
 
-internal fun activeWorkoutReference(workout: Workout): ActiveWorkoutUiState =
+fun activeWorkoutReference(workout: Workout): ActiveWorkoutUiState =
     ActiveWorkoutUiState(
         isLoading = false,
         unfinishedWorkout = unfinishedWorkout(workout).let { session ->
@@ -140,7 +140,7 @@ internal fun activeWorkoutReference(workout: Workout): ActiveWorkoutUiState =
     )
 
 /** Snapshot coverage for numeric completion, partial reps, custom targets, and reset. */
-internal fun activeWorkoutRepReference(
+fun activeWorkoutRepReference(
     targetReps: Int = 5,
     recordedReps: List<Int?> = listOf(5, 4, 3, 2, 1),
 ): ActiveWorkoutUiState = activeWorkoutReference(Workout.A).let { state ->

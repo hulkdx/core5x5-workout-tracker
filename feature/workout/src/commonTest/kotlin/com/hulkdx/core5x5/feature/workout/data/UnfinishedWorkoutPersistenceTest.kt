@@ -26,7 +26,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** Shared contract exercised by a platform fixture with a real on-disk Room database. */
-internal abstract class UnfinishedWorkoutPersistenceTest {
+abstract class UnfinishedWorkoutPersistenceTest {
     abstract fun databasePath(name: String): String
     abstract fun openDatabase(name: String): WorkoutDatabase
     abstract fun deleteDatabase(name: String)

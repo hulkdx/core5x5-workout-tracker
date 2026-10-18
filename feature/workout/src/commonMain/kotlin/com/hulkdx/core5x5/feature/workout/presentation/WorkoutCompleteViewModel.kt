@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-internal class WorkoutCompleteViewModel(
+class WorkoutCompleteViewModel(
     private val workoutId: Long,
     private val repository: WorkoutRepository,
 ) : ViewModel() {

@@ -12,7 +12,7 @@ import androidx.compose.ui.tooling.preview.Preview
 )
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
-internal annotation class ReferenceScreen
+annotation class ReferenceScreen
 
 @Preview(
     name = "Home reference",
@@ -22,4 +22,4 @@ internal annotation class ReferenceScreen
 )
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
-internal annotation class HomeReferenceScreen
+annotation class HomeReferenceScreen

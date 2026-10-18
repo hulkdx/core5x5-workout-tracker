@@ -2,10 +2,8 @@ package com.hulkdx.core5x5.screenshottest
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
@@ -14,16 +12,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import com.hulkdx.core5x5.core.navigation.TopLevelTab
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
+import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
 import com.hulkdx.core5x5.core.ui.components.AppBottomNavigation
-import com.hulkdx.core5x5.core.ui.components.AppNavigationItem
+import com.hulkdx.core5x5.core.ui.components.TopLevelScreenLayout
 import com.hulkdx.core5x5.core.ui.theme.AppColors
-import com.hulkdx.core5x5.core.ui.theme.AppDimensions
-import com.hulkdx.core5x5.core.ui.theme.AppHistoryTokens
-import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens
 import com.hulkdx.core5x5.core.ui.theme.AppCompleteTokens
-import com.hulkdx.core5x5.core.ui.theme.AppSettingsTokens
+import com.hulkdx.core5x5.core.ui.theme.AppDimensions
+import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens
 import com.hulkdx.core5x5.core.ui.theme.AppTheme
 import com.hulkdx.core5x5.feature.history.presentation.HistoryError
 import com.hulkdx.core5x5.feature.history.presentation.HistoryScreen
@@ -35,19 +33,16 @@ import com.hulkdx.core5x5.feature.settings.presentation.SettingsUiState
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.presentation.ActiveWorkoutScreen
 import com.hulkdx.core5x5.feature.workout.presentation.ActiveWorkoutUiState
+import com.hulkdx.core5x5.feature.workout.presentation.CustomRestContent
 import com.hulkdx.core5x5.feature.workout.presentation.ExerciseEditScreen
 import com.hulkdx.core5x5.feature.workout.presentation.ExerciseEditUiState
-import com.hulkdx.core5x5.feature.workout.presentation.CustomRestContent
-import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.feature.workout.presentation.RestTimerScreen
 import com.hulkdx.core5x5.feature.workout.presentation.RestTimerUiState
 import com.hulkdx.core5x5.feature.workout.presentation.TodayScreen
 import com.hulkdx.core5x5.feature.workout.presentation.TodayUiState
+import com.hulkdx.core5x5.feature.workout.presentation.WorkoutCompleteError
 import com.hulkdx.core5x5.feature.workout.presentation.WorkoutCompleteScreen
 import com.hulkdx.core5x5.feature.workout.presentation.WorkoutCompleteUiState
-import com.hulkdx.core5x5.feature.workout.presentation.WorkoutCompleteError
-import com.hulkdx.core5x5.shell.ShellScreen
-import com.hulkdx.core5x5.shell.ShellUiState
 
 class ScreenScreenshotTest {
     @PreviewTest
@@ -348,7 +343,7 @@ class ScreenScreenshotTest {
             contentAlignment = Alignment.BottomCenter,
         ) {
             AppBottomNavigation(
-                selectedItem = AppNavigationItem.SETTINGS,
+                selectedItem = TopLevelTab.SETTINGS,
                 onItemSelected = {},
                 modifier = Modifier.width(320.dp),
             )
@@ -392,14 +387,13 @@ class ScreenScreenshotTest {
 
 @Composable
 private fun HistorySnapshot(state: HistoryUiState, weightUnit: WeightUnit = WeightUnit.KG) = ScreenFrame(
-    navigationItem = AppNavigationItem.HISTORY,
-    showTitle = false,
+    navigationItem = TopLevelTab.HISTORY,
 ) {
     HistoryScreen(uiState = state, onRetryLoad = {}, weightUnit = weightUnit)
 }
 
 @Composable
-private fun TodaySnapshot(state: TodayUiState) = ScreenFrame(navigationItem = AppNavigationItem.TODAY, showTitle = false) {
+private fun TodaySnapshot(state: TodayUiState) = ScreenFrame(navigationItem = TopLevelTab.TODAY) {
     TodayScreen(uiState = state, onStartWorkout = {}, onResumeWorkout = {}, onRetryLoad = {})
 }
 
@@ -431,8 +425,7 @@ private fun WorkoutCompleteSnapshot(state: WorkoutCompleteUiState) = AppTheme {
 
 @Composable
 private fun SettingsSnapshot(state: SettingsUiState) = ScreenFrame(
-    navigationItem = AppNavigationItem.SETTINGS,
-    showTitle = false,
+    navigationItem = TopLevelTab.SETTINGS,
 ) {
     SettingsScreen(
         uiState = state,
@@ -452,47 +445,22 @@ private fun SettingsSnapshot(state: SettingsUiState) = ScreenFrame(
 
 @Composable
 private fun ScreenFrame(
-    navigationItem: AppNavigationItem? = null,
-    title: String = "Core5x5",
-    showTitle: Boolean = true,
+    navigationItem: TopLevelTab? = null,
     content: @Composable () -> Unit,
 ) {
-    val isToday = navigationItem == AppNavigationItem.TODAY
-    val isHistory = navigationItem == AppNavigationItem.HISTORY
-    val isSettings = navigationItem == AppNavigationItem.SETTINGS
-    val useRevisedNavigation = isToday || isHistory || isSettings
-    val background = when {
-        isToday -> AppHomeTokens.Background
-        isHistory -> AppHistoryTokens.Background
-        isSettings -> AppSettingsTokens.Background
-        else -> AppColors.Background
-    }
-    val navigationBackground = when {
-        useRevisedNavigation -> AppHomeTokens.Card
-        else -> AppColors.Elevated
-    }
     AppTheme {
-        Column(modifier = Modifier.fillMaxSize().background(background)) {
+        if (navigationItem != null) {
+            TopLevelScreenLayout(
+                selectedTab = navigationItem,
+                onTabSelected = {},
+                windowInsets = WindowInsets(top = AppHomeTokens.SystemTopReserve, bottom = AppHomeTokens.SystemBottomReserve),
+                content = content,
+            )
+        } else {
             Box(
-                modifier = Modifier.fillMaxWidth().weight(1f).windowInsetsPadding(
-                    WindowInsets(top = if (useRevisedNavigation) AppHomeTokens.SystemTopReserve else AppDimensions.ReferenceSystemTopReserve),
-                ),
-            ) {
-                if (navigationItem != null) {
-                    ShellScreen(uiState = ShellUiState(title = title), showTitle = showTitle, backgroundColor = background, content = content)
-                } else {
-                    content()
-                }
-            }
-            if (navigationItem != null) {
-                Box(
-                    modifier = Modifier.fillMaxWidth()
-                        .background(navigationBackground)
-                        .windowInsetsPadding(WindowInsets(bottom = if (useRevisedNavigation) AppHomeTokens.SystemBottomReserve else 0.dp)),
-                ) {
-                    AppBottomNavigation(selectedItem = navigationItem, onItemSelected = {}, useHomeDesign = useRevisedNavigation)
-                }
-            }
+                Modifier.fillMaxSize().background(AppColors.Background)
+                    .windowInsetsPadding(WindowInsets(top = AppDimensions.ReferenceSystemTopReserve)),
+            ) { content() }
         }
     }
 }

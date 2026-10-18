@@ -3,7 +3,7 @@ package com.hulkdx.core5x5.feature.workout.presentation
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.feature.workout.domain.ExerciseEdit
 
-internal data class ExerciseEditUiState(
+data class ExerciseEditUiState(
     val position: Int,
     val originalName: String,
     val name: String,

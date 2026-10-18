@@ -36,7 +36,7 @@ import com.hulkdx.core5x5.core.ui.components.AppSecondaryButton
 import com.hulkdx.core5x5.core.ui.theme.AppHistoryTokens as History
 
 @Composable
-internal fun HistoryWeightGraph(
+fun HistoryWeightGraph(
     workouts: List<CompletedWorkoutRecord>,
     selectedExercise: CompletedExerciseType,
     weightUnit: WeightUnit,

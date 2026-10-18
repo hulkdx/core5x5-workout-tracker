@@ -13,7 +13,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
-internal class PersistedTrainingPreferencesRepository(
+class PersistedTrainingPreferencesRepository(
     private val storage: PreferencesStorage,
 ) : TrainingPreferencesRepository {
     private val mutex = Mutex()

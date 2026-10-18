@@ -29,6 +29,11 @@ kotlin {
             enable = true
         }
         withHostTest {}
+        withDeviceTestBuilder {
+            sourceSetTreeName = "test"
+        }.configure {
+            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        }
     }
 
     sourceSets {
@@ -38,6 +43,8 @@ kotlin {
             }
         }
         commonMain.dependencies {
+            implementation(project(":core:navigation"))
+            implementation(libs.kotlinx.serialization.core)
             implementation(project(":core:preferences"))
             implementation(project(":core:ui"))
             implementation(project(":feature:workout"))
@@ -60,8 +67,17 @@ kotlin {
             implementation(libs.koin.compose.viewmodel)
         }
         commonTest.dependencies {
+            implementation(libs.androidx.savedstate.compose)
+            implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
+        }
+        getByName("androidDeviceTest").dependencies {
+            implementation(libs.androidx.testExt.junit)
+            implementation(libs.androidx.test.runner)
+            implementation(libs.compose.uiTestJunit4)
+            implementation(libs.compose.uiTestManifest)
+            implementation(libs.androidx.activity.compose)
         }
     }
 }

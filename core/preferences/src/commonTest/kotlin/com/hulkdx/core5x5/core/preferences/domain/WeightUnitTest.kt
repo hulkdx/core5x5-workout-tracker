@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-internal class WeightUnitTest {
+class WeightUnitTest {
     @Test
     fun internationalPoundsConvertInBothDirectionsWithoutDisplayRounding() {
         assertEquals(0.45359237, WeightUnit.LB.toKilograms(1.0))

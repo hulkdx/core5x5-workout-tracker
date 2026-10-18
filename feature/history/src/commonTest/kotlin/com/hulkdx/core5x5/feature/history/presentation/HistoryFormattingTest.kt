@@ -8,7 +8,7 @@ import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-internal class HistoryFormattingTest {
+class HistoryFormattingTest {
     @Test
     fun recordedRepsDoNotInventUnavailableOrUnrecordedValues() {
         val exercise = CompletedWorkoutExercise(

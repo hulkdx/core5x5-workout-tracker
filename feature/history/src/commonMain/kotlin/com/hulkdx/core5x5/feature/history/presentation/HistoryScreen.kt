@@ -31,19 +31,21 @@ import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutType
 import com.hulkdx.core5x5.core.ui.components.AppButtonPalette
 import com.hulkdx.core5x5.core.ui.components.AppHistoryCard
 import com.hulkdx.core5x5.core.ui.components.AppSecondaryButton
+import com.hulkdx.core5x5.core.ui.components.WeightUnitError
 import com.hulkdx.core5x5.core.ui.theme.AppDimensions
 import com.hulkdx.core5x5.core.ui.theme.AppHistoryTokens as History
 import com.hulkdx.core5x5.core.ui.theme.AppTheme
 import com.hulkdx.core5x5.core.ui.theme.AppTypography
 
-/** AppNavigation owns safe insets and bottom navigation; this screen owns its content layout. */
+/** The route's TopLevelScreenLayout owns safe insets and bottom navigation. */
 @Composable
-internal fun HistoryScreen(
+fun HistoryScreen(
     uiState: HistoryUiState,
     onRetryLoad: () -> Unit,
     modifier: Modifier = Modifier,
-    weightUnit: WeightUnit = WeightUnit.KG,
+    weightUnit: WeightUnit = uiState.weightUnit,
     onExerciseSelected: (CompletedExerciseType) -> Unit = {},
+    onRetryPreferences: () -> Unit = {},
 ) {
     val months = remember(uiState.completedWorkouts) { uiState.completedWorkouts.historyMonths() }
     Surface(modifier = modifier.fillMaxSize(), color = History.Background) {
@@ -57,6 +59,9 @@ internal fun HistoryScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(History.CardGap),
         ) {
+            if (uiState.hasPreferencesError) {
+                item(key = "preferences-error") { WeightUnitError(weightUnit, onRetryPreferences) }
+            }
             item(key = "title", contentType = "title") {
                 Text(
                     text = "History",

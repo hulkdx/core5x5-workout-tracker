@@ -33,7 +33,7 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class SettingsViewModelTest {
+class SettingsViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val repository = FakePreferencesRepository()
     private val metadata = AppMetadata { "2.7.1" }

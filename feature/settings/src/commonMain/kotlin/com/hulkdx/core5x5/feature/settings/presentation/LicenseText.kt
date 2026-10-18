@@ -1,7 +1,7 @@
 package com.hulkdx.core5x5.feature.settings.presentation
 
 // Mirrors the application's LICENSE, available offline from About.
-internal val MIT_LICENSE = """
+val MIT_LICENSE = """
     MIT License
 
     Copyright (c) 2026 Saba Jafarzadeh

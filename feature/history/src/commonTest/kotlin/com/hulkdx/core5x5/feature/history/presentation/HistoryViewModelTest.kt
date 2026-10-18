@@ -2,6 +2,8 @@ package com.hulkdx.core5x5.feature.history.presentation
 
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
+import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutExercise
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutRecord
@@ -9,6 +11,14 @@ import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSet
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSource
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutType
 import com.hulkdx.core5x5.feature.history.di.historyModule
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -21,19 +31,12 @@ import org.koin.core.annotation.KoinInternalApi
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import org.koin.viewmodel.resolveViewModel
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class HistoryViewModelTest {
+class HistoryViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val source = FakeCompletedWorkoutSource()
+    private val preferences = FakeTrainingPreferencesRepository()
     private val stores = mutableListOf<ViewModelStore>()
 
     @BeforeTest
@@ -192,7 +195,10 @@ internal class HistoryViewModelTest {
     @Test
     fun featureGraphScopesHistoryViewModelsToTheirDestinationOwners() = runTest(dispatcher) {
         val application = koinApplication {
-            modules(historyModule, module { single<CompletedWorkoutSource> { source } })
+            modules(historyModule, module {
+                single<CompletedWorkoutSource> { source }
+                single<TrainingPreferencesRepository> { preferences }
+            })
         }
         try {
             val firstStore = newStore()
@@ -214,11 +220,56 @@ internal class HistoryViewModelTest {
         }
     }
 
+    @Test
+    fun historyAndDetailOwnTheirUnitsAndRefreshWithoutRestartingObservation() = runTest(dispatcher) {
+        val history = createHistoryViewModel()
+        val detail = createDetailViewModel(42)
+        dispatcher.scheduler.runCurrent()
+        preferences.setWeightUnit(WeightUnit.LB)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(WeightUnit.LB, history.uiState.value.weightUnit)
+        assertEquals(WeightUnit.LB, detail.uiState.value.weightUnit)
+
+        history.loadHistory()
+        detail.loadWorkout()
+        history.retryPreferences()
+        detail.retryPreferences()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(2, preferences.observations)
+        assertEquals(2, preferences.values.subscriptionCount.value)
+        stores.forEach { it.clear() }
+        dispatcher.scheduler.runCurrent()
+        assertEquals(0, preferences.values.subscriptionCount.value)
+    }
+
+    @Test
+    fun historyAndDetailExposePreferenceErrorsAndRetryWithoutReloadingSavedSessions() = runTest(dispatcher) {
+        preferences.loadError = IllegalStateException("cannot read preferences")
+        val history = createHistoryViewModel()
+        val detail = createDetailViewModel(42)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(history.uiState.value.hasPreferencesError)
+        assertTrue(detail.uiState.value.hasPreferencesError)
+        assertEquals(WeightUnit.KG, history.uiState.value.weightUnit)
+        assertEquals(WeightUnit.KG, detail.uiState.value.weightUnit)
+
+        preferences.loadError = null
+        preferences.setWeightUnit(WeightUnit.LB)
+        history.retryPreferences()
+        detail.retryPreferences()
+        dispatcher.scheduler.runCurrent()
+        assertFalse(history.uiState.value.hasPreferencesError)
+        assertFalse(detail.uiState.value.hasPreferencesError)
+        assertEquals(WeightUnit.LB, history.uiState.value.weightUnit)
+        assertEquals(WeightUnit.LB, detail.uiState.value.weightUnit)
+        assertEquals(4, preferences.observations)
+    }
+
     private fun createHistoryViewModel(): HistoryViewModel =
-        HistoryViewModel(source).also { newStore().put("history", it) }
+        HistoryViewModel(source, preferences).also { newStore().put("history", it) }
 
     private fun createDetailViewModel(workoutId: Long): WorkoutDetailViewModel =
-        WorkoutDetailViewModel(source, workoutId).also { newStore().put("detail:$workoutId", it) }
+        WorkoutDetailViewModel(source, workoutId, preferences).also { newStore().put("detail:$workoutId", it) }
 
     private fun newStore(): ViewModelStore = ViewModelStore().also(stores::add)
 

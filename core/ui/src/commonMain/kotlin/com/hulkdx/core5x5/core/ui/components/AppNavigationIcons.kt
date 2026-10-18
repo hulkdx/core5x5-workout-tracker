@@ -8,20 +8,21 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.unit.dp
+import com.hulkdx.core5x5.core.navigation.TopLevelTab
 
-internal val AppNavigationItem.icon: ImageVector
+val TopLevelTab.icon: ImageVector
     get() = when (this) {
-        AppNavigationItem.TODAY -> HomeIcon
-        AppNavigationItem.HISTORY -> HistoryIcon
-        AppNavigationItem.SETTINGS -> SettingsIcon
+        TopLevelTab.TODAY -> HomeIcon
+        TopLevelTab.HISTORY -> HistoryIcon
+        TopLevelTab.SETTINGS -> SettingsIcon
     }
 
 /** Native vectors matching the revised Home PNG; the original SVG family remains below. */
-internal val AppNavigationItem.homeIcon: ImageVector
+val TopLevelTab.homeIcon: ImageVector
     get() = when (this) {
-        AppNavigationItem.TODAY -> FilledHomeIcon
-        AppNavigationItem.HISTORY -> ClockHistoryIcon
-        AppNavigationItem.SETTINGS -> FilledSettingsIcon
+        TopLevelTab.TODAY -> FilledHomeIcon
+        TopLevelTab.HISTORY -> ClockHistoryIcon
+        TopLevelTab.SETTINGS -> FilledSettingsIcon
     }
 
 private val FilledHomeIcon = ImageVector.Builder(

@@ -14,6 +14,6 @@ Each feature is a Compose Multiplatform library targeting Android, `iosArm64`, a
 
 When implementing a feature, add code under `<feature>/src/commonMain/kotlin/com/hulkdx/core5x5/feature/<feature>/`, using `presentation`, `domain`, `data`, and `di` packages only where needed. Put its tests in that feature's `src/commonTest`.
 
-Keep implementation types `internal`. Expose only entry-point composables and a Koin module when they exist; `:shared` composes the application. Do not make one feature depend on another feature. Extract a narrowly named shared capability only when a real cross-feature dependency is required.
+Use public (Kotlin's default) or `private` visibility; never use the `internal` modifier. Keep file/class implementation details private where possible. `:shared` composes the application through feature entry points and Koin modules. Do not make one feature depend on another feature. Extract a narrowly named shared capability only when a real cross-feature dependency is required.
 
 See [the architecture guide](../../docs/ARCHITECTURE.md) for package dependency rules, UDF conventions, and lifecycle ownership.

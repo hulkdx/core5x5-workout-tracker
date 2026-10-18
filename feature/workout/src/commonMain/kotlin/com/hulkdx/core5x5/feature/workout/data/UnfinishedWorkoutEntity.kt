@@ -10,7 +10,7 @@ import com.hulkdx.core5x5.feature.workout.domain.Workout
     tableName = "unfinished_workout",
     indices = [Index(value = ["unfinishedSlot"], unique = true)],
 )
-internal data class UnfinishedWorkoutEntity(
+data class UnfinishedWorkoutEntity(
     val workout: Workout,
     val startedAtEpochMillis: Long,
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

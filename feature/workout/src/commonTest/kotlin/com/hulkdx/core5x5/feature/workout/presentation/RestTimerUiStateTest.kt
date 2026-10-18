@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-internal class RestTimerUiStateTest {
+class RestTimerUiStateTest {
     @Test
     fun runningTimeRoundsUpAndExpiryRemainsVisibleAtZero() {
         assertFalse(RestTimerState.Idle.toUiState().isVisible)

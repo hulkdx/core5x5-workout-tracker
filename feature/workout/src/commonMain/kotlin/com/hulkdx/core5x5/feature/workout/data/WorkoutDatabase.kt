@@ -18,18 +18,18 @@ import kotlinx.coroutines.IO
     exportSchema = true,
 )
 @ConstructedBy(WorkoutDatabaseConstructor::class)
-internal abstract class WorkoutDatabase : RoomDatabase() {
+abstract class WorkoutDatabase : RoomDatabase() {
     abstract fun unfinishedWorkoutDao(): UnfinishedWorkoutDao
 }
 
 @Suppress("KotlinNoActualForExpect")
-internal expect object WorkoutDatabaseConstructor : RoomDatabaseConstructor<WorkoutDatabase> {
+expect object WorkoutDatabaseConstructor : RoomDatabaseConstructor<WorkoutDatabase> {
     override fun initialize(): WorkoutDatabase
 }
 
-internal fun RoomDatabase.Builder<WorkoutDatabase>.buildWorkoutDatabase(): WorkoutDatabase =
+fun RoomDatabase.Builder<WorkoutDatabase>.buildWorkoutDatabase(): WorkoutDatabase =
     setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
 
-internal const val WORKOUT_DATABASE_NAME = "workout.db"
+const val WORKOUT_DATABASE_NAME = "workout.db"

@@ -1,9 +1,9 @@
 package com.hulkdx.core5x5.feature.workout.domain
 
 /** A rest deadline independent of countdown updates, presentation, and storage. */
-internal data class RestTimer(val deadlineEpochMillis: Long)
+data class RestTimer(val deadlineEpochMillis: Long)
 
-internal sealed interface RestTimerState {
+sealed interface RestTimerState {
     data object Idle : RestTimerState
 
     data class Running(val remainingMillis: Long) : RestTimerState
@@ -15,7 +15,7 @@ internal sealed interface RestTimerState {
  * Calculates rest transitions from immutable deadlines and an injected epoch-millisecond clock.
  * The caller owns the current timer and supplies durations; these rules do not schedule work.
  */
-internal class RestTimerRules(private val nowEpochMillis: () -> Long) {
+class RestTimerRules(private val nowEpochMillis: () -> Long) {
     /** Creates a fresh deadline; storing the result replaces any previous rest. */
     fun start(durationMillis: Long): RestTimer {
         require(durationMillis > 0L) { "Rest duration must be positive." }

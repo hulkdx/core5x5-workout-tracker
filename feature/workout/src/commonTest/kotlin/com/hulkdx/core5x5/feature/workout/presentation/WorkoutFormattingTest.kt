@@ -5,7 +5,7 @@ import com.hulkdx.core5x5.feature.workout.domain.Workout
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-internal class WorkoutFormattingTest {
+class WorkoutFormattingTest {
     @Test
     fun durationUsesWholeElapsedSecondsAndSupportsSessionsLongerThanAnHour() {
         assertEquals("00:00", 0L.formatWorkoutDuration())

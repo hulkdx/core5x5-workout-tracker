@@ -3,7 +3,7 @@ package com.hulkdx.core5x5.core.training.domain
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-internal class CompletedWorkoutRecordTest {
+class CompletedWorkoutRecordTest {
     @Test
     fun durationAndSetTotalsUseTheSavedSnapshot() {
         val record = CompletedWorkoutRecord(

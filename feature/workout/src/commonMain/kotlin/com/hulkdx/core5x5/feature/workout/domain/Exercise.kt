@@ -1,7 +1,7 @@
 package com.hulkdx.core5x5.feature.workout.domain
 
 /** The fixed program's prescriptions. Weight defaults are in kilograms. */
-internal enum class Exercise(
+enum class Exercise(
     val sets: Int,
     val reps: Int,
     val startingWeightKg: Double,

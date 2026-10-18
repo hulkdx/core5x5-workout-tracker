@@ -6,6 +6,6 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 import org.koin.dsl.onClose
 
-internal actual val workoutPlatformModule: Module = module {
+actual val workoutPlatformModule: Module = module {
     single { workoutDatabaseBuilder().buildWorkoutDatabase() } onClose { it?.close() }
 }

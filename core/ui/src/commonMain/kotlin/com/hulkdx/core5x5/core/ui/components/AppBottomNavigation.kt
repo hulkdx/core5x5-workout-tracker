@@ -25,29 +25,31 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.hulkdx.core5x5.core.navigation.TopLevelTab
 import com.hulkdx.core5x5.core.ui.theme.AppColors
 import com.hulkdx.core5x5.core.ui.theme.AppDimensions
 import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
 import com.hulkdx.core5x5.core.ui.theme.AppTypography
 
-enum class AppNavigationItem(val label: String) {
-    TODAY("Today"),
-    HISTORY("History"),
-    SETTINGS("Settings"),
-}
+private val TopLevelTab.label: String
+    get() = when (this) {
+        TopLevelTab.TODAY -> "Today"
+        TopLevelTab.HISTORY -> "History"
+        TopLevelTab.SETTINGS -> "Settings"
+    }
 
-/** The app shell owns system insets; this component owns only the design's internal padding. */
+/** TopLevelScreenLayout owns system insets; this component owns only internal padding. */
 @Composable
 fun AppBottomNavigation(
-    selectedItem: AppNavigationItem,
-    onItemSelected: (AppNavigationItem) -> Unit,
+    selectedItem: TopLevelTab,
+    onItemSelected: (TopLevelTab) -> Unit,
     modifier: Modifier = Modifier,
     useHomeDesign: Boolean = true,
 ) {
     val labelStyle = if (useHomeDesign) Home.Eyebrow else AppTypography.Caption
     val textMeasurer = rememberTextMeasurer()
     val labelWidth = with(LocalDensity.current) {
-        val widestLabel = AppNavigationItem.entries.maxOf { item ->
+        val widestLabel = TopLevelTab.entries.maxOf { item ->
             textMeasurer.measure(AnnotatedString(item.label), labelStyle, softWrap = false).size.width
         }
         // Leave one pixel for rounding when side padding divides the available space.
@@ -65,11 +67,11 @@ fun AppBottomNavigation(
     ) {
         val horizontalPadding = minOf(
             if (useHomeDesign) Home.NavigationPaddingHorizontal else AppDimensions.NavigationPaddingHorizontal,
-            ((maxWidth - preferredItemWidth * AppNavigationItem.entries.size) / 2).coerceAtLeast(0.dp),
+            ((maxWidth - preferredItemWidth * TopLevelTab.entries.size) / 2).coerceAtLeast(0.dp),
         )
         val itemWidth = minOf(
             preferredItemWidth,
-            (maxWidth - horizontalPadding * 2) / AppNavigationItem.entries.size,
+            (maxWidth - horizontalPadding * 2) / TopLevelTab.entries.size,
         )
         Row(
             modifier = Modifier.fillMaxWidth()
@@ -80,7 +82,7 @@ fun AppBottomNavigation(
                 .selectableGroup(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            AppNavigationItem.entries.forEach { item ->
+            TopLevelTab.entries.forEach { item ->
                 val selected = item == selectedItem
                 val color = if (useHomeDesign) {
                     if (selected) Home.Action else Home.Secondary

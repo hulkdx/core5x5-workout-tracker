@@ -1,8 +1,9 @@
 package com.hulkdx.core5x5.feature.workout.presentation
 
+import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 
-internal data class ActiveWorkoutUiState(
+data class ActiveWorkoutUiState(
     val isLoading: Boolean = true,
     val unfinishedWorkout: UnfinishedWorkout? = null,
     val hasLoadError: Boolean = false,
@@ -18,6 +19,8 @@ internal data class ActiveWorkoutUiState(
     val hasEditLoadError: Boolean = false,
     /** Navigation is requested only after the identified session is read back as completed. */
     val requestedCompletedWorkoutId: Long? = null,
+    val weightUnit: WeightUnit = WeightUnit.KG,
+    val hasPreferencesError: Boolean = false,
 ) {
     val canSwitchWorkout: Boolean
         get() = canModifyWorkout

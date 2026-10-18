@@ -7,7 +7,7 @@ import org.koin.dsl.module
 import platform.Foundation.NSBundle
 
 @OptIn(ExperimentalForeignApi::class)
-internal actual val settingsPlatformModule: Module = module {
+actual val settingsPlatformModule: Module = module {
     single<AppMetadata> {
         AppMetadata { NSBundle.mainBundle.objectForInfoDictionaryKey("CFBundleShortVersionString") as? String }
     }

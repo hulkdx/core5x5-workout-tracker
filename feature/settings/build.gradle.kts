@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
@@ -30,6 +31,8 @@ kotlin {
             }
         }
         commonMain.dependencies {
+            implementation(project(":core:navigation"))
+            implementation(libs.kotlinx.serialization.core)
             implementation(project(":core:preferences"))
             implementation(project(":core:ui"))
             implementation(libs.compose.runtime)

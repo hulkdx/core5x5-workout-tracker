@@ -32,6 +32,7 @@ import com.hulkdx.core5x5.core.ui.components.AppPrimaryButton
 import com.hulkdx.core5x5.core.ui.components.AppSecondaryButton
 import com.hulkdx.core5x5.core.ui.components.AppWorkoutCard
 import com.hulkdx.core5x5.core.ui.components.AppWorkoutTopBar
+import com.hulkdx.core5x5.core.ui.components.WeightUnitError
 import com.hulkdx.core5x5.core.ui.theme.AppColors
 import com.hulkdx.core5x5.core.ui.theme.AppDimensions
 import com.hulkdx.core5x5.core.ui.theme.AppTheme
@@ -39,13 +40,14 @@ import com.hulkdx.core5x5.core.ui.theme.AppTypography
 
 /** The detail layout is documented in design/specs/workout-detail.md. */
 @Composable
-internal fun WorkoutDetailScreen(
+fun WorkoutDetailScreen(
     uiState: WorkoutDetailUiState,
     onBack: () -> Unit,
     onRetryLoad: () -> Unit,
-    weightUnit: WeightUnit = WeightUnit.KG,
+    weightUnit: WeightUnit = uiState.weightUnit,
     modifier: Modifier = Modifier,
     windowInsets: WindowInsets = WindowInsets.safeDrawing,
+    onRetryPreferences: () -> Unit = {},
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = AppColors.Background) {
         Column(
@@ -61,6 +63,7 @@ internal fun WorkoutDetailScreen(
                 ),
             verticalArrangement = Arrangement.spacedBy(AppDimensions.ContentGap),
         ) {
+            if (uiState.hasPreferencesError) WeightUnitError(weightUnit, onRetryPreferences)
             AppWorkoutTopBar(
                 title = uiState.completedWorkout?.displayName() ?: "Workout details",
                 onBack = onBack,

@@ -25,6 +25,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":core:navigation"))
+            implementation(project(":core:preferences"))
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)

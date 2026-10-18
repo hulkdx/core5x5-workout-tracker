@@ -24,7 +24,7 @@ import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ExerciseEditScreen(
+fun ExerciseEditScreen(
     state: ExerciseEditUiState,
     onDismiss: () -> Unit,
     onSave: () -> Unit,
@@ -142,7 +142,7 @@ internal fun ExerciseEditScreen(
 }
 
 @Composable
-internal fun CustomRestContent(seconds: Long, onChanged: (Long) -> Unit, onCancel: () -> Unit, onApply: () -> Unit) {
+fun CustomRestContent(seconds: Long, onChanged: (Long) -> Unit, onCancel: () -> Unit, onApply: () -> Unit) {
     var minutesScrolling by remember { mutableStateOf(false) }
     var secondsScrolling by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = Edit.Inset, vertical = 12.dp),
@@ -175,7 +175,7 @@ internal fun CustomRestContent(seconds: Long, onChanged: (Long) -> Unit, onCance
     }
 }
 
-internal fun restDurationLabel(seconds: Long): String = "${seconds / 60} min ${seconds % 60} sec"
+fun restDurationLabel(seconds: Long): String = "${seconds / 60} min ${seconds % 60} sec"
 
 @Composable
 private fun EditError(message: String) {

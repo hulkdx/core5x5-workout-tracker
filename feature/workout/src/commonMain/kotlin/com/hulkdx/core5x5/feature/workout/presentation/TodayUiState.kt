@@ -1,10 +1,11 @@
 package com.hulkdx.core5x5.feature.workout.presentation
 
+import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkout
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
 
-internal data class TodayUiState(
+data class TodayUiState(
     val isLoading: Boolean = true,
     val nextWorkout: Workout? = null,
     val nextWorkoutPrescription: WorkoutPrescription? = null,
@@ -13,6 +14,8 @@ internal data class TodayUiState(
     val error: TodayError? = null,
     /** Set only by an explicit start/resume request; loading does not request navigation. */
     val requestedWorkout: UnfinishedWorkout? = null,
+    val weightUnit: WeightUnit = WeightUnit.KG,
+    val hasPreferencesError: Boolean = false,
 ) {
     val canStart: Boolean
         get() = !isLoading && !isWorking && nextWorkout != null && requestedWorkout == null
@@ -21,4 +24,4 @@ internal data class TodayUiState(
         get() = !isLoading && !isWorking && unfinishedWorkout != null && requestedWorkout == null
 }
 
-internal enum class TodayError { LOAD, START, SWITCH }
+enum class TodayError { LOAD, START, SWITCH }

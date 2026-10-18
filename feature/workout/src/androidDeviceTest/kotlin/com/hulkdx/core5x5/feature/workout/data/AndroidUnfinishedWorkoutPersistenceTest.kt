@@ -6,7 +6,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class AndroidUnfinishedWorkoutPersistenceTest : UnfinishedWorkoutPersistenceTest() {
+class AndroidUnfinishedWorkoutPersistenceTest : UnfinishedWorkoutPersistenceTest() {
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
 
     override fun databasePath(name: String): String {

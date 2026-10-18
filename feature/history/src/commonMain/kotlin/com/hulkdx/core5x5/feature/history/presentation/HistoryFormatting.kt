@@ -5,7 +5,7 @@ import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutExercise
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutRecord
 import kotlin.math.max
 
-internal fun CompletedExerciseType.displayName(): String = when (this) {
+fun CompletedExerciseType.displayName(): String = when (this) {
     CompletedExerciseType.SQUAT -> "Squat"
     CompletedExerciseType.BENCH_PRESS -> "Bench Press"
     CompletedExerciseType.BARBELL_ROW -> "Barbell Row"
@@ -13,36 +13,36 @@ internal fun CompletedExerciseType.displayName(): String = when (this) {
     CompletedExerciseType.DEADLIFT -> "Deadlift"
 }
 
-internal fun CompletedWorkoutRecord.displayName(): String = "Workout ${workout.name}"
+fun CompletedWorkoutRecord.displayName(): String = "Workout ${workout.name}"
 
-internal fun CompletedWorkoutExercise.recordedRepsLabel(): String =
+fun CompletedWorkoutExercise.recordedRepsLabel(): String =
     "Reps: " + setStates.joinToString(" / ") { set ->
         if (!set.isCompleted) "–" else set.completedReps?.toString() ?: "?"
     }
 
-internal fun CompletedWorkoutRecord.dateLabel(): String = completedAtEpochMillis.toHistoryDate()
+fun CompletedWorkoutRecord.dateLabel(): String = completedAtEpochMillis.toHistoryDate()
 
-internal fun CompletedWorkoutRecord.detailDateLabel(): String = completedAtEpochMillis.toHistoryDetailDate()
+fun CompletedWorkoutRecord.detailDateLabel(): String = completedAtEpochMillis.toHistoryDetailDate()
 
-internal fun CompletedWorkoutRecord.monthLabel(): String {
+fun CompletedWorkoutRecord.monthLabel(): String {
     val date = completedAtEpochMillis.toCivilDate()
     return "${MONTH_NAMES[date.month - 1].uppercase()} ${date.year}"
 }
 
-internal fun CompletedWorkoutRecord.dayLabel(): String = completedAtEpochMillis.toCivilDate().day.toString()
+fun CompletedWorkoutRecord.dayLabel(): String = completedAtEpochMillis.toCivilDate().day.toString()
 
-internal fun CompletedWorkoutRecord.weekdayLabel(): String {
+fun CompletedWorkoutRecord.weekdayLabel(): String {
     val days = completedAtEpochMillis.floorDiv(MILLIS_PER_DAY)
     val index = ((days % 7L + 7L + 3L) % 7L).toInt()
     return WEEKDAYS[index]
 }
 
 /** Preserve the completed source's timestamp/ID ordering, including ties. */
-internal fun List<CompletedWorkoutRecord>.historyMonths(): Map<String, List<CompletedWorkoutRecord>> =
+fun List<CompletedWorkoutRecord>.historyMonths(): Map<String, List<CompletedWorkoutRecord>> =
     groupBy { it.monthLabel() }
 
 /** Counts the saved prescription; partial completion remains visible in Detail. */
-internal fun CompletedWorkoutRecord.sessionSummary(): String {
+fun CompletedWorkoutRecord.sessionSummary(): String {
     val exerciseCount = exercises.size
     val setCount = prescribedSets
     val exerciseLabel = if (exerciseCount == 1) "exercise" else "exercises"
@@ -50,7 +50,7 @@ internal fun CompletedWorkoutRecord.sessionSummary(): String {
     return "$exerciseCount $exerciseLabel  ·  $setCount $setLabel"
 }
 
-internal fun CompletedWorkoutRecord.durationLabel(): String {
+fun CompletedWorkoutRecord.durationLabel(): String {
     val totalMinutes = durationMillis / 60_000L
     return if (totalMinutes < 60L) {
         "$totalMinutes min"
@@ -59,7 +59,7 @@ internal fun CompletedWorkoutRecord.durationLabel(): String {
     }
 }
 
-internal fun CompletedWorkoutRecord.durationClockLabel(): String {
+fun CompletedWorkoutRecord.durationClockLabel(): String {
     val totalSeconds = max(0L, durationMillis / 1_000L)
     val hours = totalSeconds / 3_600L
     val minutes = (totalSeconds % 3_600L) / 60L
@@ -78,7 +78,7 @@ private fun Long.toHistoryDate(): String {
     return "${MONTHS[date.month - 1]} ${date.day}"
 }
 
-internal fun Long.toHistoryDetailDate(): String {
+fun Long.toHistoryDetailDate(): String {
     val date = toCivilDate()
     return "${MONTH_NAMES[date.month - 1]} ${date.day}, ${date.year}"
 }
