@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -30,7 +31,10 @@ class CoreNavigatorTest {
         assertTrue(state.isAtTopLevel)
         assertFalse(state.canGoBack)
         assertEquals(listOf(Home), state.visibleTopLevelKeys)
-        assertEquals(roots.values.associateWith { listOf(it) }, state.backStacks)
+        assertEquals(roots.values.toSet(), state.backStacks.keys)
+        roots.values.forEach { root ->
+            assertContentEquals(listOf(root), state.backStacks.getValue(root))
+        }
     }
 
     @Test
@@ -39,14 +43,14 @@ class CoreNavigatorTest {
         val item = Item(Long.MAX_VALUE)
 
         navigator.navigate(item)
-        assertEquals(listOf(Home, item), navigator.state.backStacks.getValue(Home))
+        assertContentEquals(listOf(Home, item), navigator.state.backStacks.getValue(Home))
         assertTrue(navigator.state.canGoBack)
 
         navigator.goBack()
         assertEquals(Home, navigator.state.currentKey)
         assertFalse(navigator.state.canGoBack)
         navigator.goBack()
-        assertEquals(listOf(Home), navigator.state.backStacks.getValue(Home))
+        assertContentEquals(listOf(Home), navigator.state.backStacks.getValue(Home))
     }
 
     @Test
@@ -56,7 +60,7 @@ class CoreNavigatorTest {
         navigator.navigate(item)
         navigator.replaceIfTop(item, Result(42))
 
-        assertEquals(listOf(Home, Result(42)), navigator.state.backStacks.getValue(Home))
+        assertContentEquals(listOf(Home, Result(42)), navigator.state.backStacks.getValue(Home))
         navigator.goBack()
         assertEquals(Home, navigator.state.currentKey)
     }
@@ -95,14 +99,14 @@ class CoreNavigatorTest {
         val navigator = navigator()
         navigator.navigate(Item(42))
         navigator.navigate(Item(42))
-        assertEquals(listOf(Home, Item(42)), navigator.state.backStacks.getValue(Home))
+        assertContentEquals(listOf(Home, Item(42)), navigator.state.backStacks.getValue(Home))
 
         navigator.navigate(Item(43))
         navigator.navigate(Item(42))
-        assertEquals(listOf(Home, Item(42)), navigator.state.backStacks.getValue(Home))
+        assertContentEquals(listOf(Home, Item(42)), navigator.state.backStacks.getValue(Home))
         navigator.navigate(Item(43))
         navigator.replaceIfTop(Item(43), Item(42))
-        assertEquals(listOf(Home, Item(42)), navigator.state.backStacks.getValue(Home))
+        assertContentEquals(listOf(Home, Item(42)), navigator.state.backStacks.getValue(Home))
     }
 
     @Test
@@ -112,7 +116,7 @@ class CoreNavigatorTest {
         navigator.selectTab(TopLevelTab.SETTINGS)
         navigator.selectTab(TopLevelTab.SETTINGS)
         assertEquals(listOf(Home, Preferences), navigator.state.visibleTopLevelKeys)
-        assertEquals(listOf(Preferences), navigator.state.backStacks.getValue(Preferences))
+        assertContentEquals(listOf(Preferences), navigator.state.backStacks.getValue(Preferences))
 
         navigator.selectTab(TopLevelTab.HISTORY)
         navigator.selectTab(TopLevelTab.HISTORY)
@@ -144,13 +148,13 @@ class CoreNavigatorTest {
         delayedRequest()
 
         assertEquals(Library, navigator.state.currentKey)
-        assertEquals(listOf(Home), navigator.state.backStacks.getValue(Home))
-        assertEquals(listOf(Library), navigator.state.backStacks.getValue(Library))
+        assertContentEquals(listOf(Home), navigator.state.backStacks.getValue(Home))
+        assertContentEquals(listOf(Library), navigator.state.backStacks.getValue(Library))
         navigator.selectTab(TopLevelTab.TODAY)
         delayedRequest()
         assertEquals(Item(Long.MAX_VALUE), navigator.state.currentKey)
         delayedRequest()
-        assertEquals(listOf(Home, Item(Long.MAX_VALUE)), navigator.state.backStacks.getValue(Home))
+        assertContentEquals(listOf(Home, Item(Long.MAX_VALUE)), navigator.state.backStacks.getValue(Home))
     }
 
     @Test
@@ -172,17 +176,17 @@ class CoreNavigatorTest {
 
         navigator.navigate(Library)
         assertEquals(Library, navigator.state.currentKey)
-        assertEquals(listOf(Home, Item(1)), navigator.state.backStacks.getValue(Home))
+        assertContentEquals(listOf(Home, Item(1)), navigator.state.backStacks.getValue(Home))
         navigator.navigate(Item(2))
         navigator.navigate(Home)
         assertEquals(Home, navigator.state.currentKey)
-        assertEquals(listOf(Home), navigator.state.backStacks.getValue(Home))
-        assertEquals(listOf(Library, Item(2)), navigator.state.backStacks.getValue(Library))
+        assertContentEquals(listOf(Home), navigator.state.backStacks.getValue(Home))
+        assertContentEquals(listOf(Library, Item(2)), navigator.state.backStacks.getValue(Library))
 
         navigator.selectTab(TopLevelTab.HISTORY)
         assertEquals(Item(2), navigator.state.currentKey)
         navigator.navigate(Library)
-        assertEquals(listOf(Library), navigator.state.backStacks.getValue(Library))
+        assertContentEquals(listOf(Library), navigator.state.backStacks.getValue(Library))
         navigator.goBack()
         assertEquals(Home, navigator.state.currentKey)
     }
@@ -198,7 +202,7 @@ class CoreNavigatorTest {
                 navigator.navigate(destination)
 
                 assertEquals(destination, navigator.state.currentKey)
-                assertEquals(listOf(destination), navigator.state.backStacks.getValue(destination))
+                assertContentEquals(listOf(destination), navigator.state.backStacks.getValue(destination))
                 navigator.state.backStacks.forEach { (root, stack) ->
                     assertEquals(root, stack.first())
                     assertTrue(stack.drop(1).none { it in roots.values })
@@ -250,8 +254,8 @@ class CoreNavigatorTest {
         navigator.selectTab(TopLevelTab.SETTINGS)
         navigator.selectTab(TopLevelTab.HISTORY)
         assertEquals(Item(Long.MAX_VALUE), state.currentKey)
-        assertEquals(listOf(Home), state.backStacks.getValue(Home))
-        assertEquals(listOf(Preferences), state.backStacks.getValue(Preferences))
+        assertContentEquals(listOf(Home), state.backStacks.getValue(Home))
+        assertContentEquals(listOf(Preferences), state.backStacks.getValue(Preferences))
     }
 
     private fun navigator() = CoreNavigator(navigationState())
