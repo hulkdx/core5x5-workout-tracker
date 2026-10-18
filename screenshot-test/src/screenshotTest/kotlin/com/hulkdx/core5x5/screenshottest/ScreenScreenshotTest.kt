@@ -154,6 +154,20 @@ class ScreenScreenshotTest {
     @PreviewTest
     @HomeReferenceScreen
     @Composable
+    fun ActiveWorkoutScrollableSets() = ActiveWorkoutSnapshot(
+        activeWorkoutRepReference(recordedReps = List(12) { if (it < 7) 5 else null }),
+    )
+
+    @PreviewTest
+    @Preview(name = "Scrollable sets, narrow large text", widthDp = 320, heightDp = 640, fontScale = 2f)
+    @Composable
+    fun ActiveWorkoutScrollableSetsNarrow() = ActiveWorkoutSnapshot(
+        activeWorkoutRepReference(recordedReps = List(12) { if (it < 7) 5 else null }),
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
     fun ActiveWorkoutReset() = ActiveWorkoutSnapshot(
         activeWorkoutRepReference(recordedReps = listOf(null, 4, 3, 2, 1)),
     )
@@ -430,12 +444,9 @@ private fun SettingsSnapshot(state: SettingsUiState) = ScreenFrame(
     SettingsScreen(
         uiState = state,
         onOpenUnits = {},
-        onOpenRestDuration = {},
         onOpenAbout = {},
         onOpenLicense = {},
         onSelectUnit = {},
-        onRestDurationInput = {},
-        onSaveRestDuration = {},
         onDismissDialog = {},
         onRetryLoad = {},
         onOpenRepository = {},
@@ -468,8 +479,8 @@ private fun ScreenFrame(
 @Composable
 private fun ExerciseEditSnapshot() = AppTheme {
     ExerciseEditScreen(
-        state = ExerciseEditUiState(0, "Squat", "Squat", 80.0, WeightUnit.KG, 5, 1, 5, null, 180_000),
-        onDismiss = {}, onSave = {}, onNameChanged = {}, onWeightChanged = {}, onSetsChanged = {},
+        state = ExerciseEditUiState(0, "Squat", 80.0, WeightUnit.KG, 5, 5, null, 180_000),
+        onDismiss = {}, onSave = {}, onWeightChanged = {}, onSetsChanged = {},
         onRepsChanged = {}, onRestSelected = {}, onOpenCustomRest = {}, onCustomRestChanged = {}, onApplyCustomRest = {},
         windowInsets = WindowInsets(top = AppHomeTokens.SystemTopReserve, bottom = AppHomeTokens.SystemBottomReserve),
     )

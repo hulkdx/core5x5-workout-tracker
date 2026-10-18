@@ -17,6 +17,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import com.hulkdx.core5x5.core.ui.theme.AppActiveTokens as Active
 import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens as Home
@@ -48,11 +49,11 @@ fun AppExpandedExerciseCard(
             } + Home.TextGap
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f).heightIn(min = headerHeight), verticalArrangement = Arrangement.spacedBy(Home.TextGap)) {
-                    Text(text = name, style = exerciseStyle, color = Home.Primary)
-                    Text(text = prescription, style = metadataStyle, color = Home.Secondary)
+                    Text(text = name, modifier = Modifier.testTag("exercise-name"), style = exerciseStyle, color = Home.Primary)
+                    Text(text = prescription, modifier = Modifier.testTag("exercise-prescription"), style = metadataStyle, color = Home.Secondary)
                 }
                 if (onEdit != null) TextButton(onClick = onEdit, enabled = editEnabled,
-                    modifier = Modifier.heightIn(min = com.hulkdx.core5x5.core.ui.theme.AppDimensions.TouchTargetMin)) {
+                    modifier = Modifier.testTag("edit-exercise").heightIn(min = com.hulkdx.core5x5.core.ui.theme.AppDimensions.TouchTargetMin)) {
                     Text("Edit", style = Home.SwitchLabel,
                         color = if (editEnabled || !dimEditWhenDisabled) Home.Action else Home.Secondary)
                 }

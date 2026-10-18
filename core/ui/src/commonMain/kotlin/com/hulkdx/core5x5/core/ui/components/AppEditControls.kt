@@ -20,9 +20,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -40,15 +42,15 @@ fun AppEditCard(modifier: Modifier = Modifier, compact: Boolean = false, content
 
 @Composable
 fun AppEditStepper(label: String, value: String, onDecrease: () -> Unit, onIncrease: () -> Unit,
-    enabled: Boolean, canDecrease: Boolean = true, canIncrease: Boolean = true) {
+    enabled: Boolean, canDecrease: Boolean = true, canIncrease: Boolean = true, id: String = label) {
     BoxWithConstraints {
         val stack = maxWidth < 300.dp || LocalDensity.current.fontScale > 1.3f
         val controls: @Composable () -> Unit = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                StepperButton("−", "Decrease $label", onDecrease, enabled && canDecrease)
-                Text(value, Modifier.widthIn(min = 52.dp).padding(horizontal = 8.dp), color = Home.Primary,
+                StepperButton("−", "Decrease $label", onDecrease, enabled && canDecrease, "edit:$id:decrease")
+                Text(value, Modifier.testTag("edit:$id:value").widthIn(min = 52.dp).padding(horizontal = 8.dp), color = Home.Primary,
                     style = Edit.Value, textAlign = TextAlign.Center)
-                StepperButton("+", "Increase $label", onIncrease, enabled && canIncrease)
+                StepperButton("+", "Increase $label", onIncrease, enabled && canIncrease, "edit:$id:increase")
             }
         }
         if (stack) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -62,8 +64,8 @@ fun AppEditStepper(label: String, value: String, onDecrease: () -> Unit, onIncre
 }
 
 @Composable
-private fun StepperButton(text: String, description: String, onClick: () -> Unit, enabled: Boolean) {
-    Box(Modifier.size(48.dp).clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+private fun StepperButton(text: String, description: String, onClick: () -> Unit, enabled: Boolean, tag: String) {
+    Box(Modifier.testTag(tag).size(48.dp).clickable(enabled = enabled, role = Role.Button, onClick = onClick)
         .semantics { contentDescription = description }, contentAlignment = Alignment.Center) {
         Surface(Modifier.size(34.dp), shape = CircleShape, color = Edit.Control) {
             Box(contentAlignment = Alignment.Center) {
@@ -81,7 +83,7 @@ fun AppRestChoices(selected: Int, enabled: Boolean, onSelect: (Int) -> Unit) {
             Surface(Modifier.weight(1f), shape = RoundedCornerShape(Home.ControlRadius), color = Home.Card,
                 border = BorderStroke(Home.BorderStroke, if (selected == index) Home.Action else Home.Border)) {
                 TextButton(onClick = { onSelect(index) }, enabled = enabled, contentPadding = PaddingValues(horizontal = 4.dp),
-                    modifier = Modifier.heightIn(min = 48.dp)) {
+                    modifier = Modifier.testTag("edit-rest:$index").semantics { this.selected = selected == index }.heightIn(min = 48.dp)) {
                     Text(label, style = Edit.Body, color = if (selected == index) Home.Action else Home.Secondary,
                         textAlign = TextAlign.Center)
                 }
@@ -113,12 +115,12 @@ fun AppDurationWheel(label: String, count: Int, selected: Int, onSelect: (Int) -
         Spacer(Modifier.height(8.dp))
         Box(contentAlignment = Alignment.Center) {
             Surface(Modifier.fillMaxWidth().height(itemHeight), shape = RoundedCornerShape(Home.CardRadius), color = Edit.Control) {}
-            LazyColumn(state = state, modifier = Modifier.fillMaxWidth().height(itemHeight * 5),
+            LazyColumn(state = state, modifier = Modifier.testTag("duration-wheel:$label").fillMaxWidth().height(itemHeight * 5),
                 contentPadding = PaddingValues(vertical = itemHeight * 2),
                 flingBehavior = rememberSnapFlingBehavior(state)) {
                 items(count) { value ->
                     val distance = kotlin.math.abs(value - selected)
-                    Box(Modifier.fillMaxWidth().height(itemHeight)
+                    Box(Modifier.testTag("duration-value:$label:$value").fillMaxWidth().height(itemHeight)
                         .clickable(role = Role.Button, onClick = { currentOnSelect(value) })
                         .semantics { contentDescription = "$value $label" }, contentAlignment = Alignment.Center) {
                         Text(if (padZero) value.toString().padStart(2, '0') else value.toString(),

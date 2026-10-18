@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,7 +49,7 @@ fun TodayScreen(
     weightUnit: WeightUnit = uiState.weightUnit,
     onRetryPreferences: () -> Unit = {},
 ) {
-    Surface(modifier = modifier.fillMaxSize(), color = Home.Background) {
+    Surface(modifier = modifier.fillMaxSize().testTag("today"), color = Home.Background) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
                 .padding(top = Home.TopGap, bottom = Home.BrandGap),
@@ -79,6 +80,7 @@ fun TodayScreen(
                         workout = active.workout,
                         exercises = active.exercises.map { ExercisePrescription(it.exercise, it.sets, it.reps, it.weightKg) },
                         buttonLabel = "Resume Workout",
+                        actionTag = "resume-workout",
                         buttonEnabled = uiState.canResume,
                         error = uiState.error,
                         onAction = onResumeWorkout,
@@ -88,6 +90,7 @@ fun TodayScreen(
                         eyebrow = "NEXT WORKOUT",
                         workout = next,
                         exercises = uiState.nextWorkoutPrescription?.exercises ?: WorkoutPrescription(next).exercises,
+                        actionTag = "start-workout",
                         buttonLabel = if (uiState.isWorking && uiState.error == null) "Please wait…" else "Start Workout",
                         buttonEnabled = uiState.canStart,
                         error = uiState.error,
@@ -111,6 +114,7 @@ private fun WorkoutSummaryCard(
     workout: Workout,
     exercises: List<ExercisePrescription>,
     buttonLabel: String,
+    actionTag: String,
     buttonEnabled: Boolean,
     error: TodayError?,
     onAction: () -> Unit,
@@ -139,7 +143,7 @@ private fun WorkoutSummaryCard(
                 Text(text = error.message(), color = AppColors.Destructive, style = Home.Eyebrow)
                 Spacer(Modifier.height(Home.ButtonGap))
             }
-            AppHomeStartButton(label = buttonLabel, onClick = onAction, enabled = buttonEnabled)
+            AppHomeStartButton(label = buttonLabel, onClick = onAction, enabled = buttonEnabled, modifier = Modifier.testTag(actionTag))
         }
     }
 }
@@ -167,7 +171,7 @@ private fun WorkoutHeading(eyebrow: String, workout: Workout, onSwitch: (() -> U
 private fun HeadingText(eyebrow: String, workout: Workout, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Home.TextGap)) {
         Text(text = eyebrow, style = Home.Eyebrow, color = Home.Secondary)
-        Text(text = "Workout ${workout.name}", style = Home.Title, color = Home.Primary)
+        Text(text = "Workout ${workout.name}", style = Home.Title, color = Home.Primary, modifier = Modifier.testTag("today-workout"))
     }
 }
 

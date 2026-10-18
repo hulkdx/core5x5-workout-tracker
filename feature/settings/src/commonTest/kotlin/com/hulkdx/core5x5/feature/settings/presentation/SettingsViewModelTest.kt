@@ -107,50 +107,6 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun restEditorLoadsSavedSecondsAndPersistsArbitraryPositiveSeconds() = runTest(dispatcher) {
-        repository.values.value = TrainingPreferences(WeightUnit.LB)
-        val viewModel = createLoadedViewModel()
-        for (seconds in listOf(1L, 3_601L, 86_400L)) {
-            viewModel.openRestDuration()
-            assertEquals(repository.values.value.restDurationSeconds.toString(), viewModel.uiState.value.restDurationInput)
-            viewModel.setRestDurationInput(seconds.toString())
-            assertTrue(viewModel.uiState.value.canSaveRestDuration)
-            viewModel.saveRestDuration()
-            dispatcher.scheduler.runCurrent()
-            assertEquals(TrainingPreferences(WeightUnit.LB, seconds), viewModel.uiState.value.preferences)
-        }
-    }
-
-    @Test
-    fun invalidRestInputCannotWriteOrReplaceSavedValues() = runTest(dispatcher) {
-        val viewModel = createLoadedViewModel()
-        viewModel.openRestDuration()
-        for (input in listOf("", "0", "-1", "1.5", "1e3", "9223372036854775808")) {
-            viewModel.setRestDurationInput(input)
-            viewModel.saveRestDuration()
-            dispatcher.scheduler.runCurrent()
-            assertFalse(viewModel.uiState.value.canSaveRestDuration)
-            assertTrue(viewModel.uiState.value.hasInvalidRestDuration)
-            assertEquals(0, repository.saves)
-            assertEquals(TrainingPreferences(), viewModel.uiState.value.preferences)
-        }
-    }
-
-    @Test
-    fun cancellingTheRestEditorLeavesTheSavedDurationUnchanged() = runTest(dispatcher) {
-        val viewModel = createLoadedViewModel()
-        viewModel.openRestDuration()
-        viewModel.setRestDurationInput("99")
-        viewModel.dismissDialog()
-        viewModel.saveRestDuration()
-        dispatcher.scheduler.runCurrent()
-        assertEquals(0, repository.saves)
-        assertEquals(180L, repository.values.value.restDurationSeconds)
-        viewModel.openRestDuration()
-        assertEquals("180", viewModel.uiState.value.restDurationInput)
-    }
-
-    @Test
     fun loadFailureIsRetryableWithoutDisplayingUnverifiedDefaults() = runTest(dispatcher) {
         repository.loadError = IllegalStateException("cannot read")
         val viewModel = createViewModel()
@@ -256,7 +212,7 @@ private class FakePreferencesRepository : TrainingPreferencesRepository {
 
     override suspend fun getPreferences(): TrainingPreferences = values.value
     override suspend fun setWeightUnit(unit: WeightUnit) = save { it.copy(weightUnit = unit) }
-    override suspend fun setRestDurationSeconds(seconds: Long) = save { it.copy(restDurationSeconds = seconds) }
+    override suspend fun setRestDurationSeconds(seconds: Long) = error("Settings only changes the weight unit")
 
     private suspend fun save(transform: (TrainingPreferences) -> TrainingPreferences) {
         saves++

@@ -5,12 +5,10 @@ import com.hulkdx.core5x5.feature.workout.domain.ExerciseEdit
 
 data class ExerciseEditUiState(
     val position: Int,
-    val originalName: String,
-    val name: String,
+    val exerciseName: String,
     val weightKg: Double,
     val unit: WeightUnit,
     val sets: Int,
-    val minimumSets: Int,
     val reps: Int,
     val restDurationMillis: Long?,
     val effectiveRestDurationMillis: Long,
@@ -19,6 +17,6 @@ data class ExerciseEditUiState(
     val showCustomRest: Boolean = false,
     val customRestSeconds: Long = 180,
 ) {
-    val canSave: Boolean get() = !isSaving && !showCustomRest && name.isNotBlank()
-    fun toEdit() = ExerciseEdit(name.trim(), weightKg, sets, reps, restDurationMillis)
+    val canSave: Boolean get() = !isSaving && !showCustomRest
+    fun toEdit() = ExerciseEdit(weightKg, sets, reps, restDurationMillis)
 }

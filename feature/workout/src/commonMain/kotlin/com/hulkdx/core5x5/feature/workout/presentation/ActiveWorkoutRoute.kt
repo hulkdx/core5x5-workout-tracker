@@ -39,7 +39,7 @@ fun ActiveWorkoutRoute(
     if (edit != null) {
         ExerciseEditScreen(
             state = edit, onDismiss = viewModel::dismissExerciseEdit, onSave = viewModel::saveExerciseEdit,
-            onNameChanged = viewModel::editName, onWeightChanged = viewModel::adjustWeight,
+            onWeightChanged = viewModel::adjustWeight,
             onSetsChanged = viewModel::adjustSets, onRepsChanged = viewModel::adjustReps,
             onRestSelected = viewModel::selectRest, onOpenCustomRest = viewModel::openCustomRest,
             onCustomRestChanged = viewModel::editCustomRest, onApplyCustomRest = viewModel::applyCustomRest,

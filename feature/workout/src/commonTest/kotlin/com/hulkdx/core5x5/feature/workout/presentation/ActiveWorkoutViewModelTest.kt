@@ -1171,7 +1171,6 @@ class ActiveWorkoutViewModelTest {
         dispatcher.scheduler.runCurrent()
         viewModel.openExerciseEdit(0, WeightUnit.LB)
         dispatcher.scheduler.runCurrent()
-        viewModel.editName("Front Squat")
         viewModel.adjustWeight(1)
         viewModel.openCustomRest()
         viewModel.editCustomRest(150)
@@ -1185,13 +1184,16 @@ class ActiveWorkoutViewModelTest {
 
     @Test
     fun editSaveIsAtomicGuardsOtherActionsAndPreservesLbPrecisionAndRunningRest() = runTest(dispatcher) {
-        val original = session(Workout.A).copy(restTimer = RestTimer(123_000))
+        val original = session(Workout.A).let { session ->
+            session.copy(restTimer = RestTimer(123_000), exercises = session.exercises.mapIndexed { index, exercise ->
+                if (index == 0) exercise.copy(customName = "Front Squat") else exercise
+            })
+        }
         val repository = FakeWorkoutRepository(original)
         val viewModel = createViewModel(repository)
         dispatcher.scheduler.runCurrent()
         viewModel.openExerciseEdit(0, WeightUnit.LB)
         dispatcher.scheduler.runCurrent()
-        viewModel.editName("  Front Squat  ")
         viewModel.adjustSets(1)
         viewModel.adjustReps(-1)
         viewModel.openCustomRest()
@@ -1222,7 +1224,31 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun editFailurePreservesDraftAndCanRetryAndLoggedSetsCannotBeRemoved() = runTest(dispatcher) {
+    fun setCountCanBeIncreasedAndReducedBeforeAndAfterSaving() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A))
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        viewModel.openExerciseEdit(0, WeightUnit.KG)
+        dispatcher.scheduler.runCurrent()
+        repeat(5) { viewModel.adjustSets(1) }
+        assertEquals(10, viewModel.uiState.value.exerciseEdit?.sets)
+        repeat(5) { viewModel.adjustSets(-1) }
+        assertEquals(5, viewModel.uiState.value.exerciseEdit?.sets)
+        repeat(5) { viewModel.adjustSets(1) }
+        viewModel.saveExerciseEdit()
+        dispatcher.scheduler.runCurrent()
+        viewModel.openExerciseEdit(0, WeightUnit.KG)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(10, viewModel.uiState.value.exerciseEdit?.sets)
+        repeat(5) { viewModel.adjustSets(-1) }
+        viewModel.saveExerciseEdit()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(5, repository.savedWorkout?.exercises?.get(0)?.sets)
+        assertEquals(5, repository.savedWorkout?.exercises?.get(0)?.setStates?.size)
+    }
+
+    @Test
+    fun editFailurePreservesDraftAndRetryCanRemoveCompletedTrailingSets() = runTest(dispatcher) {
         val original = session(Workout.A).let { workout -> workout.copy(exercises = workout.exercises.mapIndexed { index, exercise ->
             if (index != 0) exercise else exercise.copy(setStates = exercise.setStates.map { it.copy(isCompleted = it.position == 3) })
         }) }
@@ -1232,19 +1258,21 @@ class ActiveWorkoutViewModelTest {
         viewModel.openExerciseEdit(0, WeightUnit.KG)
         dispatcher.scheduler.runCurrent()
         repeat(10) { viewModel.adjustSets(-1) }
-        assertEquals(4, viewModel.uiState.value.exerciseEdit?.sets)
-        viewModel.editName("Tempo Squat")
+        assertEquals(1, viewModel.uiState.value.exerciseEdit?.sets)
         repository.editError = IllegalStateException("Write failed")
         viewModel.saveExerciseEdit()
         dispatcher.scheduler.runCurrent()
         assertTrue(viewModel.uiState.value.exerciseEdit?.hasSaveError == true)
-        assertEquals("Tempo Squat", viewModel.uiState.value.exerciseEdit?.name)
+        assertEquals(1, viewModel.uiState.value.exerciseEdit?.sets)
         assertEquals(original, viewModel.uiState.value.unfinishedWorkout)
         repository.editError = null
         viewModel.saveExerciseEdit()
         dispatcher.scheduler.runCurrent()
         assertNull(viewModel.uiState.value.exerciseEdit)
-        assertTrue(repository.savedWorkout!!.exercises[0].setStates[3].isCompleted)
+        assertEquals(1, repository.savedWorkout!!.exercises[0].sets)
+        assertEquals(1, repository.savedWorkout!!.exercises[0].setStates.size)
+        assertFalse(repository.savedWorkout!!.exercises[0].setStates[0].isCompleted)
+        assertEquals(original.exercises.drop(1), repository.savedWorkout!!.exercises.drop(1))
     }
 
     @Test
@@ -1276,20 +1304,21 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun blankNameCannotSaveAndPauseResumePreservesDraft() = runTest(dispatcher) {
+    fun pauseResumePreservesPrescriptionDraft() = runTest(dispatcher) {
         val repository = FakeWorkoutRepository(session(Workout.A))
         val viewModel = createViewModel(repository)
         dispatcher.scheduler.runCurrent()
         viewModel.openExerciseEdit(0, WeightUnit.KG)
         dispatcher.scheduler.runCurrent()
-        viewModel.editName(" ")
-        viewModel.saveExerciseEdit()
-        assertEquals(0, repository.editCount)
-        viewModel.editName("Paused Squat")
+        viewModel.adjustWeight(1)
+        viewModel.adjustSets(1)
         viewModel.onPause()
         viewModel.onResume()
         dispatcher.scheduler.runCurrent()
-        assertEquals("Paused Squat", viewModel.uiState.value.exerciseEdit?.name)
+        assertEquals("Squat", viewModel.uiState.value.exerciseEdit?.exerciseName)
+        assertEquals(22.5, viewModel.uiState.value.exerciseEdit?.weightKg)
+        assertEquals(6, viewModel.uiState.value.exerciseEdit?.sets)
+        assertEquals(0, repository.editCount)
     }
 
     private class FakeWorkoutRepository(var savedWorkout: UnfinishedWorkout?) : WorkoutRepository {
@@ -1400,10 +1429,9 @@ class ActiveWorkoutViewModelTest {
             editGate?.await()
             editError?.let { throw it }
             val active = savedWorkout?.takeIf { it.id == workoutId } ?: return null
-            val exercise = active.exercises.getOrNull(exercisePosition) ?: return null
-            if (exercise.setStates.any { it.isCompleted && it.position >= edit.sets }) return null
+            if (active.exercises.getOrNull(exercisePosition) == null) return null
             val saved = active.copy(exercises = active.exercises.mapIndexed { index, item ->
-                if (index != exercisePosition) item else item.copy(customName = edit.name.trim(), weightKg = edit.weightKg,
+                if (index != exercisePosition) item else item.copy(weightKg = edit.weightKg,
                     sets = edit.sets, reps = edit.reps, restDurationMillis = edit.restDurationMillis,
                     setStates = List(edit.sets) { position -> item.setStates.getOrNull(position)
                         ?: com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutSet(position) })

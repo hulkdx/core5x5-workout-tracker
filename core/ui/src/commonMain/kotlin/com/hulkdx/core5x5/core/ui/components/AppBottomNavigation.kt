@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
@@ -90,7 +91,7 @@ fun AppBottomNavigation(
                     if (selected) AppColors.Action else AppColors.MutedText
                 }
                 Column(
-                    modifier = Modifier
+                    modifier = Modifier.testTag("tab:${item.name}")
                         .width(itemWidth)
                         .heightIn(min = if (useHomeDesign) Home.NavigationItemHeight else AppDimensions.NavigationItemHeight)
                         .selectable(

@@ -2,13 +2,14 @@ package com.hulkdx.core5x5.core.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -16,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -36,7 +38,6 @@ data class AppSetControl(
     val reps: Int,
 )
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AppSetControls(
     sets: List<AppSetControl>,
@@ -46,10 +47,9 @@ fun AppSetControls(
     enabled: Boolean = true,
     allowCompletedTap: Boolean = false,
 ) {
-    FlowRow(
-        modifier = modifier.fillMaxWidth(),
+    Row(
+        modifier = modifier.fillMaxWidth().testTag("set-row").horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalArrangement = Arrangement.spacedBy(AppDimensions.ContentGap),
     ) {
         sets.forEach { set ->
             if (refined) {
@@ -77,7 +77,7 @@ fun AppSetControls(
             }
             Surface(
                 onClick = { onComplete(set.position) },
-                modifier = Modifier.sizeIn(minWidth = size, minHeight = size).semantics {
+                modifier = Modifier.sizeIn(minWidth = size, minHeight = size).testTag("set:${set.position}").semantics {
                     contentDescription = set.completionDescription
                     stateDescription = when {
                         completed -> "Completed"
@@ -122,7 +122,7 @@ private fun RefinedSetControl(
     )
     val targetSize = maxOf(AppDimensions.TouchTargetMin, visibleSize)
     Box(
-        modifier = Modifier.size(targetSize)
+        modifier = Modifier.size(targetSize).testTag("set:${set.position}")
             .clickable(
                 enabled = (!completed || allowCompletedTap) && !disabled,
                 role = Role.Button,

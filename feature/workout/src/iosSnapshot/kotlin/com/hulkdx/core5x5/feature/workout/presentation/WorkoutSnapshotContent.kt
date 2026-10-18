@@ -27,8 +27,8 @@ fun WorkoutSnapshotContent(scene: String) {
             onBack = {}, onFinishWorkout = {}, onRetryLoad = {}, onToggleSet = { _, _ -> }, onEditExercise = {},
         )
         "editor" -> ExerciseEditScreen(
-            state = ExerciseEditUiState(0, "Squat", "Squat", 80.0, WeightUnit.KG, 5, 1, 5, null, 180_000),
-            onDismiss = {}, onSave = {}, onNameChanged = {}, onWeightChanged = {}, onSetsChanged = {},
+            state = ExerciseEditUiState(0, "Squat", 80.0, WeightUnit.KG, 5, 5, null, 180_000),
+            onDismiss = {}, onSave = {}, onWeightChanged = {}, onSetsChanged = {},
             onRepsChanged = {}, onRestSelected = {}, onOpenCustomRest = {}, onCustomRestChanged = {}, onApplyCustomRest = {},
         )
         "complete" -> WorkoutCompleteScreen(

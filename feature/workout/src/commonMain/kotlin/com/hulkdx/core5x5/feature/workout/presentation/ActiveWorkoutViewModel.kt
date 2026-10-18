@@ -224,9 +224,8 @@ class ActiveWorkoutViewModel(
             try {
                 val duration = exercise.restDurationMillis ?: preferences.getPreferences().restDurationMillis
                 _uiState.value = uiState.value.copy(hasEditLoadError = false, exerciseEdit = ExerciseEditUiState(
-                    position = position, originalName = exercise.displayName(), name = exercise.displayName(),
+                    position = position, exerciseName = exercise.displayName(),
                     weightKg = exercise.weightKg, unit = unit, sets = exercise.sets, reps = exercise.reps,
-                    minimumSets = (exercise.setStates.filter { it.isCompleted }.maxOfOrNull { it.position + 1 } ?: 1),
                     restDurationMillis = exercise.restDurationMillis, effectiveRestDurationMillis = duration,
                     customRestSeconds = (duration / 1_000).takeIf { it > 0 } ?: 180,
                 ))
@@ -252,14 +251,13 @@ class ActiveWorkoutViewModel(
         _uiState.value = uiState.value.copy(exerciseEdit = transform(edit).copy(hasSaveError = false))
     }
 
-    fun editName(name: String) = updateEdit { it.copy(name = name.take(80)) }
     fun adjustWeight(direction: Int) = updateEdit {
         val step = if (it.unit == WeightUnit.KG) 2.5 else 5.0
         // Keep full kg precision until an explicit adjustment; opening/saving in lb never rounds storage.
         val value = it.unit.fromKilograms(it.weightKg) + direction.coerceIn(-1, 1) * step
         it.copy(weightKg = it.unit.toKilograms(value.coerceAtLeast(0.0)).coerceAtMost(1_000_000.0))
     }
-    fun adjustSets(direction: Int) = updateEdit { it.copy(sets = (it.sets + direction.coerceIn(-1, 1)).coerceIn(it.minimumSets, 100)) }
+    fun adjustSets(direction: Int) = updateEdit { it.copy(sets = (it.sets + direction.coerceIn(-1, 1)).coerceIn(1, 100)) }
     fun adjustReps(direction: Int) = updateEdit { it.copy(reps = (it.reps + direction.coerceIn(-1, 1)).coerceIn(1, 100)) }
     fun selectRest(durationMillis: Long) {
         if (durationMillis != 0L && durationMillis != 180_000L) return

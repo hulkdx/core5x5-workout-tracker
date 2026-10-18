@@ -131,12 +131,12 @@ fun AppNextWorkoutSummary(title: String, indicator: String, modifier: Modifier =
 }
 
 @Composable
-fun AppCompletionButton(label: String, onClick: () -> Unit) {
+fun AppCompletionButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     Button(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().heightIn(min = Complete.ButtonHeight),
+        modifier = modifier.fillMaxWidth().heightIn(min = Complete.ButtonHeight),
         shape = RoundedCornerShape(Complete.CardRadius),
         contentPadding = PaddingValues(horizontal = Complete.CardPadding),
         elevation = null,

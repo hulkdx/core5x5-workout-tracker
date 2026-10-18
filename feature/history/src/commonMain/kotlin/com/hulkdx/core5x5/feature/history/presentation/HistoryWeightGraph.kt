@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.semantics.contentDescription
@@ -106,13 +107,14 @@ private fun ExerciseSelector(selected: CompletedExerciseType, onSelected: (Compl
     Box {
         AppSecondaryButton(
             label = "Lift: ${selected.displayName()}",
+            modifier = Modifier.testTag("history-lift-selector"),
             onClick = { expanded = true },
             palette = AppButtonPalette.Home,
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, containerColor = History.Card) {
             CompletedExerciseType.entries.forEach { exercise ->
                 DropdownMenuItem(
-                    modifier = Modifier.semantics { this.selected = exercise == selected },
+                    modifier = Modifier.testTag("history-lift:${exercise.name}").semantics { this.selected = exercise == selected },
                     text = { Text(exercise.displayName(), color = if (exercise == selected) History.Action else History.Primary) },
                     onClick = {
                         expanded = false
@@ -139,7 +141,7 @@ private fun WeightPlot(points: List<HistoryWeightPoint>, exercise: CompletedExer
             Text(formatWeight(0.0, unit), style = History.Metadata, color = History.Secondary)
         }
         Canvas(
-            Modifier.weight(1f).height(History.GraphHeight).semantics { contentDescription = description },
+            Modifier.weight(1f).height(History.GraphHeight).testTag("history-weight-plot").semantics { contentDescription = description },
         ) {
             val inset = History.GraphPointRadius.toPx()
             val width = (size.width - inset * 2).coerceAtLeast(0f)

@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
@@ -39,7 +40,7 @@ import com.hulkdx.core5x5.core.ui.theme.AppRestTokens as Rest
 @Composable
 fun AppWorkoutSwitch(label: String, onClick: () -> Unit, enabled: Boolean, modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.heightIn(min = 48.dp).clickable(enabled = enabled, role = Role.Button, onClick = onClick),
+        modifier = modifier.testTag("workout-switch").heightIn(min = 48.dp).clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Surface(shape = RoundedCornerShape(Home.ControlRadius), color = Home.Card, border = BorderStroke(Home.BorderStroke, Home.Border)) {
@@ -75,13 +76,14 @@ fun AppHomeStartButton(
     onClick: () -> Unit,
     enabled: Boolean,
     dimWhenDisabled: Boolean = true,
+    modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.fillMaxWidth().heightIn(min = Home.ButtonHeight),
+        modifier = modifier.fillMaxWidth().heightIn(min = Home.ButtonHeight),
         shape = RoundedCornerShape(Home.ControlRadius),
         contentPadding = PaddingValues(horizontal = Home.SwitchPadding),
         elevation = null,
@@ -103,13 +105,14 @@ fun AppRestFinishButton(
     onClick: () -> Unit,
     enabled: Boolean,
     dimWhenDisabled: Boolean = true,
+    modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.fillMaxWidth().heightIn(min = Home.ButtonHeight),
+        modifier = modifier.fillMaxWidth().heightIn(min = Home.ButtonHeight),
         shape = RoundedCornerShape(Home.ControlRadius),
         border = BorderStroke(Home.BorderStroke, Home.Border),
         contentPadding = PaddingValues(horizontal = Home.SwitchPadding),

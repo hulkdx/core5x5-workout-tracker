@@ -61,6 +61,7 @@ compose-material3 = { module = "org.jetbrains.compose.material3:material3", vers
 compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "composeMultiplatform" }
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
 compose-uiToolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "composeMultiplatform" }
+compose-uiTest = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "composeMultiplatform" }
 compose-uiTestJunit4 = { module = "org.jetbrains.compose.ui:ui-test-junit4", version.ref = "composeMultiplatform" }
 # Android-only test host; the Android Compose UI dependency also resolves to 1.12.1.
 compose-uiTestManifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "composeMultiplatform" }

@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -63,7 +64,7 @@ fun ActiveWorkoutScreen(
 ) {
     val workout = uiState.unfinishedWorkout
     val resting = uiState.restTimer.isVisible
-    Surface(modifier = modifier.fillMaxSize(), color = Home.Background) {
+    Surface(modifier = modifier.fillMaxSize().testTag("active-workout"), color = Home.Background) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize().windowInsetsPadding(windowInsets)) {
             val cardHeight = Active.CardPaddingVertical * 2 + Active.SetGap + Home.TextGap +
                 Active.SetDiameter.coerceAtLeast(AppDimensions.TouchTargetMin) +
@@ -80,7 +81,7 @@ fun ActiveWorkoutScreen(
                 )
             Column(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    modifier = Modifier.weight(1f).fillMaxWidth().testTag("active-workout-list"),
                     contentPadding = PaddingValues(start = Active.Inset, end = Active.Inset,
                         top = Active.TopGap, bottom = if (pinTimer) 0.dp else Home.BrandGap),
                 ) {
@@ -128,7 +129,7 @@ fun ActiveWorkoutScreen(
                             }
                             workout.exercises.forEachIndexed { exercisePosition, exercise ->
                                 item(key = "exercise:$exercisePosition", contentType = "exercise") {
-                                    Column {
+                                    Column(Modifier.testTag("exercise:${exercise.exercise.name}")) {
                                         AppExpandedExerciseCard(
                                             name = exercise.displayName(),
                                             prescription = exercise.prescription(weightUnit),
@@ -193,6 +194,7 @@ fun ActiveWorkoutScreen(
                                 val finishLabel = if (uiState.isSaving) "Saving…" else "Finish Workout"
                                 AppHomeStartButton(
                                     label = finishLabel,
+                                    modifier = Modifier.testTag("finish-workout"),
                                     onClick = onFinishWorkout,
                                     enabled = uiState.canFinish,
                                     dimWhenDisabled = false,

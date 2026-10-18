@@ -40,17 +40,17 @@ abstract class UnfinishedWorkoutPersistenceTest {
             val switched = try {
                 val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
                 val historyA = repository.startWorkout(Workout.A)
-                repository.editExercise(historyA.id, 1, ExerciseEdit("Bench Press", 40.0, 5, 5, null))
-                repository.editExercise(historyA.id, 2, ExerciseEdit("Barbell Row", 50.0, 5, 5, null))
+                repository.editExercise(historyA.id, 1, ExerciseEdit(40.0, 5, 5, null))
+                repository.editExercise(historyA.id, 2, ExerciseEdit(50.0, 5, 5, null))
                 repository.finalizeWorkout(historyA.id)
                 val historyB = repository.startWorkout(Workout.B)
-                repository.editExercise(historyB.id, 1, ExerciseEdit("Overhead Press", 35.0, 5, 5, null))
-                repository.editExercise(historyB.id, 2, ExerciseEdit("Deadlift", 90.0, 1, 5, null))
+                repository.editExercise(historyB.id, 1, ExerciseEdit(35.0, 5, 5, null))
+                repository.editExercise(historyB.id, 2, ExerciseEdit(90.0, 1, 5, null))
                 repository.finalizeWorkout(historyB.id)
                 val completedBefore = repository.getCompletedWorkouts()
                 val original = repository.startWorkout(Workout.A)
                 val edited = requireNotNull(repository.editExercise(original.id, 0,
-                    ExerciseEdit("Paused Squat", 80.0, 4, 8, 0)))
+                    ExerciseEdit(80.0, 4, 8, 0)))
                 val noClock = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { error("Switch must preserve start time") }
                 val selectedB = requireNotNull(noClock.switchWorkout(original.id, Workout.B))
                 assertEquals(original.id, selectedB.id)
@@ -96,7 +96,7 @@ abstract class UnfinishedWorkoutPersistenceTest {
             val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { now }
             val original = repository.startWorkout(Workout.A)
             val edited = requireNotNull(repository.editExercise(original.id, 0,
-                ExerciseEdit("Paused Squat", 80.0, 4, 8, null)))
+                ExerciseEdit(80.0, 4, 8, null)))
             repository.completeSetAndStartRest(original.id, 0, 0, 180_000)
             repository.setCompletedReps(original.id, 0, 0, 3)
             repository.completeSetAndStartRest(original.id, 1, 2, 180_000)
@@ -136,7 +136,7 @@ abstract class UnfinishedWorkoutPersistenceTest {
             assertNull(repository.switchWorkout(original.id, Workout.B))
             assertEquals(completed, repository.getCompletedWorkout(original.id))
             assertEquals(later, repository.getUnfinishedWorkout())
-            repository.editExercise(later.id, 2, ExerciseEdit("Barbell Row", 20.0, 5, 5, 0))
+            repository.editExercise(later.id, 2, ExerciseEdit(20.0, 5, 5, 0))
             val restOff = requireNotNull(repository.completeSetAndStartRest(later.id, 2, 4, 180_000))
             assertNull(restOff.restTimer)
             val switched = requireNotNull(repository.switchWorkout(later.id, Workout.B))
@@ -197,7 +197,7 @@ abstract class UnfinishedWorkoutPersistenceTest {
             val saved = try {
                 val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
                 val started = repository.startWorkout(Workout.A)
-                repository.editExercise(started.id, 0, ExerciseEdit("Squat", 87.5, 5, 8, null))
+                repository.editExercise(started.id, 0, ExerciseEdit(87.5, 5, 8, null))
                 val completed = requireNotNull(repository.completeSetAndStartRest(started.id, 0, 0, 180_000))
                 assertEquals(8, completed.exercises[0].setStates[0].completedReps)
                 val noClock = RoomWorkoutRepository(database.unfinishedWorkoutDao()) {
@@ -209,7 +209,7 @@ abstract class UnfinishedWorkoutPersistenceTest {
                 assertEquals(partial, noClock.setCompletedReps(started.id, 0, 0, 3))
                 assertEquals(partial, repository.completeSetAndStartRest(started.id, 0, 0, 240_000))
                 val edited = requireNotNull(repository.editExercise(started.id, 0,
-                    ExerciseEdit("Paused Squat", 90.0, 5, 2, 60_000)))
+                    ExerciseEdit(90.0, 5, 2, 60_000)))
                 assertEquals(3, edited.exercises[0].setStates[0].completedReps)
                 assertEquals(completed.restTimer, edited.restTimer)
                 edited
@@ -1463,8 +1463,12 @@ abstract class UnfinishedWorkoutPersistenceTest {
             val saved = try {
                 val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
                 val started = repository.startWorkout(Workout.A)
+                // Existing stored labels remain readable and cannot be changed by prescription edits.
+                val dao = database.unfinishedWorkoutDao()
+                val exercise = dao.getExercises(started.id).first()
+                assertEquals(1, dao.updateExercise(exercise.copy(customName = "Front Squat")))
                 val logged = requireNotNull(repository.completeSetAndStartRest(started.id, 0, 0, 180_000))
-                val edit = ExerciseEdit("Front Squat", 82.5, 6, 4, 150_000)
+                val edit = ExerciseEdit(82.5, 6, 4, 150_000)
                 val edited = requireNotNull(repository.editExercise(started.id, 0, edit))
                 assertEquals(logged.restTimer, edited.restTimer)
                 assertTrue(edited.exercises[0].setStates[0].isCompleted)
@@ -1488,30 +1492,57 @@ abstract class UnfinishedWorkoutPersistenceTest {
                 assertEquals(5, next.sets)
                 assertEquals(5, next.reps)
                 assertEquals(82.5, next.weightKg)
-                assertNull(repository.editExercise(saved.id, 0, ExerciseEdit("Stale", 10.0, 1, 1, 0)))
+                assertNull(repository.editExercise(saved.id, 0, ExerciseEdit(10.0, 1, 1, 0)))
             } finally { reopened.close() }
         } finally { deleteDatabase(name) }
     }
 
     @Test
-    fun editCannotRemoveCompletedTrailingSetsAndOffAppliesToNextNewCompletion() = runTest {
+    fun shrinkingRemovesCompletedTrailingSetsAndReaddingStartsIncomplete() = runTest {
         withDatabase("exercise-edit-sets.db") { database ->
             val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
             val session = repository.startWorkout(Workout.A)
+            requireNotNull(repository.completeSetAndStartRest(session.id, 0, 0, 180_000))
             val logged = requireNotNull(repository.completeSetAndStartRest(session.id, 0, 3, 180_000))
-            assertNull(repository.editExercise(session.id, 0, ExerciseEdit("Squat", 20.0, 3, 5, 0)))
-            assertEquals(logged, repository.getUnfinishedWorkout())
-            val edited = requireNotNull(repository.editExercise(session.id, 0, ExerciseEdit("Squat", 20.0, 4, 5, 0)))
-            assertEquals(4, edited.exercises[0].setStates.size)
+            val edited = requireNotNull(repository.editExercise(session.id, 0, ExerciseEdit(20.0, 3, 5, 0)))
+            assertEquals(3, edited.exercises[0].setStates.size)
+            assertTrue(edited.exercises[0].setStates[0].isCompleted)
+            assertEquals(5, edited.exercises[0].setStates[0].completedReps)
+            assertEquals(logged.exercises.drop(1), edited.exercises.drop(1))
+            val expanded = requireNotNull(repository.editExercise(session.id, 0, ExerciseEdit(20.0, 5, 5, 0)))
+            assertTrue(expanded.exercises[0].setStates.drop(3).all { !it.isCompleted && it.completedReps == null })
             assertEquals(logged.restTimer, edited.restTimer)
-            assertEquals(edited, repository.completeSetAndStartRest(session.id, 0, 3, 180_000))
-            val off = requireNotNull(repository.completeSetAndStartRest(session.id, 0, 0, 180_000))
+            assertEquals(expanded.restTimer, repository.getUnfinishedWorkout()?.restTimer)
+            val off = requireNotNull(repository.completeSetAndStartRest(session.id, 0, 2, 180_000))
             assertNull(off.restTimer)
-            val custom = requireNotNull(repository.editExercise(session.id, 0, ExerciseEdit("Squat", 20.0, 4, 5, 150_000)))
+            val custom = requireNotNull(repository.editExercise(session.id, 0, ExerciseEdit(20.0, 4, 5, 150_000)))
             assertNull(custom.restTimer)
             val resting = requireNotNull(repository.completeSetAndStartRest(session.id, 0, 1, 180_000))
             assertEquals(RestTimer(151_000), resting.restTimer)
-            assertNull(repository.editExercise(session.id, -1, ExerciseEdit("Invalid", 20.0, 5, 5, null)))
+            assertNull(repository.editExercise(session.id, -1, ExerciseEdit(20.0, 5, 5, null)))
+        }
+    }
+
+    @Test
+    fun failedShrinkPreservesCompletedSetsAndRetryRemovesOnlyTrailingSets() = runTest {
+        withDatabase("exercise-edit-shrink-rollback.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+            val session = repository.startWorkout(Workout.A)
+            requireNotNull(repository.completeSetAndStartRest(session.id, 0, 0, 180_000))
+            requireNotNull(repository.completeSetAndStartRest(session.id, 0, 4, 180_000))
+            val original = requireNotNull(repository.setCompletedReps(session.id, 0, 4, 3))
+            database.useWriterConnection {
+                it.executeSQL("CREATE TRIGGER reject_shrink BEFORE DELETE ON unfinished_workout_set WHEN OLD.position = 3 BEGIN SELECT RAISE(ABORT, 'Test failure'); END")
+            }
+            val edit = ExerciseEdit(80.0, 2, 4, 0)
+            assertFails { repository.editExercise(session.id, 0, edit) }
+            assertEquals(original, repository.getUnfinishedWorkout())
+            database.useWriterConnection { it.executeSQL("DROP TRIGGER reject_shrink") }
+            val saved = requireNotNull(repository.editExercise(session.id, 0, edit))
+            assertEquals(2, saved.exercises[0].setStates.size)
+            assertEquals(original.exercises[0].setStates.take(2), saved.exercises[0].setStates)
+            assertEquals(original.exercises.drop(1), saved.exercises.drop(1))
+            assertEquals(original.restTimer, saved.restTimer)
         }
     }
 
@@ -1524,10 +1555,10 @@ abstract class UnfinishedWorkoutPersistenceTest {
             database.useWriterConnection { connection ->
                 connection.executeSQL("CREATE TRIGGER reject_extra_set BEFORE INSERT ON unfinished_workout_set WHEN NEW.position = 5 BEGIN SELECT RAISE(ABORT, 'Test failure'); END")
             }
-            assertFails { repository.editExercise(session.id, 0, ExerciseEdit("Changed", 80.0, 6, 4, 0)) }
+            assertFails { repository.editExercise(session.id, 0, ExerciseEdit(80.0, 6, 4, 0)) }
             assertEquals(original, repository.getUnfinishedWorkout())
             database.useWriterConnection { it.executeSQL("DROP TRIGGER reject_extra_set") }
-            assertEquals(6, repository.editExercise(session.id, 0, ExerciseEdit("Changed", 80.0, 6, 4, 0))?.exercises?.get(0)?.sets)
+            assertEquals(6, repository.editExercise(session.id, 0, ExerciseEdit(80.0, 6, 4, 0))?.exercises?.get(0)?.sets)
         }
     }
 

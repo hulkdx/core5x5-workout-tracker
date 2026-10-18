@@ -29,6 +29,7 @@ dependencyResolutionManagement {
 
 include(":androidApp")
 include(":screenshot-test")
+include(":ui-test")
 include(":core:ui")
 include(":core:preferences")
 include(":core:training")

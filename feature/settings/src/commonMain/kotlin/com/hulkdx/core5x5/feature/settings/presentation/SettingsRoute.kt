@@ -19,12 +19,9 @@ fun SettingsRoute(onTabSelected: (TopLevelTab) -> Unit, modifier: Modifier = Mod
         SettingsScreen(
             uiState = uiState,
             onOpenUnits = viewModel::openUnits,
-            onOpenRestDuration = viewModel::openRestDuration,
             onOpenAbout = viewModel::openAbout,
             onOpenLicense = viewModel::openLicense,
             onSelectUnit = viewModel::selectWeightUnit,
-            onRestDurationInput = viewModel::setRestDurationInput,
-            onSaveRestDuration = viewModel::saveRestDuration,
             onDismissDialog = viewModel::dismissDialog,
             onRetryLoad = viewModel::loadPreferences,
             onOpenRepository = {

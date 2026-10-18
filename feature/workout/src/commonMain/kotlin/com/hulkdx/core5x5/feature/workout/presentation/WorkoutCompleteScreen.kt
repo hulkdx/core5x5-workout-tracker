@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
@@ -54,7 +55,7 @@ fun WorkoutCompleteScreen(
     modifier: Modifier = Modifier,
     windowInsets: WindowInsets = WindowInsets.safeDrawing,
 ) {
-    Surface(modifier = modifier.fillMaxSize(), color = Complete.Background) {
+    Surface(modifier = modifier.fillMaxSize().testTag("workout-complete"), color = Complete.Background) {
         BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(windowInsets)) {
             val viewportHeight = maxHeight
             // The minimum viewport height centers short content; tall content grows and scrolls.
@@ -135,7 +136,7 @@ fun WorkoutCompleteScreen(
                     }
                 }
                 if (completed != null && next != null && !uiState.isLoading) {
-                    AppCompletionButton(label = "Back to Today", onClick = onBackToToday)
+                    AppCompletionButton(label = "Back to Today", onClick = onBackToToday, modifier = Modifier.testTag("back-to-today"))
                 } else {
                     AppSecondaryButton(label = "Back to Today", onClick = onBackToToday)
                 }

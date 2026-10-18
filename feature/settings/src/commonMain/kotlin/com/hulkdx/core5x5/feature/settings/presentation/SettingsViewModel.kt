@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.feature.settings.domain.AppMetadata
-import com.hulkdx.core5x5.feature.settings.domain.parseRestDurationSeconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,38 +45,9 @@ class SettingsViewModel(
         if (uiState.value.canChangePreferences) showDialog(SettingsDialog.UNITS)
     }
 
-    fun openRestDuration() {
-        if (!uiState.value.canChangePreferences) return
-        _uiState.value = uiState.value.copy(
-            dialog = SettingsDialog.REST_DURATION,
-            restDurationInput = requireNotNull(uiState.value.preferences).restDurationSeconds.toString(),
-            hasInvalidRestDuration = false,
-            error = null,
-        )
-    }
-
-    fun setRestDurationInput(input: String) {
-        if (uiState.value.isSaving || uiState.value.dialog != SettingsDialog.REST_DURATION) return
-        _uiState.value = uiState.value.copy(
-            restDurationInput = input,
-            hasInvalidRestDuration = parseRestDurationSeconds(input) == null,
-            error = null,
-        )
-    }
-
     fun selectWeightUnit(unit: WeightUnit) {
         if (uiState.value.dialog != SettingsDialog.UNITS) return
         save { repository.setWeightUnit(unit) }
-    }
-
-    fun saveRestDuration() {
-        if (uiState.value.dialog != SettingsDialog.REST_DURATION) return
-        val seconds = parseRestDurationSeconds(uiState.value.restDurationInput)
-        if (seconds == null) {
-            _uiState.value = uiState.value.copy(hasInvalidRestDuration = true)
-            return
-        }
-        save { repository.setRestDurationSeconds(seconds) }
     }
 
     fun openAbout() = showDialog(SettingsDialog.ABOUT)
@@ -99,7 +69,7 @@ class SettingsViewModel(
 
     fun dismissDialog() {
         if (uiState.value.isSaving) return
-        _uiState.value = uiState.value.copy(dialog = null, error = null, hasInvalidRestDuration = false)
+        _uiState.value = uiState.value.copy(dialog = null, error = null)
     }
 
     private fun showDialog(dialog: SettingsDialog) {

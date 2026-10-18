@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
@@ -50,7 +51,7 @@ fun HistoryScreen(
     val months = remember(uiState.completedWorkouts) { uiState.completedWorkouts.historyMonths() }
     Surface(modifier = modifier.fillMaxSize(), color = History.Background) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().testTag("history-list"),
             contentPadding = PaddingValues(
                 start = History.Inset,
                 top = History.TopGap,
@@ -103,6 +104,7 @@ fun HistoryScreen(
                         }
                         items(workouts, key = { "workout:${it.id}" }, contentType = { "workout" }) { workout ->
                             AppHistoryCard(
+                                modifier = Modifier.testTag("history-workout:${workout.id}"),
                                 weekday = workout.weekdayLabel(),
                                 day = workout.dayLabel(),
                                 fullDate = workout.detailDateLabel(),

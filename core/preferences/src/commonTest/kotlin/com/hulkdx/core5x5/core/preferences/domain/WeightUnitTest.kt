@@ -17,15 +17,36 @@ class WeightUnitTest {
     }
 
     @Test
-    fun displayUsesOneDecimalPositiveHalfUpRoundingAndDropsTrailingZero() {
+    fun kilogramsUseOneDecimalPositiveHalfUpRoundingAndDropTrailingZero() {
         assertEquals("20 kg", formatWeight(20.0, WeightUnit.KG))
         assertEquals("20 kg", formatWeight(20.04, WeightUnit.KG))
         assertEquals("20.1 kg", formatWeight(20.05, WeightUnit.KG))
         assertEquals("20.2 kg", formatWeight(20.15, WeightUnit.KG))
         assertEquals("0 kg", formatWeight(0.0, WeightUnit.KG))
         assertEquals("0.1 kg", formatWeight(0.05, WeightUnit.KG))
-        assertEquals("44.1 lb", formatWeight(20.0, WeightUnit.LB))
-        assertEquals("1 lb", formatWeight(0.45359237, WeightUnit.LB))
+    }
+
+    @Test
+    fun poundsRoundDownToWholeFivePoundIncrements() {
+        assertEquals("40 lb", formatWeight(20.0, WeightUnit.LB))
+        assertEquals("45 lb", formatWeight(22.5, WeightUnit.LB))
+        assertEquals("85 lb", formatWeight(40.0, WeightUnit.LB))
+        assertEquals("130 lb", formatWeight(60.0, WeightUnit.LB))
+        assertEquals("0 lb", formatWeight(0.0, WeightUnit.LB))
+        assertEquals("0 lb", formatWeight(WeightUnit.LB.toKilograms(4.999), WeightUnit.LB))
+        assertEquals("5 lb", formatWeight(WeightUnit.LB.toKilograms(5.0), WeightUnit.LB))
+        assertEquals("5 lb", formatWeight(WeightUnit.LB.toKilograms(9.999), WeightUnit.LB))
+        assertEquals("10 lb", formatWeight(WeightUnit.LB.toKilograms(10.0), WeightUnit.LB))
+    }
+
+    @Test
+    fun exactPoundBoundariesAreNotLostToFloatingPointConversion() {
+        for (pounds in listOf(5, 25, 75, 150, 300, 395)) {
+            val weightKg = WeightUnit.LB.toKilograms(pounds.toDouble())
+            assertEquals("$pounds lb", formatWeight(weightKg, WeightUnit.LB))
+            assertEquals("${pounds - 5} lb", formatWeight(weightKg - 1e-9, WeightUnit.LB))
+            assertEquals("$pounds lb", formatWeight(weightKg + 1e-9, WeightUnit.LB))
+        }
     }
 
     @Test

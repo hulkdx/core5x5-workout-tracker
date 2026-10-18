@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -35,7 +36,7 @@ fun AppRestTimer(
 ) {
     val label = if (isExpired) "Rest complete" else "Rest"
     Surface(
-        modifier = modifier.fillMaxWidth().heightIn(
+        modifier = modifier.testTag("rest-timer").fillMaxWidth().heightIn(
             min = if (compact) AppDimensions.TimerPinnedMinHeight else Rest.TimerHeight,
         ).semantics(mergeDescendants = true) {
             contentDescription = "$label, $countdown"

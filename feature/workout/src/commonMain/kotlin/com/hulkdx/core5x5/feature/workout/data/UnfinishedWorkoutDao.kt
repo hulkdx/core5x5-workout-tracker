@@ -209,9 +209,8 @@ interface UnfinishedWorkoutDao {
         val stored = getSession(workoutId) ?: return null
         if (stored.session.completedAtEpochMillis != null || stored.session.unfinishedSlot != 1) return null
         val exercise = stored.exercises.firstOrNull { it.position == exercisePosition } ?: return null
-        // Never silently discard a logged set, including non-sequential completions.
-        if (stored.sets.any { it.exercisePosition == exercisePosition && it.position >= edit.sets && it.isCompleted }) return null
-        check(updateExercise(exercise.copy(customName = edit.name.trim(), weightKg = edit.weightKg,
+        // Shrinking intentionally removes trailing sets and their logged reps in this transaction.
+        check(updateExercise(exercise.copy(weightKg = edit.weightKg,
             sets = edit.sets, reps = edit.reps, restDurationMillis = edit.restDurationMillis)) == 1)
         if (edit.sets < exercise.sets) removeTrailingSets(workoutId, exercisePosition, edit.sets)
         if (edit.sets > exercise.sets) insertSets((exercise.sets until edit.sets).map {

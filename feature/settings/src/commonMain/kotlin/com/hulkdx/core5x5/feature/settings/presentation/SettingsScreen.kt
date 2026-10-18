@@ -19,9 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
@@ -30,18 +27,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.window.Dialog
@@ -66,12 +60,9 @@ import com.hulkdx.core5x5.core.ui.theme.AppTypography
 fun SettingsScreen(
     uiState: SettingsUiState,
     onOpenUnits: () -> Unit,
-    onOpenRestDuration: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenLicense: () -> Unit,
     onSelectUnit: (WeightUnit) -> Unit,
-    onRestDurationInput: (String) -> Unit,
-    onSaveRestDuration: () -> Unit,
     onDismissDialog: () -> Unit,
     onRetryLoad: () -> Unit,
     onOpenRepository: () -> Unit,
@@ -79,7 +70,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.fillMaxSize().background(Settings.Background)
+        modifier = modifier.testTag("settings").fillMaxSize().background(Settings.Background)
             .verticalScroll(rememberScrollState()).padding(
                 horizontal = Settings.Inset,
                 vertical = Settings.TopGap,
@@ -96,18 +87,10 @@ fun SettingsScreen(
         when {
             uiState.isLoading -> SettingsMessage("Loading preferences…")
             preferences != null -> {
-                SettingsSection("WORKOUT") {
-                    AppSettingRow(
-                        label = "Rest Timer",
-                        value = formatRestDuration(preferences.restDurationSeconds),
-                        enabled = uiState.canChangePreferences,
-                        onClick = onOpenRestDuration,
-                    )
-                }
-                Spacer(Modifier.height(Settings.SectionGap))
                 SettingsSection("PREFERENCES") {
                     AppSettingRow(
                         label = "Weight Unit",
+                        modifier = Modifier.testTag("settings-units"),
                         value = preferences.weightUnit.displayName(),
                         enabled = uiState.canChangePreferences,
                         onClick = onOpenUnits,
@@ -129,12 +112,14 @@ fun SettingsScreen(
             SettingsDivider()
             AppSettingRow(
                 label = "About Core5x5",
+                modifier = Modifier.testTag("settings-about"),
                 value = "",
                 onClick = onOpenAbout,
             )
             SettingsDivider()
             AppSettingRow(
                 label = "Privacy Policy",
+                modifier = Modifier.testTag("settings-privacy"),
                 value = "",
                 onClick = onOpenPrivacyPolicy,
             )
@@ -152,7 +137,7 @@ fun SettingsScreen(
                 WeightUnit.entries.forEach { unit ->
                     val selected = uiState.preferences?.weightUnit == unit
                     Row(
-                        modifier = Modifier.fillMaxWidth().heightIn(min = AppDimensions.SettingHeight)
+                        modifier = Modifier.testTag("settings-unit:${unit.name}").fillMaxWidth().heightIn(min = AppDimensions.SettingHeight)
                             .selectable(
                                 selected = selected,
                                 enabled = !uiState.isSaving,
@@ -179,44 +164,7 @@ fun SettingsScreen(
                 }
             }
             SaveStatus(uiState)
-            AppSecondaryButton(label = "Cancel", enabled = !uiState.isSaving, onClick = onDismissDialog, palette = AppButtonPalette.Home)
-        }
-        SettingsDialog.REST_DURATION -> SettingsDialogSurface("Rest duration", onDismissDialog) {
-            SettingsMessage("Duration in seconds")
-            BasicTextField(
-                value = uiState.restDurationInput,
-                onValueChange = onRestDurationInput,
-                enabled = !uiState.isSaving,
-                singleLine = true,
-                textStyle = AppTypography.Body.copy(color = Settings.Primary),
-                cursorBrush = SolidColor(Settings.Action),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { if (uiState.canSaveRestDuration) onSaveRestDuration() }),
-                modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Rest duration in seconds" },
-                decorationBox = { field ->
-                    Box(
-                        modifier = Modifier.fillMaxWidth().heightIn(min = AppDimensions.SettingHeight)
-                            .border(
-                                width = AppDimensions.BorderStroke,
-                                color = if (uiState.hasInvalidRestDuration) AppColors.Destructive else Settings.Border,
-                                shape = RoundedCornerShape(AppDimensions.RadiusMedium),
-                            ).padding(AppDimensions.RestGap),
-                        contentAlignment = Alignment.CenterStart,
-                    ) { field() }
-                },
-            )
-            if (uiState.hasInvalidRestDuration) {
-                SettingsMessage("Enter a positive whole number of seconds.", error = true)
-            }
-            SettingsMessage("Applies to future timers. A running timer keeps its current time.")
-            SaveStatus(uiState)
-            AppPrimaryButton(
-                palette = AppButtonPalette.Home,
-                label = if (uiState.isSaving) "Saving…" else "Save",
-                enabled = uiState.canSaveRestDuration,
-                onClick = onSaveRestDuration,
-            )
-            AppSecondaryButton(label = "Cancel", enabled = !uiState.isSaving, onClick = onDismissDialog, palette = AppButtonPalette.Home)
+            AppSecondaryButton(label = "Cancel", modifier = Modifier.testTag("settings-cancel"), enabled = !uiState.isSaving, onClick = onDismissDialog, palette = AppButtonPalette.Home)
         }
         SettingsDialog.ABOUT -> SettingsDialogSurface("About Core5x5", onDismissDialog) {
             SettingsMessage("Core5x5: Workout Tracker")
@@ -225,13 +173,13 @@ fun SettingsScreen(
             if (uiState.error == SettingsError.OPEN_REPOSITORY) {
                 SettingsMessage("Unable to open the repository. Try again.", error = true)
             }
-            AppSecondaryButton(label = "Open-source repository", onClick = onOpenRepository, palette = AppButtonPalette.Home)
-            AppSecondaryButton(label = "MIT License", onClick = onOpenLicense, palette = AppButtonPalette.Home)
-            AppPrimaryButton(label = "Close", onClick = onDismissDialog, palette = AppButtonPalette.Home)
+            AppSecondaryButton(label = "Open-source repository", modifier = Modifier.testTag("settings-repository"), onClick = onOpenRepository, palette = AppButtonPalette.Home)
+            AppSecondaryButton(label = "MIT License", modifier = Modifier.testTag("settings-license"), onClick = onOpenLicense, palette = AppButtonPalette.Home)
+            AppPrimaryButton(label = "Close", modifier = Modifier.testTag("settings-close"), onClick = onDismissDialog, palette = AppButtonPalette.Home)
         }
         SettingsDialog.LICENSE -> SettingsDialogSurface("License", onDismissDialog) {
             Text(text = MIT_LICENSE, style = AppTypography.Body, color = Settings.Primary)
-            AppSecondaryButton(label = "Back to About", onClick = onOpenAbout, palette = AppButtonPalette.Home)
+            AppSecondaryButton(label = "Back to About", modifier = Modifier.testTag("settings-back-about"), onClick = onOpenAbout, palette = AppButtonPalette.Home)
         }
         null -> Unit
     }
@@ -241,7 +189,7 @@ fun SettingsScreen(
 private fun SettingsDialogSurface(title: String, onDismiss: () -> Unit, content: @Composable () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(
-            modifier = Modifier.fillMaxWidth().padding(
+            modifier = Modifier.testTag("settings-dialog").fillMaxWidth().padding(
                 horizontal = AppDimensions.ScreenInset,
                 vertical = AppDimensions.ContentPaddingVertical,
             ).imePadding(),
@@ -312,7 +260,7 @@ private fun SettingsScreenPreview() = SettingsPreview()
 
 @Preview(name = "Settings lb, narrow", widthDp = 320, heightDp = 640)
 @Composable
-private fun SettingsNarrowPreview() = SettingsPreview(TrainingPreferences(weightUnit = WeightUnit.LB, restDurationSeconds = 3_601))
+private fun SettingsNarrowPreview() = SettingsPreview(TrainingPreferences(weightUnit = WeightUnit.LB))
 
 @Preview(name = "Settings larger text", widthDp = 390, heightDp = 874)
 @Composable
@@ -332,8 +280,8 @@ private fun SettingsPreview(preferences: TrainingPreferences = TrainingPreferenc
             SettingsScreen(
                 uiState = SettingsUiState(isLoading = false, preferences = preferences, versionName = "1.0.0"),
                 modifier = Modifier.weight(1f),
-                onOpenUnits = {}, onOpenRestDuration = {}, onOpenAbout = {}, onOpenLicense = {},
-                onSelectUnit = {}, onRestDurationInput = {}, onSaveRestDuration = {},
+                onOpenUnits = {}, onOpenAbout = {}, onOpenLicense = {},
+                onSelectUnit = {},
                 onDismissDialog = {}, onRetryLoad = {}, onOpenRepository = {}, onOpenPrivacyPolicy = {},
             )
             Box(

@@ -4,8 +4,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSUserDefaults
 
 @OptIn(ExperimentalForeignApi::class)
-class IosPreferencesStorage : PreferencesStorage {
-    private val defaults = NSUserDefaults.standardUserDefaults
+class IosPreferencesStorage(private val defaults: NSUserDefaults = NSUserDefaults.standardUserDefaults) : PreferencesStorage {
 
     override suspend fun read(): String? = defaults.stringForKey(KEY)
 

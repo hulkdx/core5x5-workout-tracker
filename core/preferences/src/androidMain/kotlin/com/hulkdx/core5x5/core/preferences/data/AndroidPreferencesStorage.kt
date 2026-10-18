@@ -4,8 +4,8 @@ import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class AndroidPreferencesStorage(context: Context) : PreferencesStorage {
-    private val preferences = context.applicationContext.getSharedPreferences("core5x5_preferences", Context.MODE_PRIVATE)
+class AndroidPreferencesStorage(context: Context, name: String = "core5x5_preferences") : PreferencesStorage {
+    private val preferences = context.applicationContext.getSharedPreferences(name, Context.MODE_PRIVATE)
 
     override suspend fun read(): String? = withContext(Dispatchers.IO) {
         preferences.getString("training_preferences", null)

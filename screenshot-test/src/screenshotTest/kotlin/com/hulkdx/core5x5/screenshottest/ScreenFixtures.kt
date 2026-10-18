@@ -146,10 +146,9 @@ fun activeWorkoutRepReference(
 ): ActiveWorkoutUiState = activeWorkoutReference(Workout.A).let { state ->
     state.copy(unfinishedWorkout = requireNotNull(state.unfinishedWorkout).let { session ->
         session.copy(exercises = session.exercises.mapIndexed { index, exercise ->
-            if (index != 0) exercise else exercise.copy(reps = targetReps,
-                setStates = exercise.setStates.map { set ->
-                    val reps = recordedReps[set.position]
-                    set.copy(isCompleted = reps != null, completedReps = reps)
+            if (index != 0) exercise else exercise.copy(sets = recordedReps.size, reps = targetReps,
+                setStates = recordedReps.mapIndexed { position, reps ->
+                    UnfinishedWorkoutSet(position, isCompleted = reps != null, completedReps = reps)
                 },
             )
         })

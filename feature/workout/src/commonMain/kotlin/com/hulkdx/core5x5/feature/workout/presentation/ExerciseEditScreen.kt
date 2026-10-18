@@ -11,8 +11,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -28,7 +30,6 @@ fun ExerciseEditScreen(
     state: ExerciseEditUiState,
     onDismiss: () -> Unit,
     onSave: () -> Unit,
-    onNameChanged: (String) -> Unit,
     onWeightChanged: (Int) -> Unit,
     onSetsChanged: (Int) -> Unit,
     onRepsChanged: (Int) -> Unit,
@@ -40,16 +41,16 @@ fun ExerciseEditScreen(
     windowInsets: WindowInsets = WindowInsets.safeDrawing,
 ) {
     val enabled = !state.isSaving
-    Surface(modifier.fillMaxSize(), color = Home.Background) {
+    Surface(modifier.testTag("exercise-editor").fillMaxSize(), color = Home.Background) {
         Column(Modifier.fillMaxSize().windowInsetsPadding(windowInsets).imePadding()
             .padding(horizontal = Edit.Inset, vertical = 8.dp)) {
             Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onDismiss, enabled = enabled, modifier = Modifier.size(48.dp).semantics { contentDescription = "Cancel exercise editing" }) {
+                TextButton(onClick = onDismiss, enabled = enabled, modifier = Modifier.testTag("edit-cancel").size(48.dp).semantics { contentDescription = "Cancel exercise editing" }) {
                     AppEditCloseIcon()
                 }
-                Text("Edit ${state.originalName}", Modifier.weight(1f), style = Edit.Title,
+                Text("Edit ${state.exerciseName}", Modifier.weight(1f), style = Edit.Title,
                     color = Home.Primary, textAlign = TextAlign.Center)
-                TextButton(onClick = onSave, enabled = state.canSave) {
+                TextButton(onClick = onSave, enabled = state.canSave, modifier = Modifier.testTag("edit-save")) {
                     Text(if (state.isSaving) "Saving…" else "Save", style = Edit.Value,
                         color = if (state.canSave) Home.Action else Home.Secondary)
                 }
@@ -58,36 +59,19 @@ fun ExerciseEditScreen(
                 style = Edit.Body, color = Home.Secondary, textAlign = TextAlign.Center)
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(Edit.Gap)) {
-                AppEditCard {
-                    Text("Exercise Name", style = Edit.Body, color = Home.Secondary)
-                    Spacer(Modifier.height(Edit.NameGap))
-                    OutlinedTextField(value = state.name, onValueChange = onNameChanged, enabled = enabled,
-                        modifier = Modifier.fillMaxWidth(), singleLine = true, textStyle = Edit.Value,
-                        shape = RoundedCornerShape(Home.ControlRadius),
-                        trailingIcon = {
-                            TextButton(onClick = { onNameChanged("") }, enabled = enabled && state.name.isNotEmpty(),
-                                modifier = Modifier.semantics { contentDescription = "Clear exercise name" }) {
-                                AppEditCloseIcon()
-                            }
-                        },
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Home.Action,
-                            unfocusedBorderColor = Edit.FieldBorder, focusedTextColor = Home.Primary,
-                            unfocusedTextColor = Home.Primary, cursorColor = Home.Action),
-                    )
-                }
                 AppEditCard(compact = true) {
                     AppEditStepper("Working Weight (${state.unit.symbol})",
                         formatWeight(state.weightKg, state.unit).removeSuffix(" ${state.unit.symbol}"),
                         { onWeightChanged(-1) }, { onWeightChanged(1) }, enabled,
-                        canDecrease = state.weightKg > 0, canIncrease = state.weightKg < 1_000_000)
+                        canDecrease = state.weightKg > 0, canIncrease = state.weightKg < 1_000_000, id = "weight")
                 }
                 AppEditCard(compact = true) {
                     AppEditStepper("Sets", state.sets.toString(), { onSetsChanged(-1) }, { onSetsChanged(1) },
-                        enabled, canDecrease = state.sets > state.minimumSets, canIncrease = state.sets < 100)
+                        enabled, canDecrease = state.sets > 1, canIncrease = state.sets < 100, id = "sets")
                 }
                 AppEditCard(compact = true) {
                     AppEditStepper("Reps", state.reps.toString(), { onRepsChanged(-1) }, { onRepsChanged(1) },
-                        enabled, canDecrease = state.reps > 1, canIncrease = state.reps < 100)
+                        enabled, canDecrease = state.reps > 1, canIncrease = state.reps < 100, id = "reps")
                 }
                 AppEditCard(compact = true) {
                     val restChoices: @Composable () -> Unit = {
@@ -123,17 +107,17 @@ fun ExerciseEditScreen(
                             Modifier.padding(top = 6.dp), style = Edit.Body, color = Home.Secondary)
                     }
                 }
-                if (state.name.isBlank()) EditError("Enter an exercise name.")
                 if (state.hasSaveError) EditError("Unable to save changes. Try again.")
                 Spacer(Modifier.height(Edit.Gap))
             }
             Box(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 12.dp)) {
-                AppHomeStartButton(if (state.isSaving) "Saving…" else "Save Changes", onSave, state.canSave)
+                AppHomeStartButton(if (state.isSaving) "Saving…" else "Save Changes", onSave, state.canSave, modifier = Modifier.testTag("edit-save-changes"))
             }
         }
     }
     if (state.showCustomRest) {
         ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            sheetGesturesEnabled = false, dragHandle = null,
             containerColor = Edit.Sheet, contentColor = Home.Primary, scrimColor = Color.Black.copy(alpha = .15f),
             shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)) {
             CustomRestContent(state.customRestSeconds, onCustomRestChanged, onDismiss, onApplyCustomRest)
@@ -145,7 +129,7 @@ fun ExerciseEditScreen(
 fun CustomRestContent(seconds: Long, onChanged: (Long) -> Unit, onCancel: () -> Unit, onApply: () -> Unit) {
     var minutesScrolling by remember { mutableStateOf(false) }
     var secondsScrolling by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = Edit.Inset, vertical = 12.dp),
+    Column(Modifier.testTag("custom-rest").fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = Edit.Inset, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Custom Rest Timer", style = Edit.Title, color = Home.Primary, textAlign = TextAlign.Center)
         Text("Choose the rest duration for this exercise.", style = Edit.Body, color = Home.Secondary, textAlign = TextAlign.Center)
@@ -167,10 +151,16 @@ fun CustomRestContent(seconds: Long, onChanged: (Long) -> Unit, onCancel: () -> 
             Text("Selected: ${restDurationLabel(seconds)}", Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
                 style = Edit.Value, color = Home.Primary, textAlign = TextAlign.Center)
         }
-        if (seconds == 0L) EditError("Choose a positive duration, or use Off in the editor.")
+        // Keep the message's measured space, including wrapped lines, so validation
+        // does not resize the sheet or move the wheels and actions.
+        Text("Choose a positive duration, or use Off in the editor.",
+            modifier = if (seconds == 0L) Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+                else Modifier.clearAndSetSemantics {},
+            style = Edit.Body,
+            color = if (seconds == 0L) com.hulkdx.core5x5.core.ui.theme.AppColors.Destructive else Color.Transparent)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(Modifier.weight(1f)) { AppRestFinishButton("Cancel", onCancel, true) }
-            Box(Modifier.weight(1f)) { AppHomeStartButton("Apply", onApply, seconds > 0 && !minutesScrolling && !secondsScrolling) }
+            Box(Modifier.weight(1f)) { AppRestFinishButton("Cancel", onCancel, true, modifier = Modifier.testTag("custom-rest-cancel")) }
+            Box(Modifier.weight(1f)) { AppHomeStartButton("Apply", onApply, seconds > 0 && !minutesScrolling && !secondsScrolling, modifier = Modifier.testTag("custom-rest-apply")) }
         }
     }
 }

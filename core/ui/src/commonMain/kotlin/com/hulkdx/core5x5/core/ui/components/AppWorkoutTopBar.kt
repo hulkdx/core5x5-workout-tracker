@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
@@ -45,7 +46,7 @@ fun AppWorkoutTopBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier.sizeIn(
+            modifier = Modifier.testTag("workout-back").sizeIn(
                 minWidth = AppDimensions.TouchTargetMin,
                 minHeight = AppDimensions.TouchTargetMin,
             ).clickable(enabled = backEnabled, role = Role.Button, onClick = onBack)
@@ -66,7 +67,7 @@ fun AppWorkoutTopBar(
         }
         Text(
             text = title,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).testTag("workout-title"),
             style = if (refined) Home.Button else AppTypography.Label,
             color = if (refined) Home.Primary else AppColors.PrimaryText,
             textAlign = TextAlign.Center,
