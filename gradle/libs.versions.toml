@@ -18,7 +18,7 @@ androidx-test-runner = "1.7.0"
 composeMultiplatform = "1.12.1"
 compose-screenshot = "0.0.1-alpha16"
 junit = "4.13.2"
-kotlin = "2.4.20"
+kotlin = "2.4.21"
 koin = "4.2.2"
 kotlinx-coroutines = "1.11.0"
 # Material 3 version shipped with stable Compose Multiplatform 1.12.1.
