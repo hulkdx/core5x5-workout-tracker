@@ -16,6 +16,7 @@ kotlin {
 android {
     namespace = "com.hulkdx.core5x5.screenshottest"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
+    compileSdkMinor = libs.versions.android.compileSdkMinor.get().toInt()
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
     defaultConfig {

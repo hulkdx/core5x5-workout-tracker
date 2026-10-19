@@ -1,6 +1,7 @@
 package com.hulkdx.core5x5.core.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
 import com.hulkdx.core5x5.core.ui.theme.AppColors
 import com.hulkdx.core5x5.core.ui.theme.AppDimensions
 import com.hulkdx.core5x5.core.ui.theme.AppTypography
@@ -26,14 +30,30 @@ fun AppMetrics(
     secondValue: String,
     modifier: Modifier = Modifier,
 ) {
-    // At reference scale the cards measure 78dp inside an 86dp row. The remaining space stays below.
-    Column(modifier = modifier.fillMaxWidth().heightIn(min = AppDimensions.MetricsRowHeight)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
-            horizontalArrangement = Arrangement.spacedBy(AppDimensions.MetricsGap),
-        ) {
-            AppMetricCard(firstLabel, firstValue, Modifier.weight(1f).fillMaxHeight())
-            AppMetricCard(secondLabel, secondValue, Modifier.weight(1f).fillMaxHeight())
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    BoxWithConstraints(modifier.fillMaxWidth().heightIn(min = AppDimensions.MetricsRowHeight)) {
+        val cardContentWidth = (maxWidth - AppDimensions.MetricsGap) / 2 -
+            AppDimensions.MetricPaddingHorizontal * 2
+        val requiredTextWidth = maxOf(
+            textMeasurer.measure(AnnotatedString(firstLabel), AppTypography.Caption).size.width,
+            textMeasurer.measure(AnnotatedString(secondLabel), AppTypography.Caption).size.width,
+            textMeasurer.measure(AnnotatedString(firstValue), AppTypography.Heading).size.width,
+            textMeasurer.measure(AnnotatedString(secondValue), AppTypography.Heading).size.width,
+        )
+        if (requiredTextWidth <= with(density) { cardContentWidth.toPx() }) {
+            Row(
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.MetricsGap),
+            ) {
+                AppMetricCard(firstLabel, firstValue, Modifier.weight(1f).fillMaxHeight())
+                AppMetricCard(secondLabel, secondValue, Modifier.weight(1f).fillMaxHeight())
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(AppDimensions.MetricsGap)) {
+                AppMetricCard(firstLabel, firstValue, Modifier.fillMaxWidth())
+                AppMetricCard(secondLabel, secondValue, Modifier.fillMaxWidth())
+            }
         }
     }
 }

@@ -189,6 +189,41 @@ abstract class UnfinishedWorkoutPersistenceTest {
     }
 
     @Test
+    fun retryingTheSavedProgramAfterReopeningPreservesNewProgressAndRest() = runTest {
+        val name = "switch-retry-reopen.db"
+        deleteDatabase(name)
+        try {
+            val database = openDatabase(name)
+            val saved = try {
+                val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+                val started = repository.startWorkout(Workout.A)
+                requireNotNull(repository.switchWorkout(started.id, Workout.B))
+                requireNotNull(repository.completeSetAndStartRest(started.id, 2, 0, 180_000))
+                requireNotNull(repository.setCompletedReps(started.id, 2, 0, 3))
+            } finally {
+                database.close()
+            }
+            val reopened = openDatabase(name)
+            try {
+                val repository = RoomWorkoutRepository(reopened.unfinishedWorkoutDao()) {
+                    error("Confirming the saved program must not restart rest or the session")
+                }
+                assertEquals(saved, repository.getUnfinishedWorkout())
+                assertEquals(saved, repository.switchWorkout(saved.id, Workout.B))
+                assertEquals(saved, repository.getUnfinishedWorkout())
+                assertEquals(3, saved.exercises[2].setStates.single().completedReps)
+                assertEquals(RestTimer(181_000), saved.restTimer)
+                assertTrue(repository.getCompletedWorkouts().isEmpty())
+                assertEquals(Workout.A, repository.getNextWorkout())
+            } finally {
+                reopened.close()
+            }
+        } finally {
+            deleteDatabase(name)
+        }
+    }
+
+    @Test
     fun actualRepsSurviveEditsReopeningFinalizationAndHistoryReads() = runTest {
         val name = "actual-reps-reopen.db"
         deleteDatabase(name)
@@ -258,6 +293,58 @@ abstract class UnfinishedWorkoutPersistenceTest {
             val recompleted = requireNotNull(repository.completeSetAndStartRest(started.id, 2, 0, 180_000))
             assertEquals(5, recompleted.exercises[2].setStates[0].completedReps)
             assertEquals(RestTimer(201_000), recompleted.restTimer)
+        }
+    }
+
+    @Test
+    fun resetRepsStayUnrecordedAfterReopeningAndReloadingCompletedHistory() = runTest {
+        val name = "actual-reps-reset-reopen.db"
+        deleteDatabase(name)
+        try {
+            val database = openDatabase(name)
+            val reset = try {
+                val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+                val started = repository.startWorkout(Workout.A)
+                requireNotNull(repository.completeSetAndStartRest(started.id, 0, 0, 180_000))
+                requireNotNull(repository.setCompletedReps(started.id, 0, 0, 3))
+                requireNotNull(repository.completeSetAndStartRest(started.id, 0, 1, 180_000))
+                requireNotNull(repository.setCompletedReps(started.id, 0, 1, 2))
+                requireNotNull(repository.undoSetCompletion(started.id, 0, 0))
+            } finally {
+                database.close()
+            }
+            val reopened = openDatabase(name)
+            val completed = try {
+                val repository = RoomWorkoutRepository(reopened.unfinishedWorkoutDao()) { 61_000L }
+                assertEquals(reset, repository.getUnfinishedWorkout())
+                assertEquals(UnfinishedWorkoutSet(0), reset.exercises[0].setStates[0])
+                assertEquals(RestTimer(181_000), reset.restTimer)
+                assertEquals(reset, repository.undoSetCompletion(reset.id, 0, 0))
+                assertTrue(repository.finalizeWorkout(reset.id))
+                requireNotNull(repository.getCompletedWorkout(reset.id))
+            } finally {
+                reopened.close()
+            }
+            val completedDatabase = openDatabase(name)
+            try {
+                val repository = RoomWorkoutRepository(completedDatabase.unfinishedWorkoutDao()) {
+                    error("Reloading completed reps must not read the clock")
+                }
+                assertNull(repository.getUnfinishedWorkout())
+                assertEquals(completed, repository.getCompletedWorkout(reset.id))
+                assertEquals(reset.exercises, completed.exercises)
+                assertEquals(1, completed.completedSets)
+                val history = requireNotNull(repository.getCompletedWorkoutById(reset.id))
+                assertEquals(1, history.completedSets)
+                assertFalse(history.exercises[0].setStates[0].isCompleted)
+                assertNull(history.exercises[0].setStates[0].completedReps)
+                assertEquals(2, history.exercises[0].setStates[1].completedReps)
+                assertEquals(history, repository.getCompletedWorkouts().single())
+            } finally {
+                completedDatabase.close()
+            }
+        } finally {
+            deleteDatabase(name)
         }
     }
 

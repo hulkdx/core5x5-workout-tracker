@@ -1,5 +1,7 @@
 package com.hulkdx.core5x5.core.preferences.domain
 
+import kotlin.math.nextDown
+import kotlin.math.nextUp
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -46,6 +48,16 @@ class WeightUnitTest {
             assertEquals("$pounds lb", formatWeight(weightKg, WeightUnit.LB))
             assertEquals("${pounds - 5} lb", formatWeight(weightKg - 1e-9, WeightUnit.LB))
             assertEquals("$pounds lb", formatWeight(weightKg + 1e-9, WeightUnit.LB))
+        }
+    }
+
+    @Test
+    fun adjacentRepresentableWeightsStayOnTheCorrectSideOfEveryFivePoundBoundary() {
+        for (pounds in 5..1_000 step 5) {
+            val weightKg = WeightUnit.LB.toKilograms(pounds.toDouble())
+            assertEquals("${pounds - 5} lb", formatWeight(weightKg.nextDown(), WeightUnit.LB), "$pounds lb: below")
+            assertEquals("$pounds lb", formatWeight(weightKg, WeightUnit.LB), "$pounds lb: exact")
+            assertEquals("$pounds lb", formatWeight(weightKg.nextUp(), WeightUnit.LB), "$pounds lb: above")
         }
     }
 

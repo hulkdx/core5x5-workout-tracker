@@ -17,12 +17,14 @@ import com.hulkdx.core5x5.feature.workout.presentation.WorkoutSnapshotContent
 /** Snapshot-only bridge: no Koin, database, preferences, clock, or ViewModel is started. */
 fun SnapshotViewController(scene: String, onReady: () -> Unit) = ComposeUIViewController {
     val density = LocalDensity.current
-    CompositionLocalProvider(LocalDensity provides Density(density.density, if (scene == "settingsLarge") 2f else 1f)) {
+    CompositionLocalProvider(LocalDensity provides Density(density.density, if (scene.endsWith("Large")) 2f else 1f)) {
         AppTheme {
             when (scene) {
                 "todayA", "todayB" -> SnapshotTab(TopLevelTab.TODAY) { WorkoutSnapshotContent(scene) }
                 "history" -> SnapshotTab(TopLevelTab.HISTORY) { HistorySnapshotContent() }
-                "settings", "settingsLarge" -> SnapshotTab(TopLevelTab.SETTINGS) { SettingsSnapshotContent() }
+                "settings", "settingsLarge", "settingsUnits", "settingsUnitsError",
+                "settingsAbout", "settingsAboutError", "settingsLicense" ->
+                    SnapshotTab(TopLevelTab.SETTINGS) { SettingsSnapshotContent(scene) }
                 "active", "rest", "editor", "complete" -> WorkoutSnapshotContent(scene)
                 else -> error("Unknown iOS snapshot: $scene")
             }

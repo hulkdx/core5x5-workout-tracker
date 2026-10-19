@@ -10,10 +10,9 @@ plugins {
 kotlin {
     android {
         namespace = "com.hulkdx.core5x5.uitest"
-        // The resolved Compose test runtime requires the minor API SDK.
         compileSdk {
             version = release(libs.versions.android.compileSdk.get().toInt()) {
-                minorApiLevel = 1
+                minorApiLevel = libs.versions.android.compileSdkMinor.get().toInt()
             }
         }
         minSdk = libs.versions.android.minSdk.get().toInt()
