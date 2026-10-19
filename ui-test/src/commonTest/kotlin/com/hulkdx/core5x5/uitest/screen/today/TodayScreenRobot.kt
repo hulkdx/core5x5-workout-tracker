@@ -14,14 +14,26 @@ class TodayScreenRobot(private val app: AppUiTest) {
         app.awaitNode(hasTestTag("workout-switch") and isEnabled()).performScrollTo().performClick()
         app.awaitNode(hasTestTag("today-workout") and hasText("Workout ${target.name}"))
     }
-    fun startWorkout() {
+    fun startWorkout(waitForStart: Boolean = true) {
         app.awaitNode(hasTestTag("start-workout") and isEnabled()).performScrollTo().performClick()
-        app.awaitNode(hasTestTag("workout-title"))
+        if (waitForStart) app.awaitNode(hasTestTag("workout-title"))
     }
+    fun pressSwitch() { app.awaitNode(hasTestTag("workout-switch") and isEnabled()).performScrollTo().performClick() }
+    fun retryLoad() { app.awaitNode(hasText("Try Again")).performScrollTo().performClick() }
     fun verify(assertions: TodayScreenVerify.() -> Unit) = TodayScreenVerify(app).apply(assertions)
 }
 
 class TodayScreenVerify(private val app: AppUiTest) {
+    fun actionsBlocked() {
+        app.awaitNode(hasTestTag("start-workout")).performScrollTo().assertIsNotEnabled()
+        app.awaitNode(hasTestTag("workout-switch")).performScrollTo().assertIsNotEnabled()
+    }
+    fun initialLoadingShown() {
+        app.awaitNode(hasTestTag("today")).assertIsDisplayed()
+        app.ui.onNodeWithTag("start-workout").assertDoesNotExist()
+        app.ui.onNodeWithText("Try Again").assertDoesNotExist()
+    }
+    fun errorShown(message: String) { app.awaitNode(hasText(message)).performScrollTo().assertIsDisplayed() }
     fun nextWorkoutShown(workout: Workout) {
         app.awaitNode(hasTestTag("today-workout") and hasText("Workout ${workout.name}")).assertIsDisplayed()
     }

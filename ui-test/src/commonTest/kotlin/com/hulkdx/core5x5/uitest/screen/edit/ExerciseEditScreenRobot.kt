@@ -19,8 +19,9 @@ class ExerciseEditScreenRobot(private val app: AppUiTest) {
     fun increaseSets() = step("sets", "increase")
     fun decreaseSets() = step("sets", "decrease")
     fun increaseReps() = step("reps", "increase")
+    fun decreaseReps() = step("reps", "decrease")
     private fun step(field: String, direction: String) {
-        app.awaitNode(hasTestTag("edit:$field:$direction") and isEnabled()).performScrollTo().performClick()
+        app.awaitNode(hasTestTag("edit:$field:$direction") and isEnabled()).performScrollTo().assertIsDisplayed().performClick()
     }
     fun selectRestOff() { app.awaitNode(hasTestTag("edit-rest:0")).performScrollTo().performClick() }
     fun openCustomRest() {
@@ -29,7 +30,7 @@ class ExerciseEditScreenRobot(private val app: AppUiTest) {
     }
     fun chooseCustomRest(minutes: Int, seconds: Int) {
         for ((label, value) in listOf("Minutes" to minutes, "Seconds" to seconds)) {
-            app.ui.onNodeWithTag("duration-wheel:$label").performScrollToIndex(value)
+            app.ui.onNodeWithTag("duration-wheel:$label").performScrollTo().performScrollToIndex(value)
             app.awaitNode(hasTestTag("duration-value:$label:$value")).performClick()
         }
     }
@@ -42,11 +43,11 @@ class ExerciseEditScreenRobot(private val app: AppUiTest) {
         app.awaitNode(hasTestTag("edit-save") and isEnabled())
     }
     fun save(waitForSave: Boolean = true) {
-        app.awaitNode(hasTestTag("edit-save") and isEnabled()).performClick()
+        app.awaitNode(hasTestTag("edit-save-changes") and isEnabled()).assertIsDisplayed().performClick()
         if (waitForSave) app.awaitNode(hasTestTag("active-workout"))
     }
     fun cancel() {
-        app.awaitNode(hasTestTag("edit-cancel")).performClick()
+        app.awaitNode(hasTestTag("edit-cancel")).performScrollTo().assertIsDisplayed().performClick()
         app.awaitNode(hasTestTag("active-workout"))
     }
     fun verify(assertions: ExerciseEditScreenVerify.() -> Unit) = ExerciseEditScreenVerify(app).apply(assertions)
@@ -61,10 +62,21 @@ class ExerciseEditScreenVerify(private val app: AppUiTest) {
     fun saveErrorShown() {
         app.awaitNode(hasText("Unable to save changes. Try again.")).performScrollTo().assertIsDisplayed()
     }
-    fun nameEditingUnavailable() {
+    fun nameEditingUnavailable(name: String = "Squat") {
         app.ui.onNodeWithTag("edit-name").assertDoesNotExist()
         app.ui.onNodeWithText("Exercise Name").assertDoesNotExist()
-        app.awaitNode(hasText("Edit Squat")).assertIsDisplayed()
+        app.awaitNode(hasText("Edit $name")).assertIsDisplayed()
         app.ui.onNodeWithTag("edit-save").assertIsEnabled()
+    }
+
+    fun savingBlocksChangesAndDismissal() {
+        app.awaitNode(hasTestTag("edit-save")).assertIsNotEnabled()
+        app.awaitNode(hasTestTag("edit-cancel")).assertIsNotEnabled()
+        for (field in listOf("weight", "sets", "reps")) {
+            for (direction in listOf("increase", "decrease")) {
+                app.ui.onNodeWithTag("edit:$field:$direction").performScrollTo().assertIsNotEnabled()
+            }
+        }
+        app.ui.onNodeWithTag("edit-rest:0").performScrollTo().assertIsNotEnabled()
     }
 }

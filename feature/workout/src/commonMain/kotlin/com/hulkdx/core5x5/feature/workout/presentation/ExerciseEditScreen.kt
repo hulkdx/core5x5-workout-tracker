@@ -44,71 +44,74 @@ fun ExerciseEditScreen(
     Surface(modifier.testTag("exercise-editor").fillMaxSize(), color = Home.Background) {
         Column(Modifier.fillMaxSize().windowInsetsPadding(windowInsets).imePadding()
             .padding(horizontal = Edit.Inset, vertical = 8.dp)) {
-            Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onDismiss, enabled = enabled, modifier = Modifier.testTag("edit-cancel").size(48.dp).semantics { contentDescription = "Cancel exercise editing" }) {
-                    AppEditCloseIcon()
-                }
-                Text("Edit ${state.exerciseName}", Modifier.weight(1f), style = Edit.Title,
-                    color = Home.Primary, textAlign = TextAlign.Center)
-                TextButton(onClick = onSave, enabled = state.canSave, modifier = Modifier.testTag("edit-save")) {
-                    Text(if (state.isSaving) "Saving…" else "Save", style = Edit.Value,
-                        color = if (state.canSave) Home.Action else Home.Secondary)
-                }
-            }
-            Text("Adjust the details for this exercise.", Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 20.dp),
-                style = Edit.Body, color = Home.Secondary, textAlign = TextAlign.Center)
-            Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(Edit.Gap)) {
-                AppEditCard(compact = true) {
-                    AppEditStepper("Working Weight (${state.unit.symbol})",
-                        formatWeight(state.weightKg, state.unit).removeSuffix(" ${state.unit.symbol}"),
-                        { onWeightChanged(-1) }, { onWeightChanged(1) }, enabled,
-                        canDecrease = state.weightKg > 0, canIncrease = state.weightKg < 1_000_000, id = "weight")
-                }
-                AppEditCard(compact = true) {
-                    AppEditStepper("Sets", state.sets.toString(), { onSetsChanged(-1) }, { onSetsChanged(1) },
-                        enabled, canDecrease = state.sets > 1, canIncrease = state.sets < 100, id = "sets")
-                }
-                AppEditCard(compact = true) {
-                    AppEditStepper("Reps", state.reps.toString(), { onRepsChanged(-1) }, { onRepsChanged(1) },
-                        enabled, canDecrease = state.reps > 1, canIncrease = state.reps < 100, id = "reps")
-                }
-                AppEditCard(compact = true) {
-                    val restChoices: @Composable () -> Unit = {
-                    AppRestChoices(selected = if (state.showCustomRest) 2 else when (state.effectiveRestDurationMillis) {
-                        0L -> 0
-                        180_000L -> 1
-                        else -> 2
-                    }, enabled = enabled, onSelect = { choice ->
-                        when (choice) {
-                            0 -> onRestSelected(0)
-                            1 -> onRestSelected(180_000)
-                            else -> onOpenCustomRest()
-                        }
-                    })
+            // Long saved names must not consume the controls' scrolling viewport.
+            Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
+                Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = onDismiss, enabled = enabled, modifier = Modifier.testTag("edit-cancel").size(48.dp).semantics { contentDescription = "Cancel exercise editing" }) {
+                        AppEditCloseIcon()
                     }
-                    BoxWithConstraints {
-                        if (maxWidth >= 320.dp && LocalDensity.current.fontScale <= 1.3f) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Row(Modifier.width(116.dp), verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    AppEditTimerIcon()
-                                    Text("Rest Timer", style = Edit.Body, color = Home.Secondary)
-                                }
-                                Box(Modifier.weight(1f)) { restChoices() }
+                    Text("Edit ${state.exerciseName}", Modifier.weight(1f), style = Edit.Title,
+                        color = Home.Primary, textAlign = TextAlign.Center)
+                    TextButton(onClick = onSave, enabled = state.canSave, modifier = Modifier.testTag("edit-save")) {
+                        Text(if (state.isSaving) "Saving…" else "Save", style = Edit.Value,
+                            color = if (state.canSave) Home.Action else Home.Secondary)
+                    }
+                }
+                Text("Adjust the details for this exercise.", Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 20.dp),
+                    style = Edit.Body, color = Home.Secondary, textAlign = TextAlign.Center)
+                Column(Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(Edit.Gap)) {
+                    AppEditCard(compact = true) {
+                        AppEditStepper("Working Weight (${state.unit.symbol})",
+                            formatWeight(state.weightKg, state.unit).removeSuffix(" ${state.unit.symbol}"),
+                            { onWeightChanged(-1) }, { onWeightChanged(1) }, enabled,
+                            canDecrease = state.weightKg > 0, canIncrease = state.weightKg < 1_000_000, id = "weight")
+                    }
+                    AppEditCard(compact = true) {
+                        AppEditStepper("Sets", state.sets.toString(), { onSetsChanged(-1) }, { onSetsChanged(1) },
+                            enabled, canDecrease = state.sets > 1, canIncrease = state.sets < 100, id = "sets")
+                    }
+                    AppEditCard(compact = true) {
+                        AppEditStepper("Reps", state.reps.toString(), { onRepsChanged(-1) }, { onRepsChanged(1) },
+                            enabled, canDecrease = state.reps > 1, canIncrease = state.reps < 100, id = "reps")
+                    }
+                    AppEditCard(compact = true) {
+                        val restChoices: @Composable () -> Unit = {
+                        AppRestChoices(selected = if (state.showCustomRest) 2 else when (state.effectiveRestDurationMillis) {
+                            0L -> 0
+                            180_000L -> 1
+                            else -> 2
+                        }, enabled = enabled, onSelect = { choice ->
+                            when (choice) {
+                                0 -> onRestSelected(0)
+                                1 -> onRestSelected(180_000)
+                                else -> onOpenCustomRest()
                             }
-                        } else Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Rest Timer", style = Edit.Body, color = Home.Secondary)
-                            restChoices()
+                        })
+                        }
+                        BoxWithConstraints {
+                            if (maxWidth >= 320.dp && LocalDensity.current.fontScale <= 1.3f) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Row(Modifier.width(116.dp), verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        AppEditTimerIcon()
+                                        Text("Rest Timer", style = Edit.Body, color = Home.Secondary)
+                                    }
+                                    Box(Modifier.weight(1f)) { restChoices() }
+                                }
+                            } else Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Rest Timer", style = Edit.Body, color = Home.Secondary)
+                                restChoices()
+                            }
+                        }
+                        if (state.effectiveRestDurationMillis !in listOf(0L, 180_000L)) {
+                            Text(restDurationLabel(state.effectiveRestDurationMillis / 1_000),
+                                Modifier.padding(top = 6.dp), style = Edit.Body, color = Home.Secondary)
                         }
                     }
-                    if (state.effectiveRestDurationMillis !in listOf(0L, 180_000L)) {
-                        Text(restDurationLabel(state.effectiveRestDurationMillis / 1_000),
-                            Modifier.padding(top = 6.dp), style = Edit.Body, color = Home.Secondary)
-                    }
+                    if (state.hasSaveError) EditError("Unable to save changes. Try again.")
+                    Spacer(Modifier.height(Edit.Gap))
                 }
-                if (state.hasSaveError) EditError("Unable to save changes. Try again.")
-                Spacer(Modifier.height(Edit.Gap))
             }
             Box(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 12.dp)) {
                 AppHomeStartButton(if (state.isSaving) "Saving…" else "Save Changes", onSave, state.canSave, modifier = Modifier.testTag("edit-save-changes"))

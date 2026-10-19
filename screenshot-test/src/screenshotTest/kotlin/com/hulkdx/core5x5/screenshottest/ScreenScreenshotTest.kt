@@ -28,6 +28,7 @@ import com.hulkdx.core5x5.feature.history.presentation.HistoryScreen
 import com.hulkdx.core5x5.feature.history.presentation.HistoryUiState
 import com.hulkdx.core5x5.feature.history.presentation.WorkoutDetailScreen
 import com.hulkdx.core5x5.feature.history.presentation.WorkoutDetailUiState
+import com.hulkdx.core5x5.feature.settings.presentation.SettingsError
 import com.hulkdx.core5x5.feature.settings.presentation.SettingsScreen
 import com.hulkdx.core5x5.feature.settings.presentation.SettingsUiState
 import com.hulkdx.core5x5.feature.workout.domain.Workout
@@ -396,6 +397,44 @@ class ScreenScreenshotTest {
     @Composable
     fun Settings() = SettingsSnapshot(
         SettingsUiState(isLoading = false, preferences = TrainingPreferences(), versionName = "1.0.0"),
+    )
+
+    @PreviewTest
+    @Preview(name = "Narrow Settings lb", widthDp = 320, heightDp = 640)
+    @Composable
+    fun SettingsNarrow() = SettingsSnapshot(
+        SettingsUiState(isLoading = false, preferences = TrainingPreferences(WeightUnit.LB), versionName = "1.0.0"),
+    )
+
+    @PreviewTest
+    @Preview(name = "Settings large text", widthDp = 360, heightDp = 640, fontScale = 2f)
+    @Composable
+    fun SettingsLargeText() = SettingsSnapshot(
+        SettingsUiState(isLoading = false, preferences = TrainingPreferences(), versionName = "1.0.0"),
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun SettingsLoading() = SettingsSnapshot(SettingsUiState(versionName = "1.0.0"))
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun SettingsLoadError() = SettingsSnapshot(
+        SettingsUiState(isLoading = false, error = SettingsError.LOAD, versionName = "1.0.0"),
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun SettingsPrivacyError() = SettingsSnapshot(
+        SettingsUiState(
+            isLoading = false,
+            preferences = TrainingPreferences(),
+            versionName = "1.0.0",
+            error = SettingsError.OPEN_PRIVACY_POLICY,
+        ),
     )
 }
 

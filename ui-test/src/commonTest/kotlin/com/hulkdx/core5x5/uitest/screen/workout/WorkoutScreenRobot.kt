@@ -8,6 +8,8 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
@@ -21,6 +23,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.unit.IntSize
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.presentation.displayName
@@ -40,10 +43,12 @@ fun launchWorkoutScreen(app: AppUiTest, actions: WorkoutScreenRobot.() -> Unit):
 
 class WorkoutScreenRobot(private val app: AppUiTest) {
 
-    fun tapSet(exercise: Exercise, set: Int, waitForSave: Boolean = true) {
+    fun tapSet(exercise: Exercise, set: Int, waitForSave: Boolean = true, scroll: Boolean = true) {
         val target = setMatcher(exercise, set)
-        app.ui.onNodeWithTag("active-workout-list").performScrollToNode(hasTestTag("exercise:${exercise.name}"))
-        val node = app.awaitNode(target and isEnabled()).performScrollTo()
+        val node = if (scroll) {
+            app.scrollToNode("active-workout-list", target and isEnabled(), hasTestTag("exercise:${exercise.name}"))
+                .performScrollTo()
+        } else app.awaitNode(target and isEnabled())
         val before = node.fetchSemanticsNode().config
         val beforeState = before[SemanticsProperties.StateDescription]
         val beforeDescription = before[SemanticsProperties.ContentDescription]
@@ -52,7 +57,13 @@ class WorkoutScreenRobot(private val app: AppUiTest) {
             it.config[SemanticsProperties.StateDescription] != beforeState ||
                 it.config[SemanticsProperties.ContentDescription] != beforeDescription
         }
-        if (waitForSave) app.awaitNode(target and isEnabled() and changed)
+        if (waitForSave) {
+            val saved = target and isEnabled() and changed
+            // A newly pinned timer can move a lower lazy item out of composition.
+            if (scroll) {
+                app.scrollToNode("active-workout-list", saved, hasTestTag("exercise:${exercise.name}"))
+            } else app.awaitNode(saved)
+        }
     }
 
     fun completeAllSets(workout: Workout = Workout.A) {
@@ -105,8 +116,55 @@ class WorkoutScreenRobot(private val app: AppUiTest) {
 }
 
 class WorkoutScreenVerify(private val app: AppUiTest) {
+    fun mutationsBlocked(switchCanRetry: Boolean = false) {
+        app.ui.onNodeWithTag("active-workout-list").performScrollToNode(hasTestTag("workout-switch"))
+        val switch = app.awaitNode(hasTestTag("workout-switch"))
+        if (switchCanRetry) switch.assertIsEnabled() else switch.assertIsNotEnabled()
+        app.ui.onNodeWithTag("active-workout-list").performScrollToNode(hasTestTag("exercise:SQUAT"))
+        app.awaitNode(setMatcher(Exercise.SQUAT, 1)).assertIsNotEnabled()
+        app.awaitNode(hasTestTag("edit-exercise") and hasAnyAncestor(hasTestTag("exercise:SQUAT")))
+            .assertIsNotEnabled()
+        app.ui.onNodeWithTag("active-workout-list").performScrollToNode(hasTestTag("finish-workout"))
+        app.awaitNode(hasTestTag("finish-workout")).assertIsNotEnabled()
+    }
+
+    fun mutationsAvailable() {
+        app.ui.onNodeWithTag("active-workout-list").performScrollToNode(hasTestTag("workout-switch"))
+        app.awaitNode(hasTestTag("workout-switch") and isEnabled()).assertIsEnabled()
+        app.ui.onNodeWithTag("active-workout-list").performScrollToNode(hasTestTag("exercise:SQUAT"))
+        app.awaitNode(setMatcher(Exercise.SQUAT, 1) and isEnabled()).assertIsEnabled()
+        app.awaitNode(hasTestTag("edit-exercise") and hasAnyAncestor(hasTestTag("exercise:SQUAT")))
+            .assertIsEnabled()
+        app.ui.onNodeWithTag("active-workout-list").performScrollToNode(hasTestTag("finish-workout"))
+        app.awaitNode(hasTestTag("finish-workout") and isEnabled()).assertIsEnabled()
+    }
+
+    fun finishShowsSaving() {
+        app.awaitNode(hasTestTag("finish-workout")).assertTextEquals("Saving…").assertIsNotEnabled()
+    }
+
+    fun geometry(exercise: Exercise): ExerciseGeometry {
+        val card = hasTestTag("exercise:${exercise.name}")
+        app.ui.onNodeWithTag("active-workout-list").performScrollToNode(card)
+        return ExerciseGeometry(
+            app.awaitNode(card).fetchSemanticsNode().size,
+            app.awaitNode(setMatcher(exercise, 1)).fetchSemanticsNode().size,
+        )
+    }
+
+    // Do not scroll before this assertion: that would hide an unwanted anchor shift.
+    fun exerciseTop(exercise: Exercise): Float =
+        app.awaitNode(hasTestTag("exercise:${exercise.name}")).fetchSemanticsNode().positionInRoot.y
+
+    fun pinnedTimerDoesNotOverlapList() {
+        val list = app.ui.onNodeWithTag("active-workout-list").fetchSemanticsNode().boundsInRoot
+        val timer = app.awaitNode(hasTestTag("rest-timer")).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        assertTrue(list.bottom <= timer.top, "Pinned rest must reserve space below scrolling controls")
+    }
+
     fun workoutShown(workout: Workout) {
-        app.awaitNode(hasTestTag("workout-title")).assertTextEquals("Workout ${workout.name}").assertIsDisplayed()
+        app.awaitNode(hasTestTag("workout-title") and hasText("Workout ${workout.name}"))
+            .assertTextEquals("Workout ${workout.name}").assertIsDisplayed()
     }
 
     fun setCompleted(exercise: Exercise, set: Int, reps: Int, name: String = exercise.displayName()) {
@@ -155,7 +213,7 @@ class WorkoutScreenVerify(private val app: AppUiTest) {
     }
 
     fun prescriptionShown(exercise: Exercise, text: String) {
-        app.ui.onNodeWithTag("active-workout-list").performScrollToNode(hasTestTag("exercise:${exercise.name}"))
+        app.awaitNode(hasTestTag("active-workout-list")).performScrollToNode(hasTestTag("exercise:${exercise.name}"))
         val prescription = hasTestTag("exercise-prescription") and hasAnyAncestor(hasTestTag("exercise:${exercise.name}"))
         app.awaitNode(prescription).assertTextEquals(text).assertIsDisplayed()
     }
@@ -199,6 +257,8 @@ class WorkoutScreenVerify(private val app: AppUiTest) {
         assertTrue(saved.exercises.flatMap { it.setStates }.all { it.isCompleted && it.completedReps == 5 })
     }
 }
+
+data class ExerciseGeometry(val card: IntSize, val set: IntSize)
 
 private fun setMatcher(exercise: Exercise, set: Int) =
     hasTestTag("set:${set - 1}") and hasAnyAncestor(hasTestTag("exercise:${exercise.name}"))

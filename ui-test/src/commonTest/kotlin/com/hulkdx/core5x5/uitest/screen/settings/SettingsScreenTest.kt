@@ -1,8 +1,10 @@
 package com.hulkdx.core5x5.uitest.screen.settings
 
+import androidx.compose.ui.unit.dp
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.feature.workout.domain.Exercise.SQUAT
 import com.hulkdx.core5x5.feature.workout.domain.Workout
+import com.hulkdx.core5x5.uitest.UiTestOperation
 import com.hulkdx.core5x5.uitest.runAppUiTest
 import com.hulkdx.core5x5.uitest.screen.history.launchHistoryScreen
 import com.hulkdx.core5x5.uitest.screen.today.launchTodayScreen
@@ -10,6 +12,68 @@ import com.hulkdx.core5x5.uitest.screen.workout.launchWorkoutScreen
 import kotlin.test.Test
 
 class SettingsScreenTest {
+    @Test
+    fun cancellingUnitsPreservesTheSavedSelectionAfterReopening() = runAppUiTest {
+        val settings = launchSettingsScreen(this) { openUnits() }
+        settings.verify { unitSelected(WeightUnit.KG) }
+        settings.cancelUnits()
+        restart()
+        launchSettingsScreen(this) {}.verify { unitsShown("Kilograms (kg)") }
+    }
+
+    @Test
+    fun pendingUnitWriteBlocksBothChoicesAndCancelUntilPersistenceCompletes() = runAppUiTest {
+        val settings = launchSettingsScreen(this) { openUnits() }
+        val write = pauseNext(UiTestOperation.WRITE_PREFERENCES)
+        settings.chooseUnit(WeightUnit.LB, waitForSave = false)
+        awaitStarted(write)
+        settings.verify { savingBlocksUnitChangesAndCancellation() }
+        release(write)
+        awaitAbsent("settings-dialog")
+        restart()
+        launchSettingsScreen(this) {}.verify { unitsShown("Pounds (lb)") }
+    }
+
+    @Test
+    fun preferenceLoadingLeavesAboutLicenseAndPrivacyAvailable() = runAppUiTest {
+        val read = pauseNext(UiTestOperation.READ_PREFERENCES)
+        restart()
+        awaitStarted(read)
+        val settings = launchSettingsScreen(this, waitForPreferences = false) {}
+        settings.verify { loadingShown() }
+        settings.openAbout()
+        settings.openLicense()
+        settings.verify { licenseShown() }
+        settings.backToAbout()
+        settings.closeAbout()
+        settings.openPrivacy()
+        settings.verify { uriOpened("https://sabajafarzadeh.com/core5x5/privacy/") }
+        release(read)
+        settings.verify { unitsShown("Kilograms (kg)") }
+    }
+
+    @Test
+    fun preferenceLoadFailureKeepsInformationalActionsAndRetriesAtNarrowLargeText() = runAppUiTest(
+        width = 320.dp, height = 640.dp, fontScale = 2f,
+        prepare = { blockPreferenceReads() },
+    ) {
+        val settings = launchSettingsScreen(this, waitForPreferences = false) {}
+        settings.verify { loadErrorShown() }
+        settings.openAbout()
+        settings.openLicense()
+        settings.verify { licenseShown() }
+        settings.backToAbout()
+        settings.closeAbout()
+        settings.openPrivacy()
+        settings.verify { uriOpened("https://sabajafarzadeh.com/core5x5/privacy/") }
+        allowPreferenceReads()
+        settings.retryPreferences()
+        settings.openUnits()
+        settings.verify { unitSelected(WeightUnit.KG) }
+        settings.chooseUnit(WeightUnit.LB)
+        settings.verify { unitsShown("Pounds (lb)"); restControlsAbsent() }
+    }
+
     @Test
     fun poundsSurviveReopeningAndAppearOnTodayAndActiveWorkout() = runAppUiTest {
         launchSettingsScreen(this) {

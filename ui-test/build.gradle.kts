@@ -10,7 +10,12 @@ plugins {
 kotlin {
     android {
         namespace = "com.hulkdx.core5x5.uitest"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        // The resolved Compose test runtime requires the minor API SDK.
+        compileSdk {
+            version = release(libs.versions.android.compileSdk.get().toInt()) {
+                minorApiLevel = 1
+            }
+        }
         minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions { jvmTarget = JvmTarget.JVM_21 }
         androidResources { enable = true }
@@ -28,6 +33,8 @@ kotlin {
             implementation(project(":shared"))
             implementation(project(":feature:workout"))
             implementation(project(":feature:settings"))
+            implementation(project(":feature:history"))
+            implementation(project(":core:navigation"))
             implementation(project(":core:preferences"))
             implementation(project(":core:training"))
             implementation(project(":core:ui"))
@@ -38,6 +45,7 @@ kotlin {
             implementation(libs.compose.ui)
             implementation(libs.compose.uiTest)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
+            implementation(libs.androidx.navigation3.runtime)
             implementation(libs.androidx.room.runtime)
             implementation(libs.koin.core)
             implementation(libs.koin.compose)

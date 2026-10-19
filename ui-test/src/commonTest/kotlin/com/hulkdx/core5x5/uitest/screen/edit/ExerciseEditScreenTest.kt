@@ -2,11 +2,122 @@ package com.hulkdx.core5x5.uitest.screen.edit
 
 import androidx.compose.ui.unit.dp
 import com.hulkdx.core5x5.feature.workout.domain.Exercise.*
+import com.hulkdx.core5x5.uitest.UiTestOperation
 import com.hulkdx.core5x5.uitest.runAppUiTest
 import com.hulkdx.core5x5.uitest.screen.workout.launchWorkoutScreen
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class ExerciseEditScreenTest {
+    @Test
+    fun legacyNameSurvivesPrescriptionSaveAndReopening() = runAppUiTest {
+        val workout = launchWorkoutScreen(this) {}
+        val legacyName = "Tempo Front Squat"
+        seedLegacyName(SQUAT, legacyName)
+        workout.restartApp()
+        workout.resumeWorkout()
+        workout.editExercise(SQUAT) {
+            verify { nameEditingUnavailable(legacyName) }
+            increaseWeight()
+            save()
+        }
+        workout.restartApp()
+        workout.resumeWorkout()
+        workout.verify {
+            exerciseNameShown(SQUAT, legacyName)
+            prescriptionShown(SQUAT, "5 × 5 · 22.5 kg")
+        }
+    }
+
+    @Test
+    fun failedShrinkRollsBackPrescriptionAndRecordedTrailingRepsThenRetries() = runAppUiTest {
+        val workout = launchWorkoutScreen(this) {
+            tapSet(SQUAT, 1)
+            tapSet(SQUAT, 5)
+            tapSet(SQUAT, 5)
+        }
+        val before = assertNotNull(unfinishedWorkout())
+        blockSetRemoval()
+        val editor = workout.editExercise(SQUAT) {
+            increaseWeight()
+            decreaseSets()
+            save(waitForSave = false)
+        }
+        editor.verify {
+            saveErrorShown()
+            setsShown(4)
+            weightShown("22.5")
+        }
+        assertEquals(before, unfinishedWorkout(), "A failed resize must roll back the entire edit")
+        allowWorkoutWrites()
+        editor.save()
+        workout.restartApp()
+        workout.resumeWorkout()
+        workout.verify {
+            prescriptionShown(SQUAT, "4 × 5 · 22.5 kg")
+            setCompleted(SQUAT, 1, reps = 5)
+        }
+        workout.editExercise(SQUAT) { increaseSets(); save() }
+        workout.verify { setIncomplete(SQUAT, 5) }
+    }
+
+    @Test
+    fun loweringPrescriptionKeepsRecordedRepsAboveTheNewTarget() = runAppUiTest {
+        val workout = launchWorkoutScreen(this) {
+            tapSet(SQUAT, 1)
+            tapSet(SQUAT, 1)
+        }
+        workout.editExercise(SQUAT) {
+            repeat(3) { decreaseReps() }
+            save()
+        }
+        workout.restartApp()
+        workout.resumeWorkout()
+        workout.verify {
+            prescriptionShown(SQUAT, "5 × 2 · 20 kg")
+            setCompleted(SQUAT, 1, reps = 4)
+        }
+        workout.tapSet(SQUAT, 2)
+        workout.verify { setCompleted(SQUAT, 2, reps = 2) }
+    }
+
+    @Test
+    fun savingPrescriptionBlocksSteppersRestAndCancellationUntilCommit() = runAppUiTest {
+        val workout = launchWorkoutScreen(this) {}
+        val editor = workout.editExercise(SQUAT) { increaseWeight() }
+        val save = pauseNext(UiTestOperation.EDIT)
+        editor.save(waitForSave = false)
+        awaitStarted(save)
+        editor.verify { savingBlocksChangesAndDismissal() }
+        assertEquals(20.0, assertNotNull(unfinishedWorkout()).exercises.first().weightKg)
+        release(save)
+        workout.verify { prescriptionShown(SQUAT, "5 × 5 · 22.5 kg") }
+    }
+
+    @Test
+    fun largeTextAtNarrowWidthKeepsEditorAndLastSetReachable() = runAppUiTest(
+        width = 320.dp, height = 640.dp, fontScale = 2f,
+    ) {
+        val workout = launchWorkoutScreen(this) {}
+        workout.editExercise(SQUAT) {
+            repeat(7) { increaseSets() }
+            openCustomRest()
+            chooseCustomRest(0, 1)
+            applyCustomRest()
+            save()
+        }
+        workout.verify { setsStayOnOneHorizontallyScrollableRow(SQUAT, count = 12) }
+        workout.tapSet(SQUAT, 12)
+        workout.verify {
+            setCompleted(SQUAT, 12, reps = 5)
+            pinnedTimerDoesNotOverlapList()
+        }
+        workout.pressFinish()
+        workout.verify { workoutCompleteScreenShown(completedSets = 1, prescribedSets = 22) }
+        workout.returnToToday()
+    }
+
     @Test
     fun savedExercisePrescriptionSurvivesReopening() = runAppUiTest {
         val workout = launchWorkoutScreen(this) {}

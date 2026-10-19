@@ -7,14 +7,24 @@ import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.uitest.AppUiTest
 import kotlin.test.assertEquals
 
-fun launchSettingsScreen(app: AppUiTest, actions: SettingsScreenRobot.() -> Unit): SettingsScreenRobot {
+fun launchSettingsScreen(
+    app: AppUiTest,
+    waitForPreferences: Boolean = true,
+    actions: SettingsScreenRobot.() -> Unit,
+): SettingsScreenRobot {
     app.awaitNode(hasTestTag("tab:SETTINGS")).performClick()
-    app.awaitNode(hasTestTag("settings-units") and isEnabled())
+    app.awaitNode(hasTestTag("settings"))
+    if (waitForPreferences) app.awaitNode(hasTestTag("settings-units") and isEnabled())
     return SettingsScreenRobot(app).apply(actions)
 }
 
 class SettingsScreenRobot(private val app: AppUiTest) {
-    fun openUnits() { app.awaitNode(hasTestTag("settings-units")).performScrollTo().performClick() }
+    fun openUnits() { app.awaitNode(hasTestTag("settings-units") and isEnabled()).performScrollTo().performClick() }
+    fun cancelUnits() {
+        app.awaitNode(hasTestTag("settings-cancel")).performScrollTo().performClick()
+        app.awaitAbsent("settings-dialog")
+    }
+    fun retryPreferences() { app.awaitNode(hasText("Try Again")).performScrollTo().performClick() }
     fun chooseUnit(unit: WeightUnit, waitForSave: Boolean = true) {
         app.awaitNode(hasTestTag("settings-unit:${unit.name}") and isEnabled()).performClick()
         if (waitForSave) app.awaitAbsent("settings-dialog")
@@ -30,8 +40,18 @@ class SettingsScreenRobot(private val app: AppUiTest) {
 }
 
 class SettingsScreenVerify(private val app: AppUiTest) {
+    fun loadingShown() { app.awaitNode(hasText("Loading preferences…")).assertIsDisplayed() }
+    fun loadErrorShown() { app.awaitNode(hasText("Unable to load preferences. Try again.")).assertIsDisplayed() }
+    fun unitSelected(unit: WeightUnit) { app.awaitNode(hasTestTag("settings-unit:${unit.name}")).assertIsSelected() }
+    fun savingBlocksUnitChangesAndCancellation() {
+        app.awaitNode(hasText("Saving…")).performScrollTo().assertIsDisplayed()
+        for (unit in WeightUnit.entries) {
+            app.ui.onNodeWithTag("settings-unit:${unit.name}").performScrollTo().assertIsNotEnabled()
+        }
+        app.ui.onNodeWithTag("settings-cancel").performScrollTo().assertIsNotEnabled()
+    }
     fun unitsShown(label: String) {
-        app.ui.onNodeWithTag("settings-units").assertTextContains(label)
+        app.awaitNode(hasTestTag("settings-units") and hasText(label, substring = true)).assertTextContains(label)
     }
     fun restControlsAbsent() {
         app.ui.onNodeWithTag("settings-rest").assertDoesNotExist()

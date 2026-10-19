@@ -60,9 +60,9 @@ class CustomRestContentTest {
             target.performTouchInput {
                 down(center)
                 moveBy(Offset(0f, 200f), delayMillis = 500)
+                // Release before querying semantics, which waits for gestures to settle.
+                up()
             }
-            assertEquals(top, sheet.fetchSemanticsNode().boundsInRoot.top)
-            target.performTouchInput { up() }
             waitForIdle()
             assertEquals(top, sheet.fetchSemanticsNode().boundsInRoot.top)
         }
