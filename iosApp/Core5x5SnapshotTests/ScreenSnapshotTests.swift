@@ -18,6 +18,11 @@ final class ScreenSnapshotTests: XCTestCase {
     func testHistory() { snapshot("history") }
     func testSettings() { snapshot("settings") }
     func testSettingsLargeText() { snapshot("settingsLarge") }
+    func testSettingsUnits() { snapshot("settingsUnits") }
+    func testSettingsUnitsSaveError() { snapshot("settingsUnitsError") }
+    func testSettingsAbout() { snapshot("settingsAbout") }
+    func testSettingsAboutError() { snapshot("settingsAboutError") }
+    func testSettingsLicense() { snapshot("settingsLicense") }
 
     private func snapshot(
         _ scene: String,

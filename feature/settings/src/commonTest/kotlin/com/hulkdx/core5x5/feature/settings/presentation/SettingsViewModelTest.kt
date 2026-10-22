@@ -87,6 +87,30 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun pendingUnitChangeKeepsObservingExternalPreferenceUpdates() = runTest(dispatcher) {
+        repository.values.value = TrainingPreferences(restDurationSeconds = 91)
+        val viewModel = createLoadedViewModel()
+        repository.saveGate = CompletableDeferred()
+        viewModel.openUnits()
+        viewModel.selectWeightUnit(WeightUnit.LB)
+        dispatcher.scheduler.runCurrent()
+
+        repository.values.value = TrainingPreferences(restDurationSeconds = 42)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(TrainingPreferences(restDurationSeconds = 42), viewModel.uiState.value.preferences)
+        assertTrue(viewModel.uiState.value.isSaving)
+        assertEquals(SettingsDialog.UNITS, viewModel.uiState.value.dialog)
+
+        repository.saveGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(TrainingPreferences(WeightUnit.LB, 42), repository.values.value)
+        assertEquals(repository.values.value, viewModel.uiState.value.preferences)
+        assertEquals(1, repository.saves)
+        assertFalse(viewModel.uiState.value.isSaving)
+        assertNull(viewModel.uiState.value.dialog)
+    }
+
+    @Test
     fun saveFailureKeepsTheSavedValueAndDialogForRetry() = runTest(dispatcher) {
         val viewModel = createLoadedViewModel()
         repository.saveError = IllegalStateException("disk unavailable")

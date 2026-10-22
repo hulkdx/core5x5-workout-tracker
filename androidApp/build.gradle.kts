@@ -21,6 +21,7 @@ dependencies {
 android {
     namespace = "com.hulkdx.core5x5"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
+    compileSdkMinor = libs.versions.android.compileSdkMinor.get().toInt()
 
     defaultConfig {
         applicationId = "com.hulkdx.core5x5"

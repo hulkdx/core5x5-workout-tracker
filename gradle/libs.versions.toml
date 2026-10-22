@@ -1,6 +1,8 @@
 [versions]
 agp = "9.4.1"
+# AGP configures the minor API level separately from compileSdk.
 android-compileSdk = "37"
+android-compileSdkMinor = "1"
 android-minSdk = "26"
 android-targetSdk = "37"
 androidx-activity = "1.13.0"

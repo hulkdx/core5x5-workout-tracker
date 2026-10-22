@@ -61,6 +61,23 @@ fun historyRecords() = listOf(
     ),
 )
 
+/** Stored legacy name and mixed numeric/legacy/unrecorded reps, with a custom target. */
+fun detailRepRecord() = historyRecords().first().let { workout ->
+    workout.copy(exercises = workout.exercises.mapIndexed { index, exercise ->
+        if (index != 0) exercise else exercise.copy(
+            customName = "Legacy paused barbell squat with a long saved exercise name",
+            reps = 8,
+            setStates = listOf(
+                CompletedWorkoutSet(0, true, completedReps = 8),
+                CompletedWorkoutSet(1, true, completedReps = 7),
+                CompletedWorkoutSet(2, true, completedReps = 1),
+                CompletedWorkoutSet(3, true),
+                CompletedWorkoutSet(4, false),
+            ),
+        )
+    })
+}
+
 /** Matches the supplied month/card composition using real A/B prescriptions. */
 fun historyReferenceRecords() = listOf(
     Triple(1_791_374_400_000L, 42L, CompletedWorkoutType.A),
