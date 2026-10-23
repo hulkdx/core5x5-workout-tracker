@@ -117,6 +117,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutBeforeFirstTap() = ActiveWorkoutSnapshot(
         activeWorkoutRepReference(recordedReps = listOf(null, null, null, null, null)),
@@ -124,6 +125,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutSwitchB() =
         ActiveWorkoutSnapshot(activeWorkoutReference(Workout.B).let { state ->
@@ -141,6 +143,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutSwitchSaving() = ActiveWorkoutSnapshot(
         activeWorkoutRepReference(recordedReps = listOf(null, null, null, null, null)).copy(
@@ -150,6 +153,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutSwitchError() = ActiveWorkoutSnapshot(
         activeWorkoutRepReference(recordedReps = listOf(null, null, null, null, null)).copy(
@@ -159,6 +163,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutAfterFirstTap() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -168,6 +173,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutSetSaving() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -177,6 +183,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutRestSetSaving() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -187,6 +194,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutFinishing() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -196,6 +204,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutRestFinishing() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -253,6 +262,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutRest() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -262,6 +272,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutRestB() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.B).copy(
@@ -271,6 +282,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutRestExpired() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -280,6 +292,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutRestExpiredB() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.B).copy(
@@ -320,6 +333,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutRestSaveError() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -349,6 +363,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @Preview(name = "Custom rest sheet", widthDp = 432, heightDp = 768)
+    @VerificationSizes
     @Composable
     fun ActiveWorkoutEditRest() = AppTheme {
         Box(
@@ -357,6 +372,16 @@ class ScreenScreenshotTest {
                 .background(com.hulkdx.core5x5.core.ui.theme.AppEditTokens.Sheet)
         ) {
             CustomRestContent(150, {}, {}, {})
+        }
+    }
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @VerificationSizes
+    @Composable
+    fun ActiveWorkoutEditRestZero() = AppTheme {
+        Box(Modifier.fillMaxSize().background(com.hulkdx.core5x5.core.ui.theme.AppEditTokens.Sheet)) {
+            CustomRestContent(0, {}, {}, {})
         }
     }
 
@@ -374,6 +399,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun WorkoutCompleteB() =
         WorkoutCompleteSnapshot(completedWorkoutState(Workout.B, completedSets = 7))
@@ -385,6 +411,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun WorkoutCompleteLoadError() = WorkoutCompleteSnapshot(
         WorkoutCompleteUiState(isLoading = false, error = WorkoutCompleteError.LOAD),
@@ -622,11 +649,13 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun SettingsUnits() = SettingsSnapshot(settingsDialogState(SettingsDialog.UNITS))
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun SettingsUnitsSaveError() = SettingsSnapshot(
         settingsDialogState(SettingsDialog.UNITS).copy(error = SettingsError.SAVE),
@@ -634,6 +663,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun SettingsAbout() = SettingsSnapshot(settingsDialogState(SettingsDialog.ABOUT))
 
@@ -651,6 +681,7 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
+    @VerificationSizes
     @Composable
     fun SettingsLicense() = SettingsSnapshot(settingsDialogState(SettingsDialog.LICENSE))
 }

@@ -37,7 +37,9 @@ android {
     }
     buildTypes {
         debug {
-            applicationIdSuffix = ".debug"
+            // Native verification installs beside development data, using the production host.
+            applicationIdSuffix = if (providers.gradleProperty("nativeVerification").orNull == "true")
+                ".verification" else ".debug"
         }
         release {
             isMinifyEnabled = true

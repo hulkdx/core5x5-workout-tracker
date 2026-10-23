@@ -23,3 +23,9 @@ annotation class ReferenceScreen
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
 annotation class HomeReferenceScreen
+
+@Preview(name = "320dp", widthDp = 320, heightDp = 640)
+@Preview(name = "320dp large text", widthDp = 320, heightDp = 640, fontScale = 2f)
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.BINARY)
+annotation class VerificationSizes

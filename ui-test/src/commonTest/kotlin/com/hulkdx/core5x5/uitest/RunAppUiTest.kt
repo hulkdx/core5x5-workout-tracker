@@ -186,6 +186,15 @@ class AppUiTest(
         check(dao.updateExercise(saved.copy(customName = name)) == 1)
     }
 
+    // Stored extreme values select the native numeric-input path, unreachable through wheel taps.
+    fun seedLegacyRestDuration(exercise: Exercise, durationMillis: Long) = runBlocking {
+        require(durationMillis > 0)
+        val dao = storage.database.unfinishedWorkoutDao()
+        val session = requireNotNull(dao.getUnfinishedWorkout())
+        val saved = dao.getExercises(session.id).single { it.exercise == exercise }
+        check(dao.updateExercise(saved.copy(restDurationMillis = durationMillis)) == 1)
+    }
+
     fun blockSetWrites() = installFailure("UPDATE", "unfinished_workout_set")
     fun blockFinishing() = installFailure("UPDATE OF completedAtEpochMillis", "unfinished_workout")
     fun blockEditing() = installFailure("UPDATE", "unfinished_workout_exercise")
