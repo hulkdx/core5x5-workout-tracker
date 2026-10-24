@@ -44,19 +44,23 @@ their test-host reopening checks do not simulate native process termination.
 
 To validate screenshots:
 ```bash
-./gradlew :screenshot-test:validateDebugScreenshotTest
+./gradlew :screenshot-test:android:validateDebugScreenshotTest
 ```
 
 To record screenshots:
 
 ```bash
-./gradlew :screenshot-test:updateDebugScreenshotTest
+./gradlew :screenshot-test:android:updateDebugScreenshotTest
 ```
 
 Updating references accepts the current rendered previews as the new baseline. Review the changed images before committing them.
 
-For native iOS snapshots, select the shared `Core5x5Snapshots` scheme in Xcode
-and run Test, or run from this repository root:
+Android declarations and references live in [screenshot-test/android/](screenshot-test/android/).
+The simulator-only Kotlin fixtures, dedicated Swift host, tests and references
+live in [screenshot-test/ios/](screenshot-test/ios/).
+
+For native iOS snapshots, select the shared `Core5x5Snapshots` scheme in the
+existing Xcode project and run Test, or run from this repository root:
 
 ```bash
 xcodebuild test \
@@ -69,9 +73,11 @@ xcodebuild test \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-This invokes Gradle with `-PiosSnapshots=true`. To record references, append
+The scheme launches `Core5x5SnapshotHost`, which builds `Core5x5Screenshots` through
+`:screenshot-test:ios:embedAndSignAppleFrameworkForXcode`. It does not launch the
+production app. To record references, append
 `CORE5X5_RECORD_SNAPSHOTS=YES`; recording deliberately reports failures. Review
-the images in [the reference directory](iosApp/Core5x5SnapshotTests/__Snapshots__/ScreenSnapshotTests/),
+the images in [the reference directory](screenshot-test/ios/tests/Snapshots/ScreenSnapshotTests/),
 then rerun with recording off. Match Xcode, SDK, device, runtime and display
 settings; existing references use Xcode 27.1 (27A9275), the iOS 27.1 SDK and
 iPhone 16 / iOS 18.6, with English/US and portrait orientation.

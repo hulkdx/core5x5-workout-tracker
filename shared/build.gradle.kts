@@ -41,11 +41,6 @@ kotlin {
     }
 
     sourceSets {
-        if (providers.gradleProperty("iosSnapshots").orNull == "true") {
-            matching { it.name == "iosMain" }.configureEach {
-                kotlin.srcDir("src/iosSnapshot/kotlin")
-            }
-        }
         commonMain.dependencies {
             implementation(project(":core:navigation"))
             implementation(libs.kotlinx.serialization.core)

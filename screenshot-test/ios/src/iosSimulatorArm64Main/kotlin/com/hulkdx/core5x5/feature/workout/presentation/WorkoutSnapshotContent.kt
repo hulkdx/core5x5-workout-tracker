@@ -9,7 +9,7 @@ import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutSet
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
 
-/** Compiled only with -PiosSnapshots=true; feature internals stay inside their module. */
+/** Simulator-only screenshot fixture using the feature's public screen and state APIs. */
 @Composable
 fun WorkoutSnapshotContent(scene: String) {
     val session = snapshotSession()

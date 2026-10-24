@@ -1,9 +1,8 @@
-#if SNAPSHOT_TESTING
-import Core5x5Shared
+import Core5x5Screenshots
 import SwiftUI
 import UIKit
 
-// This host and the Kotlin fixtures exist only in the Snapshot configuration.
+// Only the dedicated snapshot app target compiles this host.
 struct SnapshotContentView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
         let scene = ProcessInfo.processInfo.environment["CORE5X5_SNAPSHOT_SCENE"] ?? "todayA"
@@ -20,4 +19,3 @@ struct SnapshotContentView: UIViewControllerRepresentable {
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
 }
-#endif

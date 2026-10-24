@@ -9,6 +9,7 @@
 /* Begin PBXFileReference section */
 		5609823B61ED0A3097F22BFC /* Core5x5.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Core5x5.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A11000000000000000000001 /* Core5x5SnapshotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Core5x5SnapshotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A12000000000000000000002 /* Core5x5SnapshotHost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Core5x5SnapshotHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -19,10 +20,17 @@
 			);
 			target = 69BB41A6A62EB34F976F0ACC /* Core5x5 */;
 		};
-		A11000000000000000000018 /* Snapshot reference exclusions */ = {
+		A11000000000000000000018 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (__Snapshots__,);
+			membershipExceptions = (
+				Snapshots,
+			);
 			target = A11000000000000000000005 /* Core5x5SnapshotTests */;
+		};
+		A12000000000000000000009 /* Snapshot host plist exclusion */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (Info.plist,);
+			target = A12000000000000000000001 /* Core5x5SnapshotHost */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -50,8 +58,22 @@
 		};
 		A11000000000000000000004 /* Core5x5SnapshotTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (A11000000000000000000018,);
-			path = Core5x5SnapshotTests;
+			exceptions = (
+				A11000000000000000000018 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "../screenshot-test/ios/tests";
+			sourceTree = "<group>";
+		};
+		A12000000000000000000003 /* Core5x5SnapshotHost */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (A12000000000000000000009,);
+			explicitFileTypes = {};
+			explicitFolders = ();
+			path = "../screenshot-test/ios/host";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -70,6 +92,7 @@
 			files = (A11000000000000000000002 /* SnapshotTesting in Frameworks */,);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A12000000000000000000006 /* Snapshot host frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -78,6 +101,7 @@
 			children = (
 				E6911C8D5FD02012822759B8 /* Configuration */,
 				0EC0AC5D593223D0F010111B /* Core5x5 */,
+				A12000000000000000000003 /* Core5x5SnapshotHost */,
 				A11000000000000000000004 /* Core5x5SnapshotTests */,
 				78EDF1B7E5C0FC2E62C4031F /* Products */,
 			);
@@ -87,6 +111,7 @@
 			isa = PBXGroup;
 			children = (
 				5609823B61ED0A3097F22BFC /* Core5x5.app */,
+				A12000000000000000000002 /* Core5x5SnapshotHost.app */,
 				A11000000000000000000001 /* Core5x5SnapshotTests.xctest */,
 			);
 			name = Products;
@@ -131,6 +156,24 @@
 			productReference = A11000000000000000000001;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		A12000000000000000000001 /* Core5x5SnapshotHost */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A12000000000000000000004;
+			buildPhases = (
+				A12000000000000000000008 /* Compile Snapshot Kotlin Framework */,
+				A12000000000000000000005 /* Snapshot host sources */,
+				A12000000000000000000006 /* Snapshot host frameworks */,
+				A12000000000000000000007 /* Snapshot host resources */,
+			);
+			buildRules = ();
+			dependencies = ();
+			fileSystemSynchronizedGroups = (A12000000000000000000003,);
+			name = Core5x5SnapshotHost;
+			packageProductDependencies = ();
+			productName = Core5x5SnapshotHost;
+			productReference = A12000000000000000000002;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -141,12 +184,15 @@
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
-					A11000000000000000000005 = {
-						CreatedOnToolsVersion = 26.1;
-						TestTargetID = 69BB41A6A62EB34F976F0ACC;
+					A12000000000000000000001 = {
+						CreatedOnToolsVersion = 27.1;
 					};
 					69BB41A6A62EB34F976F0ACC = {
 						CreatedOnToolsVersion = 16.2;
+					};
+					A11000000000000000000005 = {
+						CreatedOnToolsVersion = 26.1;
+						TestTargetID = A12000000000000000000001;
 					};
 				};
 			};
@@ -159,12 +205,15 @@
 			);
 			mainGroup = 49B57AC1F9B8C95554122B30;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A11000000000000000000011 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 78EDF1B7E5C0FC2E62C4031F /* Products */;
-			packageReferences = (A11000000000000000000011 /* swift-snapshot-testing */,);
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				A12000000000000000000001 /* Core5x5SnapshotHost */,
 				A11000000000000000000005 /* Core5x5SnapshotTests */,
 				69BB41A6A62EB34F976F0ACC /* Core5x5 */,
 			);
@@ -180,6 +229,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A11000000000000000000009 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A12000000000000000000007 /* Snapshot host resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
@@ -200,7 +250,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\nset --\nif [ \"YES\" = \"$CORE5X5_SNAPSHOT_FIXTURES\" ]; then\n  set -- -PiosSnapshots=true\nfi\n./gradlew :shared:embedAndSignAppleFrameworkForXcode \"$@\"\n";
+			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
+		};
+		A12000000000000000000008 /* Compile Snapshot Kotlin Framework */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = ();
+			inputFileListPaths = ();
+			inputPaths = ();
+			name = "Compile Snapshot Kotlin Framework";
+			outputFileListPaths = ();
+			outputPaths = ();
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :screenshot-test:ios:embedAndSignAppleFrameworkForXcode\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -213,6 +277,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A11000000000000000000008 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A12000000000000000000005 /* Snapshot host sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
@@ -398,33 +463,33 @@
 		A11000000000000000000013 /* Snapshot */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CORE5X5_SNAPSHOT_FIXTURES = YES;
-				CORE5X5_RECORD_SNAPSHOTS = NO;
-				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
-				OTHER_LDFLAGS = "$(inherited) -framework Core5x5Shared";
-				KOTLIN_FRAMEWORK_BUILD_TYPE = Debug;
-				PRODUCT_BUNDLE_IDENTIFIER = com.hulkdx.core5x5.snapshots;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) SNAPSHOT_TESTING";
-				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				PRODUCT_NAME = Core5x5SnapshotHost;
+				SDKROOT = iphonesimulator;
+				SUPPORTED_PLATFORMS = iphonesimulator;
+				SUPPORTS_MACCATALYST = NO;
+				INFOPLIST_KEY_CFBundleDisplayName = Core5x5;
 				ARCHS = arm64;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_ASSET_PATHS = "\"Core5x5/Preview Content\"";
+				CORE5X5_RECORD_SNAPSHOTS = NO;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../screenshot-test/ios/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Core5x5/Info.plist;
+				INFOPLIST_FILE = "../screenshot-test/ios/host/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				KOTLIN_FRAMEWORK_BUILD_TYPE = Debug;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				OTHER_LDFLAGS = "$(inherited) -framework Core5x5Screenshots";
+				PRODUCT_BUNDLE_IDENTIFIER = com.hulkdx.core5x5.snapshots;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -499,15 +564,15 @@
 		A11000000000000000000015 /* Snapshot */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = arm64;
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
-				/* SnapshotTesting imports Testing; omit the UI-test target's inherited module alias. */
 				OTHER_SWIFT_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.hulkdx.core5x5.snapshots.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = Core5x5;
+				TEST_TARGET_NAME = Core5x5SnapshotHost;
 			};
 			name = Snapshot;
 		};
@@ -518,7 +583,6 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				238EE3E612E7469AAE3AC6F0 /* Debug */,
-				A11000000000000000000013 /* Snapshot */,
 				3A4CA89F7B2930DF68E007B3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -540,23 +604,33 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Snapshot;
 		};
+		A12000000000000000000004 /* Build configuration list for Core5x5SnapshotHost */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (A11000000000000000000013 /* Snapshot */,);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Snapshot;
+		};
 /* End XCConfigurationList section */
 /* Begin PBXBuildFile section */
 		A11000000000000000000002 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = A11000000000000000000003 /* SnapshotTesting */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		A11000000000000000000012 = {
+		A11000000000000000000012 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 5BEE5AF596B6E2D1E2E9F60B;
+			containerPortal = 5BEE5AF596B6E2D1E2E9F60B /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 69BB41A6A62EB34F976F0ACC;
-			remoteInfo = Core5x5;
+			remoteGlobalIDString = A12000000000000000000001;
+			remoteInfo = Core5x5SnapshotHost;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXTargetDependency section */
-		A11000000000000000000010 = {isa = PBXTargetDependency; target = 69BB41A6A62EB34F976F0ACC; targetProxy = A11000000000000000000012; };
+		A11000000000000000000010 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A12000000000000000000001 /* Core5x5SnapshotHost */;
+			targetProxy = A11000000000000000000012 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCRemoteSwiftPackageReference section */

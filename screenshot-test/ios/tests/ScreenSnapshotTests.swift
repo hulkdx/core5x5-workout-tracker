@@ -65,9 +65,19 @@ final class ScreenSnapshotTests: XCTestCase {
             return
         }
         let image = UIImage(cgImage: content, scale: screenshot.scale, orientation: screenshot.imageOrientation)
+        let testFile = URL(fileURLWithPath: "\(file)")
+        let snapshotDirectory = testFile.deletingLastPathComponent()
+            .appendingPathComponent("Snapshots")
+            .appendingPathComponent(testFile.deletingPathExtension().lastPathComponent)
+            .path
         let recording = ProcessInfo.processInfo.environment["CORE5X5_RECORD_SNAPSHOTS"] == "YES"
         withSnapshotTesting(record: recording ? .all : .never) {
-            assertSnapshot(of: image, as: .image, file: file, testName: testName, line: line)
+            if let failure = verifySnapshot(
+                of: image, as: .image, snapshotDirectory: snapshotDirectory,
+                file: file, testName: testName, line: line
+            ) {
+                XCTFail(failure, file: file, line: line)
+            }
         }
     }
 }

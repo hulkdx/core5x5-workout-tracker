@@ -28,7 +28,8 @@ dependencyResolutionManagement {
 }
 
 include(":androidApp")
-include(":screenshot-test")
+include(":screenshot-test:android")
+include(":screenshot-test:ios")
 include(":ui-test")
 include(":core:ui")
 include(":core:preferences")

@@ -3,7 +3,7 @@
   <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES">
     <BuildActionEntries>
       <BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="NO" buildForArchiving="NO" buildForAnalyzing="YES">
-        <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="69BB41A6A62EB34F976F0ACC" BuildableName="Core5x5.app" BlueprintName="Core5x5" ReferencedContainer="container:Core5x5.xcodeproj"/>
+        <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="A12000000000000000000001" BuildableName="Core5x5SnapshotHost.app" BlueprintName="Core5x5SnapshotHost" ReferencedContainer="container:Core5x5.xcodeproj"/>
       </BuildActionEntry>
       <BuildActionEntry buildForTesting="YES" buildForRunning="NO" buildForProfiling="NO" buildForArchiving="NO" buildForAnalyzing="YES">
         <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="A11000000000000000000005" BuildableName="Core5x5SnapshotTests.xctest" BlueprintName="Core5x5SnapshotTests" ReferencedContainer="container:Core5x5.xcodeproj"/>
@@ -12,7 +12,7 @@
   </BuildAction>
   <TestAction buildConfiguration="Snapshot" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="NO" language="en" region="US">
     <MacroExpansion>
-      <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="69BB41A6A62EB34F976F0ACC" BuildableName="Core5x5.app" BlueprintName="Core5x5" ReferencedContainer="container:Core5x5.xcodeproj"/>
+      <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="A12000000000000000000001" BuildableName="Core5x5SnapshotHost.app" BlueprintName="Core5x5SnapshotHost" ReferencedContainer="container:Core5x5.xcodeproj"/>
     </MacroExpansion>
     <Testables>
       <TestableReference skipped="NO" parallelizable="NO">
@@ -25,7 +25,7 @@
   </TestAction>
   <LaunchAction buildConfiguration="Snapshot" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" debugServiceExtension="internal" allowLocationSimulation="YES">
     <BuildableProductRunnable runnableDebuggingMode="0">
-      <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="69BB41A6A62EB34F976F0ACC" BuildableName="Core5x5.app" BlueprintName="Core5x5" ReferencedContainer="container:Core5x5.xcodeproj"/>
+      <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="A12000000000000000000001" BuildableName="Core5x5SnapshotHost.app" BlueprintName="Core5x5SnapshotHost" ReferencedContainer="container:Core5x5.xcodeproj"/>
     </BuildableProductRunnable>
   </LaunchAction>
   <AnalyzeAction buildConfiguration="Snapshot"/>
