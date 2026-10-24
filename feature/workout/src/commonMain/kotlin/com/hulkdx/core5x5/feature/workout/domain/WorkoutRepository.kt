@@ -1,6 +1,11 @@
 package com.hulkdx.core5x5.feature.workout.domain
 
+import kotlinx.coroutines.flow.Flow
+
 interface WorkoutRepository {
+    /** Emits initially and after saved session, prescription or set changes, even while a screen is hidden. */
+    fun observeWorkoutChanges(): Flow<Unit>
+
     /** Returns the persisted session as stored, or null when no workout is active. */
     suspend fun getUnfinishedWorkout(): UnfinishedWorkout?
 

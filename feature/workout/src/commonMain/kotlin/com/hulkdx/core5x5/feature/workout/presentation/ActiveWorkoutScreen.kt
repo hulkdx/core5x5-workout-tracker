@@ -90,7 +90,7 @@ fun ActiveWorkoutScreen(
                             AppWorkoutTopBar(
                                 title = workout?.let { "Workout ${it.workout.name}" } ?: "Workout",
                                 onBack = onBack,
-                                backEnabled = !uiState.isSaving && !uiState.isCompletingSet && !uiState.isSwitchingWorkout,
+                                backEnabled = !uiState.isSaving && !uiState.isNavigating && !uiState.isCompletingSet && !uiState.isSwitchingWorkout,
                                 refined = true,
                             )
                             if (workout != null) {
@@ -191,7 +191,7 @@ fun ActiveWorkoutScreen(
                                 }
                             }
                             item(key = "finish", contentType = "finish") {
-                                val finishLabel = if (uiState.isSaving) "Saving…" else "Finish Workout"
+                                val finishLabel = if (uiState.isSaving || uiState.isNavigating) "Saving…" else "Finish Workout"
                                 AppHomeStartButton(
                                     label = finishLabel,
                                     modifier = Modifier.testTag("finish-workout"),

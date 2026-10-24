@@ -23,6 +23,7 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -131,7 +132,7 @@ class TodayViewModelTest {
     }
 
     @Test
-    fun startUsesDisplayedWorkoutAndPublishesReturnedSession() = runTest(dispatcher) {
+    fun startUsesDisplayedWorkoutAndKeepsItsCardUntilHidden() = runTest(dispatcher) {
         repository.nextWorkout = Workout.B
         val viewModel = createViewModel()
         dispatcher.scheduler.runCurrent()
@@ -147,11 +148,20 @@ class TodayViewModelTest {
         repository.startGate?.complete(Unit)
         dispatcher.scheduler.runCurrent()
         assertEquals(repository.active, viewModel.uiState.value.requestedWorkout)
-        assertEquals(repository.active, viewModel.uiState.value.unfinishedWorkout)
-        assertNull(viewModel.uiState.value.nextWorkout)
+        assertNull(viewModel.uiState.value.unfinishedWorkout)
+        assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
+        assertTrue(viewModel.uiState.value.isNavigating)
         assertNull(viewModel.uiState.value.error)
         viewModel.onWorkoutRequestHandled()
         assertNull(viewModel.uiState.value.requestedWorkout)
+        assertFalse(viewModel.uiState.value.canStart)
+        assertFalse(viewModel.uiState.value.canResume)
+        viewModel.startWorkout()
+        assertEquals(listOf(Workout.B), repository.startedWorkouts)
+        viewModel.onHidden()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(repository.active, viewModel.uiState.value.unfinishedWorkout)
+        viewModel.onVisible()
         assertTrue(viewModel.uiState.value.canResume)
     }
 
@@ -200,13 +210,154 @@ class TodayViewModelTest {
         assertEquals(1, repository.readCount)
 
         viewModel.onWorkoutRequestHandled()
-        viewModel.loadWorkout()
+        viewModel.onHidden()
         dispatcher.scheduler.runCurrent()
+        viewModel.onVisible()
         assertTrue(viewModel.uiState.value.canStart)
         assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
         assertNull(viewModel.uiState.value.unfinishedWorkout)
         assertNull(viewModel.uiState.value.requestedWorkout)
         assertEquals(emptyList(), repository.startedWorkouts)
+    }
+
+    @Test
+    fun consumingResumeKeepsActionsBlockedUntilTheScreenReturns() = runTest(dispatcher) {
+        repository.active = session(Workout.A)
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        viewModel.requestResume()
+        viewModel.onWorkoutRequestHandled()
+        viewModel.requestResume()
+        viewModel.loadWorkout()
+        assertNull(viewModel.uiState.value.requestedWorkout)
+        assertTrue(viewModel.uiState.value.isNavigating)
+        assertFalse(viewModel.uiState.value.canResume)
+        assertEquals(1, repository.readCount)
+
+        viewModel.onHidden()
+        dispatcher.scheduler.runCurrent()
+        viewModel.onVisible()
+        assertTrue(viewModel.uiState.value.canResume)
+        assertNull(viewModel.uiState.value.requestedWorkout)
+    }
+
+    @Test
+    fun rejectedNavigationRestoresActionsWithoutWaitingForALifecycleChange() = runTest(dispatcher) {
+        repository.active = session(Workout.A)
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        viewModel.requestResume()
+        viewModel.onWorkoutRequestHandled(accepted = false)
+        assertTrue(viewModel.uiState.value.canResume)
+        assertFalse(viewModel.uiState.value.isNavigating)
+        viewModel.requestResume()
+        assertSame(repository.active, viewModel.uiState.value.requestedWorkout)
+    }
+
+    @Test
+    fun savedChangesWaitForDepartureThenRefreshTheHiddenToday() = runTest(dispatcher) {
+        repository.active = session(Workout.A)
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        val departing = viewModel.uiState.value.unfinishedWorkout
+        viewModel.requestResume()
+        viewModel.onWorkoutRequestHandled()
+        repository.active = null
+        repository.nextPrescription = WorkoutPrescription(Workout.B).let { prescription ->
+            prescription.copy(exercises = prescription.exercises.map { it.copy(weightKg = 42.5) })
+        }
+        repository.nextWorkout = Workout.B
+        repository.changes.emit(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertSame(departing, viewModel.uiState.value.unfinishedWorkout)
+        assertEquals(1, repository.readCount)
+
+        viewModel.onHidden()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(repository.nextPrescription, viewModel.uiState.value.nextWorkoutPrescription)
+        assertNull(viewModel.uiState.value.unfinishedWorkout)
+        viewModel.onVisible()
+        assertTrue(viewModel.uiState.value.canStart)
+        assertEquals(2, repository.readCount)
+    }
+
+    @Test
+    fun hiddenEditsAndCompletionRefreshWithoutWaitingForReturn() = runTest(dispatcher) {
+        repository.active = session(Workout.A)
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        viewModel.onHidden()
+        dispatcher.scheduler.runCurrent()
+        repository.active = repository.active?.copy(exercises = repository.active!!.exercises.map { it.copy(weightKg = 35.0) })
+        repository.changes.emit(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertSame(repository.active, viewModel.uiState.value.unfinishedWorkout)
+
+        repository.active = null
+        repository.nextWorkout = Workout.B
+        repository.changes.emit(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
+        assertNull(viewModel.uiState.value.unfinishedWorkout)
+        assertNull(viewModel.uiState.value.requestedWorkout)
+        val reads = repository.readCount
+        viewModel.onVisible()
+        assertTrue(viewModel.uiState.value.canStart)
+        assertEquals(reads, repository.readCount)
+    }
+
+    @Test
+    fun slowHiddenRefreshDoesNotRevealAnInvalidatedResumeCard() = runTest(dispatcher) {
+        repository.active = session(Workout.A)
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        repository.readGate = CompletableDeferred()
+        viewModel.onHidden()
+        repository.active = null
+        repository.nextWorkout = Workout.B
+        repository.changes.emit(Unit)
+        dispatcher.scheduler.runCurrent()
+        viewModel.onVisible()
+        assertTrue(viewModel.uiState.value.isLoading)
+        assertNull(viewModel.uiState.value.unfinishedWorkout)
+        assertFalse(viewModel.uiState.value.canResume)
+        repository.readGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
+        assertTrue(viewModel.uiState.value.canStart)
+    }
+
+    @Test
+    fun aStartThatCompletesAfterHidingDoesNotNavigateOnReturn() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        repository.startGate = CompletableDeferred()
+        viewModel.startWorkout()
+        dispatcher.scheduler.runCurrent()
+        viewModel.onHidden()
+        repository.startGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        viewModel.onVisible()
+        assertNull(viewModel.uiState.value.requestedWorkout)
+        assertSame(repository.active, viewModel.uiState.value.unfinishedWorkout)
+        assertTrue(viewModel.uiState.value.canResume)
+    }
+
+    @Test
+    fun observationPreservesManualSelectionAndStopsWithItsOwner() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        viewModel.onVisible()
+        assertEquals(1, repository.readCount)
+        viewModel.switchWorkout()
+        dispatcher.scheduler.runCurrent()
+        repository.changes.emit(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
+        assertEquals(1, repository.changes.subscriptionCount.value)
+        stores.single().clear()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(0, repository.changes.subscriptionCount.value)
     }
 
     @Test
@@ -522,6 +673,9 @@ class TodayViewModelTest {
         TodayViewModel(repository, preferences).also { newStore().put("today", it) }
 
     private class FakeWorkoutRepository : WorkoutRepository {
+        val changes = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
+        override fun observeWorkoutChanges() = changes
+
         override suspend fun switchWorkout(workoutId: Long, workout: Workout): UnfinishedWorkout? =
             error("Today switches its preview before a session starts")
 

@@ -16,6 +16,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotSame
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -29,6 +31,24 @@ class FeatureNavigationTest {
     private val serializer = NavBackStackSerializer(PolymorphicSerializer(NavKey::class))
     // Exercise the same KMP serializer used by rememberNavBackStack without Android Bundle stubs.
     private val json = Json { serializersModule = navigationSavedStateConfiguration.serializersModule }
+
+    @Test
+    fun transitionsDistinguishTabsIncludingRetainedNestedDestinations() {
+        val keys = mapOf<NavKey, List<Any>>(
+            TodayKey to listOf("today", "active", "complete"),
+            HistoryKey to listOf("history", "detail"),
+            SettingsKey to listOf("settings"),
+        )
+        assertTrue(isTabSwitch("today", "history", keys))
+        assertTrue(isTabSwitch("history", "today", keys))
+        assertTrue(isTabSwitch("settings", "history", keys))
+        assertTrue(isTabSwitch("today", "detail", keys))
+        assertFalse(isTabSwitch("today", "active", keys))
+        assertFalse(isTabSwitch("active", "complete", keys))
+        assertFalse(isTabSwitch("complete", "today", keys))
+        assertFalse(isTabSwitch("detail", "history", keys))
+        assertFalse(isTabSwitch("removed-entry", "today", keys))
+    }
 
     @Test
     fun allFeatureKeysRoundTripWithLargeLongIds() {

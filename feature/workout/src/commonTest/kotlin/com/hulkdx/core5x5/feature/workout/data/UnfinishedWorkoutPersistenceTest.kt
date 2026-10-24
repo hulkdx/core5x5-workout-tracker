@@ -18,6 +18,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -30,6 +32,42 @@ abstract class UnfinishedWorkoutPersistenceTest {
     abstract fun databasePath(name: String): String
     abstract fun openDatabase(name: String): WorkoutDatabase
     abstract fun deleteDatabase(name: String)
+
+    @Test
+    fun changesObserveSessionPrescriptionAndSetWritesEvenWhenTheSessionIdStaysTheSame() = runTest {
+        val name = "observe-workout.db"
+        deleteDatabase(name)
+        val database = openDatabase(name)
+        val changes = Channel<UnfinishedWorkout?>(Channel.UNLIMITED)
+        val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+        val observation = backgroundScope.launch {
+            repository.observeWorkoutChanges().collect { changes.send(repository.getUnfinishedWorkout()) }
+        }
+        suspend fun awaitSnapshot(predicate: (UnfinishedWorkout?) -> Boolean): UnfinishedWorkout? {
+            while (true) {
+                val snapshot = changes.receive()
+                if (predicate(snapshot)) return snapshot
+            }
+        }
+        try {
+            assertNull(changes.receive())
+            val session = repository.startWorkout(Workout.A)
+            assertEquals(session, awaitSnapshot { it?.id == session.id })
+            repository.editExercise(session.id, 0, ExerciseEdit(37.5, 5, 5, null))
+            assertEquals(37.5, awaitSnapshot { it?.exercises?.first()?.weightKg == 37.5 }?.exercises?.first()?.weightKg)
+            repository.setSetCompleted(0, 0, true)
+            val logged = awaitSnapshot { it?.exercises?.first()?.setStates?.first()?.isCompleted == true }
+            assertEquals(session.id, logged?.id)
+            repository.finalizeWorkout(session.id)
+            assertNull(awaitSnapshot { it == null })
+        } finally {
+            observation.cancel()
+            observation.join()
+            changes.close()
+            database.close()
+            deleteDatabase(name)
+        }
+    }
 
     @Test
     fun switchingPreservesIdentitySharedEditsHistoryAndCarriedWeightsAfterReopening() = runTest {

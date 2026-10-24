@@ -226,6 +226,9 @@ class WorkoutCompleteViewModelTest {
         WorkoutCompleteViewModel(id, repository).also { newStore().put("completion", it) }
 
     private class FakeWorkoutRepository : WorkoutRepository {
+        override fun observeWorkoutChanges(): kotlinx.coroutines.flow.Flow<Unit> =
+            error("Completion does not observe Today refreshes")
+
         override suspend fun switchWorkout(workoutId: Long, workout: Workout): UnfinishedWorkout? =
             error("Summary cannot change a saved program")
 

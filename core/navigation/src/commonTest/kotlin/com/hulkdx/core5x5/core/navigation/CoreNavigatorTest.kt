@@ -145,15 +145,15 @@ class CoreNavigatorTest {
         val delayedRequest = { navigator.navigateFrom(Home, Item(Long.MAX_VALUE)) }
         navigator.selectTab(TopLevelTab.HISTORY)
 
-        delayedRequest()
+        assertFalse(delayedRequest())
 
         assertEquals(Library, navigator.state.currentKey)
         assertContentEquals(listOf(Home), navigator.state.backStacks.getValue(Home))
         assertContentEquals(listOf(Library), navigator.state.backStacks.getValue(Library))
         navigator.selectTab(TopLevelTab.TODAY)
-        delayedRequest()
+        assertTrue(delayedRequest())
         assertEquals(Item(Long.MAX_VALUE), navigator.state.currentKey)
-        delayedRequest()
+        assertFalse(delayedRequest())
         assertContentEquals(listOf(Home, Item(Long.MAX_VALUE)), navigator.state.backStacks.getValue(Home))
     }
 

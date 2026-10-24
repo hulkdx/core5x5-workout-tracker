@@ -9,9 +9,21 @@ import com.hulkdx.core5x5.feature.workout.domain.ExerciseEdit
 import com.hulkdx.core5x5.feature.workout.domain.RestTimerRules
 import androidx.room3.Transaction
 import com.hulkdx.core5x5.feature.workout.domain.Workout
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UnfinishedWorkoutDao {
+    // Room reruns this small query on changes to any of the three tables. The value is
+    // only an invalidation signal; do not distinctUntilChanged it (edits can retain the ID).
+    @Query("""
+        SELECT session.id FROM unfinished_workout AS session
+        LEFT JOIN unfinished_workout_exercise AS exercise ON exercise.workoutId = session.id
+        LEFT JOIN unfinished_workout_set AS workoutSet ON workoutSet.workoutId = exercise.workoutId
+            AND workoutSet.exercisePosition = exercise.position
+        ORDER BY session.id DESC LIMIT 1
+    """)
+    fun observeWorkoutChanges(): Flow<Long?>
+
     // Preserve an existing session rather than silently replacing it.
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(workout: UnfinishedWorkoutEntity): Long

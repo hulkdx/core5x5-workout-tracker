@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 
 class TodayViewModel(
     private val repository: WorkoutRepository,
@@ -21,12 +22,15 @@ class TodayViewModel(
     val uiState: StateFlow<TodayUiState> = _uiState.asStateFlow()
     private var operationInProgress = false
     private var selectedWorkout: Workout? = null
+    private var isVisible = true
+    private var refreshPending = false
+    private var workoutChangesJob: Job? = null
 
     private var preferencesJob: Job? = null
 
     init {
         retryPreferences()
-        loadWorkout()
+        observeWorkoutChanges()
     }
 
     /** Subscribe once per owner; only an explicit retry restarts a failed observation. */
@@ -46,14 +50,58 @@ class TodayViewModel(
     }
 
     fun loadWorkout() {
+        if (operationInProgress || uiState.value.isNavigating) return
+        if (workoutChangesJob?.isActive != true) {
+            observeWorkoutChanges()
+        } else {
+            refreshPending = true
+            refreshIfPossible()
+        }
+    }
+
+    private fun observeWorkoutChanges() {
+        workoutChangesJob = viewModelScope.launch {
+            try {
+                repository.observeWorkoutChanges().collect {
+                    refreshPending = true
+                    refreshIfPossible()
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _uiState.value = uiState.value.copy(isLoading = false, error = TodayError.LOAD)
+            }
+        }
+    }
+
+    private fun refreshIfPossible() {
+        if (!refreshPending || operationInProgress || (isVisible && uiState.value.isNavigating)) return
+        refreshPending = false
         runOperation(TodayError.LOAD, loading = true) {
             showWorkout(repository.getUnfinishedWorkout())
         }
     }
 
+    /** STARTED includes the incoming animation, so refreshed data is ready before RESUMED. */
+    fun onVisible() {
+        isVisible = true
+        val wasNavigating = uiState.value.isNavigating
+        _uiState.value = uiState.value.copy(isNavigating = false, requestedWorkout = null)
+        if (wasNavigating) refreshPending = true
+        refreshIfPossible()
+    }
+
+    /** The outgoing content is no longer drawn; it can now reconcile saved changes. */
+    fun onHidden() {
+        isVisible = false
+        _uiState.value = uiState.value.copy(isNavigating = false, requestedWorkout = null)
+        refreshPending = true
+        refreshIfPossible()
+    }
+
     fun switchWorkout() {
         val state = uiState.value
-        if (!state.canStart || state.unfinishedWorkout != null) return
+        if (!isVisible || !state.canStart || state.unfinishedWorkout != null) return
         val selected = state.nextWorkout?.nextWorkout() ?: return
         runOperation(TodayError.SWITCH) {
             val prescription = repository.getNextWorkoutPrescription(selected)
@@ -67,33 +115,43 @@ class TodayViewModel(
     }
 
     fun startWorkout() {
-        if (!uiState.value.canStart) return
+        if (!isVisible || !uiState.value.canStart) return
         val displayed = uiState.value.nextWorkout ?: return
         runOperation(TodayError.START) {
             val workout = repository.startWorkout(displayed)
-            showWorkout(workout, requested = true)
+            selectedWorkout = null
+            // Keep the outgoing prescription/card intact. The hidden refresh publishes Resume.
+            _uiState.value = uiState.value.copy(
+                requestedWorkout = workout.takeIf { isVisible },
+                isNavigating = isVisible,
+                error = null,
+            )
+            refreshPending = true
         }
     }
 
     fun requestResume() {
         val state = uiState.value
-        if (!state.canResume) return
+        if (!isVisible || !state.canResume) return
         // Active Workout validates this identity and reloads durable progress after navigation.
-        _uiState.value = state.copy(requestedWorkout = state.unfinishedWorkout, error = null)
+        _uiState.value = state.copy(requestedWorkout = state.unfinishedWorkout, isNavigating = true, error = null)
     }
 
-    fun onWorkoutRequestHandled() {
-        _uiState.value = uiState.value.copy(requestedWorkout = null)
+    fun onWorkoutRequestHandled(accepted: Boolean = true) {
+        _uiState.value = uiState.value.copy(
+            requestedWorkout = null,
+            isNavigating = accepted && isVisible,
+        )
+        refreshIfPossible()
     }
 
-    private suspend fun showWorkout(workout: UnfinishedWorkout?, requested: Boolean = false) {
+    private suspend fun showWorkout(workout: UnfinishedWorkout?) {
         if (workout != null || uiState.value.unfinishedWorkout != null) selectedWorkout = null
         val nextWorkout = if (workout == null) repository.getNextWorkoutPrescription(selectedWorkout) else null
         _uiState.value = uiState.value.copy(
             nextWorkout = nextWorkout?.workout,
             nextWorkoutPrescription = nextWorkout,
             unfinishedWorkout = workout,
-            requestedWorkout = if (requested) workout else null,
             error = null,
         )
     }
@@ -103,13 +161,17 @@ class TodayViewModel(
         loading: Boolean = false,
         block: suspend () -> Unit,
     ) {
-        if (operationInProgress || uiState.value.requestedWorkout != null) return
+        if (operationInProgress || (isVisible && uiState.value.isNavigating)) return
         operationInProgress = true
         _uiState.value = uiState.value.copy(
             isLoading = loading,
             isWorking = !loading,
             error = null,
             requestedWorkout = null,
+            // Never reveal an invalidated hidden snapshot if its replacement read is slow.
+            nextWorkout = uiState.value.nextWorkout.takeUnless { loading && !isVisible },
+            nextWorkoutPrescription = uiState.value.nextWorkoutPrescription.takeUnless { loading && !isVisible },
+            unfinishedWorkout = uiState.value.unfinishedWorkout.takeUnless { loading && !isVisible },
         )
         viewModelScope.launch {
             try {
@@ -121,6 +183,7 @@ class TodayViewModel(
             } finally {
                 operationInProgress = false
                 _uiState.value = uiState.value.copy(isLoading = false, isWorking = false)
+                if (viewModelScope.isActive) refreshIfPossible()
             }
         }
     }

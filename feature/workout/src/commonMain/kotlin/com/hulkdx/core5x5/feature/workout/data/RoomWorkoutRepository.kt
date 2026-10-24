@@ -18,11 +18,15 @@ import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSource
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutType
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutRepository
 import kotlin.time.Clock
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class RoomWorkoutRepository(
     private val dao: UnfinishedWorkoutDao,
     private val nowEpochMillis: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) : WorkoutRepository, CompletedWorkoutSource {
+    override fun observeWorkoutChanges(): Flow<Unit> = dao.observeWorkoutChanges().map { Unit }
+
     override suspend fun getUnfinishedWorkout(): UnfinishedWorkout? =
         dao.getSession()?.toDomain()
 

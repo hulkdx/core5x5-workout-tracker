@@ -187,6 +187,13 @@ class ActiveWorkoutViewModelTest {
         assertEquals(listOf(42L), repository.finalizedIds)
         viewModel.onCompletionRequestHandled()
         assertNull(viewModel.uiState.value.requestedCompletedWorkoutId)
+        assertTrue(viewModel.uiState.value.isNavigating)
+        assertFalse(viewModel.uiState.value.canFinish)
+        viewModel.finishWorkout()
+        viewModel.loadWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(listOf(42L), repository.finalizedIds)
+        assertEquals(1, repository.readCount)
     }
 
     @Test
@@ -599,7 +606,7 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun finishingClearsDisplayedRestOnlyWhenTheSaveCommits() = runTest(dispatcher) {
+    fun finishingKeepsDisplayedRestThroughVerificationAndDeparture() = runTest(dispatcher) {
         val original = session(Workout.A).copy(restTimer = RestTimer(181_000))
         val repository = FakeWorkoutRepository(original)
         val viewModel = createViewModel(repository)
@@ -616,13 +623,40 @@ class ActiveWorkoutViewModelTest {
         viewModel.finishWorkout()
         dispatcher.scheduler.runCurrent()
         assertTrue(viewModel.uiState.value.isSaving)
-        assertFalse(viewModel.uiState.value.restTimer.isVisible)
-        assertNull(viewModel.uiState.value.unfinishedWorkout?.restTimer)
+        assertTrue(viewModel.uiState.value.restTimer.isVisible)
+        assertEquals(original.restTimer, viewModel.uiState.value.unfinishedWorkout?.restTimer)
+        assertNull(repository.savedWorkout)
         assertNull(viewModel.uiState.value.requestedCompletedWorkoutId)
 
         repository.completedReadGate?.complete(Unit)
         dispatcher.scheduler.runCurrent()
         assertEquals(original.id, viewModel.uiState.value.requestedCompletedWorkoutId)
+        viewModel.onCompletionRequestHandled()
+        viewModel.onResume()
+        assertTrue(viewModel.uiState.value.restTimer.isVisible)
+        assertEquals(original.restTimer, viewModel.uiState.value.unfinishedWorkout?.restTimer)
+        assertFalse(viewModel.uiState.value.canCompleteSet)
+    }
+
+    @Test
+    fun failedVerificationAfterAConfirmedSaveClearsRestOnTheScreenThatStaysOpen() = runTest(dispatcher) {
+        val repository = FakeWorkoutRepository(session(Workout.A).copy(restTimer = RestTimer(181_000)))
+        val viewModel = createViewModel(repository)
+        dispatcher.scheduler.runCurrent()
+        repository.completedReadError = IllegalStateException("Read failed after commit")
+        viewModel.finishWorkout()
+        dispatcher.scheduler.runCurrent()
+
+        assertTrue(viewModel.uiState.value.hasSaveError)
+        assertFalse(viewModel.uiState.value.isNavigating)
+        assertFalse(viewModel.uiState.value.restTimer.isVisible)
+        assertNull(viewModel.uiState.value.unfinishedWorkout?.restTimer)
+        assertTrue(viewModel.uiState.value.canFinish)
+        repository.completedReadError = null
+        viewModel.finishWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(1, repository.saveCount)
+        assertEquals(1L, viewModel.uiState.value.requestedCompletedWorkoutId)
     }
 
     @Test
@@ -1322,6 +1356,9 @@ class ActiveWorkoutViewModelTest {
     }
 
     private class FakeWorkoutRepository(var savedWorkout: UnfinishedWorkout?) : WorkoutRepository {
+        override fun observeWorkoutChanges(): kotlinx.coroutines.flow.Flow<Unit> =
+            error("Active Workout does not observe Today refreshes")
+
         val switchRequests = mutableListOf<Pair<Long, Workout>>()
         var switchGate: CompletableDeferred<Unit>? = null
         var switchError: Exception? = null

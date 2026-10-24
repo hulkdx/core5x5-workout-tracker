@@ -8,6 +8,7 @@ data class ActiveWorkoutUiState(
     val unfinishedWorkout: UnfinishedWorkout? = null,
     val hasLoadError: Boolean = false,
     val isSaving: Boolean = false,
+    val isNavigating: Boolean = false,
     val hasSaveError: Boolean = false,
     val isCompletingSet: Boolean = false,
     val hasSetSaveError: Boolean = false,
@@ -33,6 +34,6 @@ data class ActiveWorkoutUiState(
 
     // A failed switch may already have committed. Confirm its program before logging by position.
     private val canModifyWorkout: Boolean
-        get() = !isLoading && !hasLoadError && !isSaving && !isCompletingSet && !isSwitchingWorkout &&
+        get() = !isLoading && !hasLoadError && !isSaving && !isNavigating && !isCompletingSet && !isSwitchingWorkout &&
             unfinishedWorkout != null && requestedCompletedWorkoutId == null && exerciseEdit == null
 }

@@ -54,7 +54,7 @@ class ActiveWorkoutViewModel(
     }
 
     fun loadWorkout() {
-        if (operationInProgress) return
+        if (operationInProgress || uiState.value.isNavigating) return
         operationInProgress = true
         val previous = uiState.value
         _uiState.value = previous.copy(isLoading = true, hasLoadError = false)
@@ -78,6 +78,7 @@ class ActiveWorkoutViewModel(
                         identified?.nextExercisePosition() ?: 0
                     },
                     requestedCompletedWorkoutId = completed?.id,
+                    isNavigating = completed != null,
                     exerciseEdit = previous.exerciseEdit?.takeIf { identified?.id == previous.unfinishedWorkout?.id },
                 )
                 updateCountdown()
@@ -93,6 +94,7 @@ class ActiveWorkoutViewModel(
 
     /** Construction loads once; a later return reloads durable progress and elapsed rest. */
     fun onResume() {
+        if (uiState.value.isNavigating) return
         countdownActive = true
         updateCountdown()
         if (reloadOnResume) {
@@ -308,18 +310,28 @@ class ActiveWorkoutViewModel(
         operationInProgress = true
         _uiState.value = uiState.value.copy(isSaving = true, hasSaveError = false)
         viewModelScope.launch {
+            var saveConfirmed = false
             try {
                 // A false result can be an already-saved retry; the persisted read is authoritative.
-                if (repository.finalizeWorkout(activeId)) clearDisplayedRest()
+                saveConfirmed = repository.finalizeWorkout(activeId)
                 val completed = repository.getCompletedWorkout(activeId)
-                if (completed != null) clearDisplayedRest()
+                // Storage already cleared rest. Retain its last presentation while this screen exits.
+                if (completed != null) {
+                    countdownJob?.cancel()
+                    countdownJob = null
+                } else if (saveConfirmed) {
+                    clearDisplayedRest()
+                }
                 _uiState.value = uiState.value.copy(
                     hasSaveError = completed == null,
                     requestedCompletedWorkoutId = completed?.id,
+                    isNavigating = completed != null,
                 )
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
+                // Verification failed after a known commit: reconcile the screen that remains open.
+                if (saveConfirmed) clearDisplayedRest()
                 _uiState.value = uiState.value.copy(hasSaveError = true)
             } finally {
                 operationInProgress = false

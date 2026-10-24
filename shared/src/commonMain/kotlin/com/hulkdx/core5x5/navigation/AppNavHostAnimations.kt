@@ -10,6 +10,14 @@ import androidx.compose.animation.veilOut
 import androidx.navigation3.scene.Scene
 import androidx.navigationevent.NavigationEvent.Companion.EDGE_LEFT
 import androidx.navigationevent.NavigationEvent.SwipeEdge
+import androidx.navigation3.runtime.NavKey
+
+/** Recognize retained nested entries as well as roots when changing between independent tabs. */
+fun isTabSwitch(initialContentKey: Any, targetContentKey: Any, tabContentKeys: Map<NavKey, List<Any>>): Boolean {
+    val initialTab = tabContentKeys.entries.firstOrNull { initialContentKey in it.value }?.key
+    val targetTab = tabContentKeys.entries.firstOrNull { targetContentKey in it.value }?.key
+    return initialTab != null && targetTab != null && initialTab != targetTab
+}
 
 //
 // copied from NavDisplay.ios.kt

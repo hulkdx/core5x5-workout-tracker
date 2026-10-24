@@ -82,6 +82,7 @@ fun TodayScreen(
                         buttonLabel = "Resume Workout",
                         actionTag = "resume-workout",
                         buttonEnabled = uiState.canResume,
+                        dimWhenDisabled = !uiState.isNavigating && !uiState.isLoading,
                         error = uiState.error,
                         onAction = onResumeWorkout,
                         weightUnit = weightUnit,
@@ -91,8 +92,9 @@ fun TodayScreen(
                         workout = next,
                         exercises = uiState.nextWorkoutPrescription?.exercises ?: WorkoutPrescription(next).exercises,
                         actionTag = "start-workout",
-                        buttonLabel = if (uiState.isWorking && uiState.error == null) "Please wait…" else "Start Workout",
+                        buttonLabel = if (uiState.isWorking && !uiState.isNavigating && uiState.error == null) "Please wait…" else "Start Workout",
                         buttonEnabled = uiState.canStart,
+                        dimWhenDisabled = !uiState.isNavigating && !uiState.isLoading,
                         error = uiState.error,
                         onAction = onStartWorkout,
                         onSwitch = onSwitchWorkout,
@@ -116,6 +118,7 @@ private fun WorkoutSummaryCard(
     buttonLabel: String,
     actionTag: String,
     buttonEnabled: Boolean,
+    dimWhenDisabled: Boolean = true,
     error: TodayError?,
     onAction: () -> Unit,
     weightUnit: WeightUnit,
@@ -143,7 +146,8 @@ private fun WorkoutSummaryCard(
                 Text(text = error.message(), color = AppColors.Destructive, style = Home.Eyebrow)
                 Spacer(Modifier.height(Home.ButtonGap))
             }
-            AppHomeStartButton(label = buttonLabel, onClick = onAction, enabled = buttonEnabled, modifier = Modifier.testTag(actionTag))
+            AppHomeStartButton(label = buttonLabel, onClick = onAction, enabled = buttonEnabled,
+                dimWhenDisabled = dimWhenDisabled, modifier = Modifier.testTag(actionTag))
         }
     }
 }

@@ -25,8 +25,10 @@ class CoreNavigator(val state: NavigationState) {
     }
 
     /** An asynchronous result may navigate only while its originating entry is current. */
-    fun navigateFrom(source: NavKey, destination: NavKey) {
-        if (state.currentKey == source) navigate(destination)
+    fun navigateFrom(source: NavKey, destination: NavKey): Boolean {
+        if (state.currentKey != source) return false
+        navigate(destination)
+        return true
     }
 
     fun goBack() {
