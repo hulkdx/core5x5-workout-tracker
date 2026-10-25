@@ -19,11 +19,25 @@ class TodayScreenRobot(private val app: AppUiTest) {
         if (waitForStart) app.awaitNode(hasTestTag("workout-title"))
     }
     fun pressSwitch() { app.awaitNode(hasTestTag("workout-switch") and isEnabled()).performScrollTo().performClick() }
+    fun resumePreviousWorkout(waitForStart: Boolean = true) {
+        app.awaitNode(hasTestTag("resume-previous-workout") and isEnabled()).performScrollTo().performClick()
+        if (waitForStart) app.awaitNode(hasTestTag("workout-title"))
+    }
     fun retryLoad() { app.awaitNode(hasText("Try Again")).performScrollTo().performClick() }
     fun verify(assertions: TodayScreenVerify.() -> Unit) = TodayScreenVerify(app).apply(assertions)
 }
 
 class TodayScreenVerify(private val app: AppUiTest) {
+    fun previousWorkoutChoiceShown(workout: Workout) {
+        app.awaitNode(hasTestTag("start-workout") and isEnabled()).performScrollTo().assertTextEquals("Start new workout")
+        app.awaitNode(hasText("Workout ${workout.name} finished today")).performScrollTo().assertIsDisplayed()
+        app.awaitNode(hasTestTag("resume-previous-workout") and isEnabled()).performScrollTo()
+            .assertTextEquals("Resume previous workout").assertIsDisplayed()
+    }
+    fun reopeningBlocked() {
+        actionsBlocked()
+        app.awaitNode(hasTestTag("resume-previous-workout")).performScrollTo().assertIsNotEnabled()
+    }
     fun actionsBlocked() {
         app.awaitNode(hasTestTag("start-workout")).performScrollTo().assertIsNotEnabled()
         app.awaitNode(hasTestTag("workout-switch")).performScrollTo().assertIsNotEnabled()

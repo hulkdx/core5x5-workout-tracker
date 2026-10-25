@@ -137,6 +137,34 @@ class TodayViewModel(
         _uiState.value = state.copy(requestedWorkout = state.unfinishedWorkout, isNavigating = true, error = null)
     }
 
+    fun resumePreviousWorkout() {
+        val state = uiState.value
+        if (!isVisible || !state.canResumePrevious) return
+        val previous = state.previousWorkout ?: return
+        runOperation(TodayError.REOPEN) {
+            val workout = try {
+                repository.reopenWorkout(previous.id, previous.completedAtEpochMillis)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                // Recover a committed reopen whose acknowledgement was lost, by this ID only.
+                repository.getUnfinishedWorkout()?.takeIf { it.id == previous.id } ?: throw failure
+            }
+            if (workout == null) {
+                // Eligibility may have expired or another session may have started since loading.
+                showWorkout(repository.getUnfinishedWorkout())
+            } else {
+                selectedWorkout = null
+                _uiState.value = uiState.value.copy(
+                    requestedWorkout = workout.takeIf { isVisible },
+                    isNavigating = isVisible,
+                    error = null,
+                )
+                refreshPending = true
+            }
+        }
+    }
+
     fun onWorkoutRequestHandled(accepted: Boolean = true) {
         _uiState.value = uiState.value.copy(
             requestedWorkout = null,
@@ -148,10 +176,12 @@ class TodayViewModel(
     private suspend fun showWorkout(workout: UnfinishedWorkout?) {
         if (workout != null || uiState.value.unfinishedWorkout != null) selectedWorkout = null
         val nextWorkout = if (workout == null) repository.getNextWorkoutPrescription(selectedWorkout) else null
+        val previousWorkout = if (workout == null) repository.getResumablePreviousWorkout() else null
         _uiState.value = uiState.value.copy(
             nextWorkout = nextWorkout?.workout,
             nextWorkoutPrescription = nextWorkout,
             unfinishedWorkout = workout,
+            previousWorkout = previousWorkout,
             error = null,
         )
     }
@@ -166,12 +196,14 @@ class TodayViewModel(
         _uiState.value = uiState.value.copy(
             isLoading = loading,
             isWorking = !loading,
+            isReopening = error == TodayError.REOPEN,
             error = null,
             requestedWorkout = null,
             // Never reveal an invalidated hidden snapshot if its replacement read is slow.
             nextWorkout = uiState.value.nextWorkout.takeUnless { loading && !isVisible },
             nextWorkoutPrescription = uiState.value.nextWorkoutPrescription.takeUnless { loading && !isVisible },
             unfinishedWorkout = uiState.value.unfinishedWorkout.takeUnless { loading && !isVisible },
+            previousWorkout = uiState.value.previousWorkout.takeUnless { loading && !isVisible },
         )
         viewModelScope.launch {
             try {
@@ -182,7 +214,7 @@ class TodayViewModel(
                 _uiState.value = uiState.value.copy(error = error)
             } finally {
                 operationInProgress = false
-                _uiState.value = uiState.value.copy(isLoading = false, isWorking = false)
+                _uiState.value = uiState.value.copy(isLoading = false, isWorking = false, isReopening = false)
                 if (viewModelScope.isActive) refreshIfPossible()
             }
         }

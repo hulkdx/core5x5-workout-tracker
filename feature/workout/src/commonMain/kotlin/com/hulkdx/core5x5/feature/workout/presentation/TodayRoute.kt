@@ -33,6 +33,7 @@ fun TodayRoute(onWorkoutRequested: (Long) -> Boolean, onTabSelected: (TopLevelTa
             onRetryPreferences = viewModel::retryPreferences,
             onStartWorkout = viewModel::startWorkout,
             onResumeWorkout = viewModel::requestResume,
+            onResumePreviousWorkout = viewModel::resumePreviousWorkout,
             onRetryLoad = viewModel::loadWorkout,
             onSwitchWorkout = viewModel::switchWorkout,
         )

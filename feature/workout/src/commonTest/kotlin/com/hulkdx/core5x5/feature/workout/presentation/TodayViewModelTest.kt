@@ -669,6 +669,147 @@ class TodayViewModelTest {
 
     private fun newStore(): ViewModelStore = ViewModelStore().also(stores::add)
 
+    @Test
+    fun previousCompletionOffersBothChoicesAndStartingNewPreservesIt() = runTest(dispatcher) {
+        repository.previous = completedSession()
+        repository.nextWorkout = Workout.B
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(repository.previous, viewModel.uiState.value.previousWorkout)
+        assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
+        assertTrue(viewModel.uiState.value.canStart)
+        assertTrue(viewModel.uiState.value.canResumePrevious)
+        assertFalse(viewModel.uiState.value.canResume)
+        assertNull(viewModel.uiState.value.requestedWorkout)
+
+        viewModel.startWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(listOf(Workout.B), repository.startedWorkouts)
+        assertEquals(completedSession(), repository.previous)
+        assertEquals(emptyList(), repository.reopenedIds)
+    }
+
+    @Test
+    fun reopeningBlocksCompetingActionsAndPreservesTheDepartingCard() = runTest(dispatcher) {
+        repository.previous = completedSession()
+        repository.nextWorkout = Workout.B
+        val gate = CompletableDeferred<Unit>()
+        repository.reopenGate = gate
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        viewModel.resumePreviousWorkout()
+        dispatcher.scheduler.runCurrent()
+        viewModel.resumePreviousWorkout()
+        viewModel.startWorkout()
+        viewModel.switchWorkout()
+        viewModel.requestResume()
+        assertTrue(viewModel.uiState.value.isReopening)
+        assertFalse(viewModel.uiState.value.canStart)
+        assertFalse(viewModel.uiState.value.canResumePrevious)
+        assertEquals(listOf(1L), repository.reopenedIds)
+        assertEquals(emptyList(), repository.startedWorkouts)
+
+        gate.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(repository.active, viewModel.uiState.value.requestedWorkout)
+        assertEquals(completedSession(), viewModel.uiState.value.previousWorkout)
+        assertEquals(Workout.B, viewModel.uiState.value.nextWorkout)
+        viewModel.onWorkoutRequestHandled()
+        assertTrue(viewModel.uiState.value.isNavigating)
+        assertFalse(viewModel.uiState.value.canResumePrevious)
+        viewModel.onHidden()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(repository.active, viewModel.uiState.value.unfinishedWorkout)
+        assertNull(viewModel.uiState.value.previousWorkout)
+    }
+
+    @Test
+    fun reopenFailureRetriesAndLostReplyRecoversTheOriginalSession() = runTest(dispatcher) {
+        repository.previous = completedSession()
+        repository.reopenError = IllegalStateException("Write unavailable")
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        viewModel.resumePreviousWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(TodayError.REOPEN, viewModel.uiState.value.error)
+        assertTrue(viewModel.uiState.value.canResumePrevious)
+        assertFalse(viewModel.uiState.value.canStart)
+        assertNull(viewModel.uiState.value.requestedWorkout)
+
+        repository.reopenError = null
+        repository.reopenAfterCommitError = IllegalStateException("Lost reply")
+        viewModel.resumePreviousWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(1L, viewModel.uiState.value.requestedWorkout?.id)
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun staleReopenRefreshesWithoutSubstitutingAnotherSessionEvenAfterAnError() = runTest(dispatcher) {
+        repository.previous = completedSession()
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        repository.previous = null
+        repository.active = session(Workout.B).copy(id = 2L)
+        repository.reopenError = IllegalStateException("Uncertain reply")
+        viewModel.resumePreviousWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertNull(viewModel.uiState.value.requestedWorkout)
+        assertEquals(TodayError.REOPEN, viewModel.uiState.value.error)
+
+        repository.reopenError = null
+        viewModel.resumePreviousWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertNull(viewModel.uiState.value.requestedWorkout)
+        assertEquals(2L, viewModel.uiState.value.unfinishedWorkout?.id)
+        assertFalse(viewModel.uiState.value.canResumePrevious)
+        assertTrue(viewModel.uiState.value.canResume)
+    }
+
+    @Test
+    fun lateReopenAfterLeavingTodayDoesNotNavigateInAnotherTab() = runTest(dispatcher) {
+        repository.previous = completedSession()
+        val gate = CompletableDeferred<Unit>()
+        repository.reopenGate = gate
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        viewModel.resumePreviousWorkout()
+        dispatcher.scheduler.runCurrent()
+        viewModel.onHidden()
+        gate.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertNull(viewModel.uiState.value.requestedWorkout)
+        assertFalse(viewModel.uiState.value.isNavigating)
+        assertEquals(repository.active, viewModel.uiState.value.unfinishedWorkout)
+        viewModel.onVisible()
+        assertTrue(viewModel.uiState.value.canResume)
+    }
+
+    @Test
+    fun previousReadFailureRetriesAndAnUnfinishedSessionSuppressesTheChoice() = runTest(dispatcher) {
+        repository.previousReadError = IllegalStateException("Read unavailable")
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(TodayError.LOAD, viewModel.uiState.value.error)
+        assertNull(viewModel.uiState.value.nextWorkout)
+        repository.previousReadError = null
+        repository.previous = completedSession()
+        viewModel.loadWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.canResumePrevious)
+        repository.previousReadError = IllegalStateException("Must not read previous with an active session")
+        repository.active = session(Workout.B)
+        viewModel.loadWorkout()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.canResume)
+        assertFalse(viewModel.uiState.value.canResumePrevious)
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    private fun completedSession(): CompletedWorkout = session(Workout.A).let {
+        CompletedWorkout(it.id, it.workout, it.startedAtEpochMillis, 1_000L, it.exercises)
+    }
+
     private fun createViewModel(): TodayViewModel =
         TodayViewModel(repository, preferences).also { newStore().put("today", it) }
 
@@ -678,6 +819,31 @@ class TodayViewModelTest {
 
         override suspend fun switchWorkout(workoutId: Long, workout: Workout): UnfinishedWorkout? =
             error("Today switches its preview before a session starts")
+
+        var previous: CompletedWorkout? = null
+        var previousReadError: Exception? = null
+        var reopenError: Exception? = null
+        var reopenAfterCommitError: Exception? = null
+        var reopenGate: CompletableDeferred<Unit>? = null
+        val reopenedIds = mutableListOf<Long>()
+
+        override suspend fun getResumablePreviousWorkout(): CompletedWorkout? {
+            previousReadError?.let { throw it }
+            return previous.takeIf { active == null }
+        }
+
+        override suspend fun reopenWorkout(workoutId: Long, completedAtEpochMillis: Long): UnfinishedWorkout? {
+            reopenedIds += workoutId
+            reopenGate?.await()
+            reopenError?.let { throw it }
+            active?.let { return it.takeIf { it.id == workoutId } }
+            val completed = previous?.takeIf { it.id == workoutId && it.completedAtEpochMillis == completedAtEpochMillis }
+                ?: return null
+            active = UnfinishedWorkout(completed.workout, completed.startedAtEpochMillis, completed.exercises, completed.id)
+            previous = null
+            reopenAfterCommitError?.let { throw it }
+            return active
+        }
 
         var active: UnfinishedWorkout? = null
         var nextWorkout = Workout.A

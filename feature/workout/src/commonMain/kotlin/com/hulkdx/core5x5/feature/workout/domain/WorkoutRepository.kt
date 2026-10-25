@@ -12,6 +12,16 @@ interface WorkoutRepository {
     /** Returns only a durably completed session with this ID; active or missing IDs return null. */
     suspend fun getCompletedWorkout(workoutId: Long): CompletedWorkout?
 
+    /** Latest session, finished today (UTC), only when no unfinished session exists. */
+    suspend fun getResumablePreviousWorkout(): CompletedWorkout?
+
+    /**
+     * Reopens exactly the displayed completion atomically, retaining progress and clearing rest.
+     * Returns null if it is no longer eligible or another session is active. A retry may return
+     * this same already reopened session, but never substitutes another session.
+     */
+    suspend fun reopenWorkout(workoutId: Long, completedAtEpochMillis: Long): UnfinishedWorkout?
+
     /**
      * Returns the program after the latest completed session, or A before any completion.
      * Unfinished sessions and set completion do not advance this selection.

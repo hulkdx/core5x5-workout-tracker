@@ -226,6 +226,12 @@ class WorkoutCompleteViewModelTest {
         WorkoutCompleteViewModel(id, repository).also { newStore().put("completion", it) }
 
     private class FakeWorkoutRepository : WorkoutRepository {
+        override suspend fun getResumablePreviousWorkout(): CompletedWorkout? =
+            error("This screen does not reopen completed workouts")
+
+        override suspend fun reopenWorkout(workoutId: Long, completedAtEpochMillis: Long): UnfinishedWorkout? =
+            error("This screen does not reopen completed workouts")
+
         override fun observeWorkoutChanges(): kotlinx.coroutines.flow.Flow<Unit> =
             error("Completion does not observe Today refreshes")
 

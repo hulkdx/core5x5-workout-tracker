@@ -1,13 +1,70 @@
 package com.hulkdx.core5x5.uitest.screen.today
 
 import androidx.compose.ui.unit.dp
+import com.hulkdx.core5x5.feature.workout.domain.Exercise
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.uitest.UiTestOperation
 import com.hulkdx.core5x5.uitest.runAppUiTest
 import com.hulkdx.core5x5.uitest.screen.workout.launchWorkoutScreen
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class TodayScreenTest {
+    @Test
+    fun previousCompletionReopensAfterRestartAndLostReplyWithItsRecordedReps() = runAppUiTest {
+        val workout = launchWorkoutScreen(this) {
+            repeat(3) { tapSet(Exercise.SQUAT, 1) }
+            advanceTimeBy(60_000L)
+            pressFinish()
+        }
+        val completed = assertNotNull(savedWorkout())
+        workout.returnToToday()
+        restart()
+        val today = launchTodayScreen(this) {}
+        today.verify { previousWorkoutChoiceShown(Workout.A); nextWorkoutShown(Workout.B) }
+        advanceTimeBy(30_000L)
+        failNext(UiTestOperation.REOPEN, afterCommit = true)
+        today.resumePreviousWorkout()
+        workout.verify { workoutShown(Workout.A); setCompleted(Exercise.SQUAT, 1, 3); restTimerAbsent() }
+        assertEquals(completed.id, unfinishedWorkout()?.id)
+        assertEquals(completed.exercises, unfinishedWorkout()?.exercises)
+        assertNull(savedWorkout())
+        advanceTimeBy(30_000L)
+        workout.pressFinish()
+        workout.verify { workoutCompleteScreenShown(completedSets = 1, duration = "02:00") }
+        assertEquals(completed.id, savedWorkout()?.id)
+        workout.returnToToday()
+        today.verify { previousWorkoutChoiceShown(Workout.A); nextWorkoutShown(Workout.B) }
+        today.startWorkout()
+        today.verify { activeWorkoutShown(Workout.B) }
+        assertEquals(completed.id, savedWorkout()?.id)
+    }
+
+    @Test
+    fun previousCompletionFailureAndPendingRetryRemainReachableAtNarrowLargeText() = runAppUiTest(
+        width = 320.dp, height = 640.dp, fontScale = 2f,
+    ) {
+        val workout = launchWorkoutScreen(this) { pressFinish() }
+        val completed = assertNotNull(savedWorkout())
+        workout.returnToToday()
+        val today = launchTodayScreen(this) {}
+        today.verify { previousWorkoutChoiceShown(Workout.A) }
+        failNext(UiTestOperation.REOPEN)
+        today.resumePreviousWorkout(waitForStart = false)
+        today.verify { errorShown("Unable to resume the previous workout. Try again or refresh.") }
+        assertEquals(completed, savedWorkout())
+        assertNull(unfinishedWorkout())
+        val reopen = pauseNext(UiTestOperation.REOPEN)
+        today.resumePreviousWorkout(waitForStart = false)
+        awaitStarted(reopen)
+        today.verify { reopeningBlocked() }
+        release(reopen)
+        workout.verify { workoutShown(Workout.A); restTimerAbsent() }
+        assertEquals(completed.id, unfinishedWorkout()?.id)
+    }
+
     @Test
     fun initialLoadingWaitsForStorageWithoutOfferingAnInventedWorkout() = runAppUiTest {
         val read = pauseNext(UiTestOperation.LOAD_ACTIVE)

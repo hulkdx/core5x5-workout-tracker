@@ -9,6 +9,7 @@ import com.hulkdx.core5x5.feature.workout.domain.ExerciseEdit
 import com.hulkdx.core5x5.feature.workout.domain.RestTimerRules
 import androidx.room3.Transaction
 import com.hulkdx.core5x5.feature.workout.domain.Workout
+import com.hulkdx.core5x5.feature.workout.domain.isWorkoutFinishedToday
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -40,6 +41,39 @@ interface UnfinishedWorkoutDao {
 
     @Query("SELECT * FROM unfinished_workout WHERE id = :workoutId")
     suspend fun getWorkout(workoutId: Long): UnfinishedWorkoutEntity?
+
+    @Query("SELECT * FROM unfinished_workout ORDER BY id DESC LIMIT 1")
+    suspend fun getLatestWorkout(): UnfinishedWorkoutEntity?
+
+    @Transaction
+    suspend fun getResumablePreviousWorkout(nowEpochMillis: Long): StoredUnfinishedWorkout? {
+        if (getUnfinishedWorkout() != null) return null
+        val latest = getLatestWorkout() ?: return null
+        val completedAt = latest.completedAtEpochMillis ?: return null
+        if (!isWorkoutFinishedToday(completedAt, nowEpochMillis)) return null
+        return getSession(latest.id)
+    }
+
+    @Query("""
+        UPDATE unfinished_workout SET completedAtEpochMillis = NULL,
+        unfinishedSlot = 1, restDeadlineEpochMillis = NULL
+        WHERE id = :workoutId AND completedAtEpochMillis = :completedAtEpochMillis
+        AND unfinishedSlot IS NULL
+    """)
+    suspend fun clearCompletion(workoutId: Long, completedAtEpochMillis: Long): Int
+
+    /** Shares the writer transaction with Start/Finish, including across database instances. */
+    @Transaction
+    suspend fun reopenWorkout(
+        workoutId: Long, completedAtEpochMillis: Long, nowEpochMillis: Long,
+    ): StoredUnfinishedWorkout? {
+        val active = getSession()
+        if (active != null) return active.takeIf { it.session.id == workoutId }
+        val previous = getResumablePreviousWorkout(nowEpochMillis) ?: return null
+        if (previous.session.id != workoutId || previous.session.completedAtEpochMillis != completedAtEpochMillis) return null
+        check(clearCompletion(workoutId, completedAtEpochMillis) == 1)
+        return getSession(workoutId)
+    }
 
     @Query("""
         SELECT * FROM unfinished_workout

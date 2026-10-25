@@ -29,6 +29,7 @@ import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.preferences.domain.formatWeight
 import com.hulkdx.core5x5.core.ui.components.AppHomeExerciseRow
 import com.hulkdx.core5x5.core.ui.components.AppHomeStartButton
+import com.hulkdx.core5x5.core.ui.components.AppRestFinishButton
 import com.hulkdx.core5x5.core.ui.components.AppWorkoutSwitch
 import com.hulkdx.core5x5.core.ui.components.WeightUnitError
 import com.hulkdx.core5x5.core.ui.theme.AppColors
@@ -48,6 +49,7 @@ fun TodayScreen(
     onSwitchWorkout: () -> Unit = {},
     weightUnit: WeightUnit = uiState.weightUnit,
     onRetryPreferences: () -> Unit = {},
+    onResumePreviousWorkout: () -> Unit = {},
 ) {
     Surface(modifier = modifier.fillMaxSize().testTag("today"), color = Home.Background) {
         Column(
@@ -92,13 +94,22 @@ fun TodayScreen(
                         workout = next,
                         exercises = uiState.nextWorkoutPrescription?.exercises ?: WorkoutPrescription(next).exercises,
                         actionTag = "start-workout",
-                        buttonLabel = if (uiState.isWorking && !uiState.isNavigating && uiState.error == null) "Please wait…" else "Start Workout",
+                        buttonLabel = when {
+                            uiState.isWorking && !uiState.isReopening && !uiState.isNavigating && uiState.error == null -> "Please wait…"
+                            uiState.previousWorkout != null -> "Start new workout"
+                            else -> "Start Workout"
+                        },
                         buttonEnabled = uiState.canStart,
                         dimWhenDisabled = !uiState.isNavigating && !uiState.isLoading,
                         error = uiState.error,
                         onAction = onStartWorkout,
                         onSwitch = onSwitchWorkout,
                         weightUnit = weightUnit,
+                        previousWorkout = uiState.previousWorkout?.workout,
+                        onResumePrevious = onResumePreviousWorkout,
+                        resumePreviousEnabled = uiState.canResumePrevious,
+                        isReopening = uiState.isReopening && !uiState.isNavigating,
+                        onRefresh = onRetryLoad,
                     )
                     else -> Column(verticalArrangement = Arrangement.spacedBy(Home.BrandGap)) {
                         Text(text = "Unable to load your workout.", color = Home.Secondary, style = Home.Prescription)
@@ -123,6 +134,11 @@ private fun WorkoutSummaryCard(
     onAction: () -> Unit,
     weightUnit: WeightUnit,
     onSwitch: (() -> Unit)? = null,
+    previousWorkout: Workout? = null,
+    onResumePrevious: () -> Unit = {},
+    resumePreviousEnabled: Boolean = false,
+    isReopening: Boolean = false,
+    onRefresh: () -> Unit = {},
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -148,6 +164,27 @@ private fun WorkoutSummaryCard(
             }
             AppHomeStartButton(label = buttonLabel, onClick = onAction, enabled = buttonEnabled,
                 dimWhenDisabled = dimWhenDisabled, modifier = Modifier.testTag(actionTag))
+            if (previousWorkout != null) {
+                Spacer(Modifier.height(Home.ButtonGap))
+                Text(
+                    text = "Workout ${previousWorkout.name} finished today",
+                    style = Home.Prescription,
+                    color = Home.Secondary,
+                    modifier = Modifier.padding(horizontal = Home.TextInset),
+                )
+                Spacer(Modifier.height(Home.TextGap))
+                AppRestFinishButton(
+                    label = if (isReopening) "Resuming…" else "Resume previous workout",
+                    onClick = onResumePrevious,
+                    enabled = resumePreviousEnabled,
+                    dimWhenDisabled = dimWhenDisabled,
+                    modifier = Modifier.testTag("resume-previous-workout"),
+                )
+            }
+            if (error == TodayError.REOPEN) {
+                Spacer(Modifier.height(Home.TextGap))
+                AppRestFinishButton(label = "Refresh", onClick = onRefresh, enabled = resumePreviousEnabled)
+            }
         }
     }
 }
@@ -190,6 +227,7 @@ private fun TodayError.message() = when (this) {
     TodayError.LOAD -> "Unable to refresh your workout. Try again."
     TodayError.START -> "Unable to start your workout. Try again."
     TodayError.SWITCH -> "Unable to switch workouts. Try again."
+    TodayError.REOPEN -> "Unable to resume the previous workout. Try again or refresh."
 }
 
 @Preview(name = "Today A", widthDp = 390, heightDp = 740)

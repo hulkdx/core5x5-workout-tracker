@@ -32,13 +32,23 @@ class RoomWorkoutRepository(
 
     override suspend fun getCompletedWorkout(workoutId: Long): CompletedWorkout? {
         val stored = dao.getSession(workoutId) ?: return null
-        val completedAt = stored.session.completedAtEpochMillis ?: return null
+        return stored.toCompletedWorkout()
+    }
+
+    override suspend fun getResumablePreviousWorkout(): CompletedWorkout? =
+        dao.getResumablePreviousWorkout(nowEpochMillis())?.toCompletedWorkout()
+
+    override suspend fun reopenWorkout(workoutId: Long, completedAtEpochMillis: Long): UnfinishedWorkout? =
+        dao.reopenWorkout(workoutId, completedAtEpochMillis, nowEpochMillis())?.toDomain()
+
+    private fun StoredUnfinishedWorkout.toCompletedWorkout(): CompletedWorkout? {
+        val completedAt = session.completedAtEpochMillis ?: return null
         return CompletedWorkout(
-            id = stored.session.id,
-            workout = stored.session.workout,
-            startedAtEpochMillis = stored.session.startedAtEpochMillis,
+            id = session.id,
+            workout = session.workout,
+            startedAtEpochMillis = session.startedAtEpochMillis,
             completedAtEpochMillis = completedAt,
-            exercises = stored.exerciseSnapshots(),
+            exercises = exerciseSnapshots(),
         )
     }
 

@@ -9,7 +9,7 @@ import kotlinx.coroutines.CompletableDeferred
 
 enum class UiTestOperation {
     LOAD_ACTIVE, LOAD_PRESCRIPTION, START, SWITCH, COMPLETE_SET, SAVE_REPS, RESET_SET,
-    EDIT, FINISH, LOAD_COMPLETE, LOAD_DETAIL, READ_PREFERENCES, WRITE_PREFERENCES,
+    EDIT, FINISH, REOPEN, LOAD_COMPLETE, LOAD_DETAIL, READ_PREFERENCES, WRITE_PREFERENCES,
 }
 
 class UiTestRequest(
@@ -83,6 +83,8 @@ class UiTestWorkoutRepository(
     override suspend fun startWorkout(workout: Workout) = requests.execute(UiTestOperation.START) {
         delegate.startWorkout(workout)
     }
+    override suspend fun reopenWorkout(workoutId: Long, completedAtEpochMillis: Long) =
+        requests.execute(UiTestOperation.REOPEN) { delegate.reopenWorkout(workoutId, completedAtEpochMillis) }
     override suspend fun switchWorkout(workoutId: Long, workout: Workout) = requests.execute(UiTestOperation.SWITCH) {
         delegate.switchWorkout(workoutId, workout)
     }
