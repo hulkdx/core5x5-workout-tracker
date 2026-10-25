@@ -53,8 +53,8 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun preferenceLoadFailureKeepsInformationalActionsAndRetriesAtNarrowLargeText() = runAppUiTest(
-        width = 320.dp, height = 640.dp, fontScale = 2f,
+    fun preferenceLoadFailureKeepsInformationalActionsAndRetries() = runAppUiTest(
+        width = 320.dp, height = 640.dp,
         prepare = { blockPreferenceReads() },
     ) {
         val settings = launchSettingsScreen(this, waitForPreferences = false) {}

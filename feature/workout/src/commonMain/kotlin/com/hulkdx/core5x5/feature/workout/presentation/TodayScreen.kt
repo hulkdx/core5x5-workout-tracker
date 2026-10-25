@@ -231,8 +231,6 @@ private fun TodayError.message() = when (this) {
 }
 
 @Preview(name = "Today A", widthDp = 390, heightDp = 740)
-@Preview(name = "Today narrow", widthDp = 320, heightDp = 540)
-@Preview(name = "Today large text", widthDp = 320, heightDp = 540, fontScale = 2f)
 @Composable
 private fun TodayScreenPreview() {
     AppTheme {

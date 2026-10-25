@@ -18,18 +18,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.hulkdx.core5x5.core.ui.components.AppCompletionButton
 import com.hulkdx.core5x5.core.ui.components.AppCompletionMetrics
@@ -155,20 +152,6 @@ private fun WorkoutCompleteScreenPreview() {
 @Composable
 private fun WorkoutCompleteBPreview() {
     CompletionPreview(Workout.B, completedSets = 7)
-}
-
-@Preview(name = "Narrow completion", widthDp = 320, heightDp = 640)
-@Composable
-private fun WorkoutCompleteNarrowPreview() {
-    CompletionPreview(Workout.B, completedSets = 7)
-}
-
-@Preview(name = "Larger completion text", widthDp = 390, heightDp = 874)
-@Composable
-private fun WorkoutCompleteLargeTextPreview() {
-    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale = 2f)) {
-        CompletionPreview(Workout.A)
-    }
 }
 
 @Composable

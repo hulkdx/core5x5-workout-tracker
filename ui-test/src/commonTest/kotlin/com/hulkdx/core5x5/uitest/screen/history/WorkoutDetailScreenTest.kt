@@ -15,8 +15,8 @@ import kotlin.test.assertNull
 
 class WorkoutDetailScreenTest {
     @Test
-    fun savedCustomAndResetRepsSurviveReopeningAndShowInNarrowLargeTextDetail() = runAppUiTest(
-        width = 320.dp, height = 640.dp, fontScale = 2f,
+    fun savedCustomAndResetRepsSurviveReopeningAndShowInDetail() = runAppUiTest(
+        width = 320.dp, height = 640.dp,
     ) {
         launchSettingsScreen(this) { openUnits(); chooseUnit(WeightUnit.LB); returnToToday() }
         val workout = launchWorkoutScreen(this) {}

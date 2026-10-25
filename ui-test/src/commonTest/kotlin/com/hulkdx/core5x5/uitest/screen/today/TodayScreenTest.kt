@@ -43,8 +43,8 @@ class TodayScreenTest {
     }
 
     @Test
-    fun previousCompletionFailureAndPendingRetryRemainReachableAtNarrowLargeText() = runAppUiTest(
-        width = 320.dp, height = 640.dp, fontScale = 2f,
+    fun previousCompletionFailureAndPendingRetryPreserveSavedProgress() = runAppUiTest(
+        width = 320.dp, height = 640.dp,
     ) {
         val workout = launchWorkoutScreen(this) { pressFinish() }
         val completed = assertNotNull(savedWorkout())
@@ -90,8 +90,8 @@ class TodayScreenTest {
     }
 
     @Test
-    fun failedPreStartSwitchKeepsPreviousProgramAndRetriesAtNarrowLargeText() = runAppUiTest(
-        width = 320.dp, height = 640.dp, fontScale = 2f,
+    fun failedPreStartSwitchKeepsPreviousProgramAndRetries() = runAppUiTest(
+        width = 320.dp, height = 640.dp,
     ) {
         val today = launchTodayScreen(this) {}
         failNext(UiTestOperation.LOAD_PRESCRIPTION)

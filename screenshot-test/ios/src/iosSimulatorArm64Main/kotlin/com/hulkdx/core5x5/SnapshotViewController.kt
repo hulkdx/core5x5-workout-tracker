@@ -1,11 +1,8 @@
 package com.hulkdx.core5x5
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.withFrameNanos
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.window.ComposeUIViewController
 import com.hulkdx.core5x5.core.navigation.TopLevelTab
 import com.hulkdx.core5x5.core.ui.components.TopLevelScreenLayout
@@ -16,18 +13,15 @@ import com.hulkdx.core5x5.feature.workout.presentation.WorkoutSnapshotContent
 
 /** Snapshot-only bridge: no Koin, database, preferences, clock, or ViewModel is started. */
 fun SnapshotViewController(scene: String, onReady: () -> Unit) = ComposeUIViewController {
-    val density = LocalDensity.current
-    CompositionLocalProvider(LocalDensity provides Density(density.density, if (scene.endsWith("Large")) 2f else 1f)) {
-        AppTheme {
-            when (scene) {
-                "todayA", "todayB" -> SnapshotTab(TopLevelTab.TODAY) { WorkoutSnapshotContent(scene) }
-                "history" -> SnapshotTab(TopLevelTab.HISTORY) { HistorySnapshotContent() }
-                "settings", "settingsLarge", "settingsUnits", "settingsUnitsError",
-                "settingsAbout", "settingsAboutError", "settingsLicense" ->
-                    SnapshotTab(TopLevelTab.SETTINGS) { SettingsSnapshotContent(scene) }
-                "active", "rest", "editor", "complete" -> WorkoutSnapshotContent(scene)
-                else -> error("Unknown iOS snapshot: $scene")
-            }
+    AppTheme {
+        when (scene) {
+            "todayA", "todayB" -> SnapshotTab(TopLevelTab.TODAY) { WorkoutSnapshotContent(scene) }
+            "history" -> SnapshotTab(TopLevelTab.HISTORY) { HistorySnapshotContent() }
+            "settings", "settingsUnits", "settingsUnitsError",
+            "settingsAbout", "settingsAboutError", "settingsLicense" ->
+                SnapshotTab(TopLevelTab.SETTINGS) { SettingsSnapshotContent(scene) }
+            "active", "rest", "editor", "complete" -> WorkoutSnapshotContent(scene)
+            else -> error("Unknown iOS snapshot: $scene")
         }
     }
     LaunchedEffect(Unit) {

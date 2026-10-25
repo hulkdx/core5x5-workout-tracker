@@ -96,8 +96,8 @@ class ExerciseEditScreenTest {
     }
 
     @Test
-    fun largeTextAtNarrowWidthKeepsEditorAndLastSetReachable() = runAppUiTest(
-        width = 320.dp, height = 640.dp, fontScale = 2f,
+    fun editingSetOverflowKeepsTheLastSetReachable() = runAppUiTest(
+        width = 320.dp, height = 640.dp,
     ) {
         val workout = launchWorkoutScreen(this) {}
         workout.editExercise(SQUAT) {

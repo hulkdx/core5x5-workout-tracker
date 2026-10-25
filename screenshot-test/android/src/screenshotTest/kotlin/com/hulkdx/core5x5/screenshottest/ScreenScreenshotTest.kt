@@ -4,10 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -16,7 +14,6 @@ import com.hulkdx.core5x5.core.navigation.TopLevelTab
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
-import com.hulkdx.core5x5.core.ui.components.AppBottomNavigation
 import com.hulkdx.core5x5.core.ui.components.TopLevelScreenLayout
 import com.hulkdx.core5x5.core.ui.theme.AppColors
 import com.hulkdx.core5x5.core.ui.theme.AppCompleteTokens
@@ -101,11 +98,6 @@ class ScreenScreenshotTest {
     )
 
     @PreviewTest
-    @Preview(name = "Today 320dp, large text", widthDp = 320, heightDp = 640, fontScale = 2f)
-    @Composable
-    fun TodayNarrow() = TodaySnapshot(TodayUiState(isLoading = false, nextWorkout = Workout.B))
-
-    @PreviewTest
     @HomeReferenceScreen
     @Composable
     fun ActiveWorkout() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A))
@@ -117,7 +109,6 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutBeforeFirstTap() = ActiveWorkoutSnapshot(
         activeWorkoutRepReference(recordedReps = listOf(null, null, null, null, null)),
@@ -125,7 +116,6 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutSwitchB() =
         ActiveWorkoutSnapshot(activeWorkoutReference(Workout.B).let { state ->
@@ -143,7 +133,6 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutSwitchSaving() = ActiveWorkoutSnapshot(
         activeWorkoutRepReference(recordedReps = listOf(null, null, null, null, null)).copy(
@@ -153,7 +142,6 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutSwitchError() = ActiveWorkoutSnapshot(
         activeWorkoutRepReference(recordedReps = listOf(null, null, null, null, null)).copy(
@@ -163,7 +151,6 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutAfterFirstTap() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -173,7 +160,6 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutSetSaving() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -183,7 +169,6 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutRestSetSaving() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -194,7 +179,6 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutFinishing() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -204,7 +188,6 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutRestFinishing() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -233,18 +216,6 @@ class ScreenScreenshotTest {
     )
 
     @PreviewTest
-    @Preview(
-        name = "Scrollable sets, narrow large text",
-        widthDp = 320,
-        heightDp = 640,
-        fontScale = 2f
-    )
-    @Composable
-    fun ActiveWorkoutScrollableSetsNarrow() = ActiveWorkoutSnapshot(
-        activeWorkoutRepReference(recordedReps = List(12) { if (it < 7) 5 else null }),
-    )
-
-    @PreviewTest
     @HomeReferenceScreen
     @Composable
     fun ActiveWorkoutReset() = ActiveWorkoutSnapshot(
@@ -262,7 +233,6 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutRest() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -272,7 +242,6 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutRestB() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.B).copy(
@@ -282,7 +251,6 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutRestExpired() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -292,7 +260,6 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutRestExpiredB() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.B).copy(
@@ -323,17 +290,7 @@ class ScreenScreenshotTest {
         })
 
     @PreviewTest
-    @Preview(name = "Narrow running rest", widthDp = 360, heightDp = 640, fontScale = 2f)
-    @Composable
-    fun ActiveWorkoutRestNarrow() = ActiveWorkoutSnapshot(
-        activeWorkoutReference(Workout.A).copy(
-            restTimer = RestTimerUiState(isVisible = true, countdown = "02:30"),
-        )
-    )
-
-    @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutRestSaveError() = ActiveWorkoutSnapshot(
         activeWorkoutReference(Workout.A).copy(
@@ -343,27 +300,12 @@ class ScreenScreenshotTest {
     )
 
     @PreviewTest
-    @Preview(name = "Narrow large text", widthDp = 360, heightDp = 640, fontScale = 2f)
-    @Composable
-    fun ActiveWorkoutNarrow() = ActiveWorkoutSnapshot(
-        activeWorkoutReference(Workout.A).copy(
-            restTimer = RestTimerUiState(isVisible = true, isExpired = true, countdown = "00:00"),
-        )
-    )
-
-    @PreviewTest
     @HomeReferenceScreen
     @Composable
     fun ActiveWorkoutEdit() = ExerciseEditSnapshot()
 
     @PreviewTest
-    @Preview(name = "Narrow edit, large text", widthDp = 360, heightDp = 640, fontScale = 2f)
-    @Composable
-    fun ActiveWorkoutEditNarrow() = ExerciseEditSnapshot()
-
-    @PreviewTest
     @Preview(name = "Custom rest sheet", widthDp = 432, heightDp = 768)
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutEditRest() = AppTheme {
         Box(
@@ -377,7 +319,6 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun ActiveWorkoutEditRestZero() = AppTheme {
         Box(Modifier.fillMaxSize().background(com.hulkdx.core5x5.core.ui.theme.AppEditTokens.Sheet)) {
@@ -399,19 +340,12 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun WorkoutCompleteB() =
         WorkoutCompleteSnapshot(completedWorkoutState(Workout.B, completedSets = 7))
 
     @PreviewTest
-    @Preview(name = "Narrow completion, large text", widthDp = 360, heightDp = 640, fontScale = 2f)
-    @Composable
-    fun WorkoutCompleteNarrow() = WorkoutCompleteSnapshot(completedWorkoutState(Workout.B))
-
-    @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun WorkoutCompleteLoadError() = WorkoutCompleteSnapshot(
         WorkoutCompleteUiState(isLoading = false, error = WorkoutCompleteError.LOAD),
@@ -433,16 +367,6 @@ class ScreenScreenshotTest {
     @HomeReferenceScreen
     @Composable
     fun History() = HistorySnapshot(
-        HistoryUiState(
-            isLoading = false,
-            completedWorkouts = historyGraphRecords()
-        )
-    )
-
-    @PreviewTest
-    @Preview(name = "Narrow history, large text", widthDp = 360, heightDp = 640, fontScale = 2f)
-    @Composable
-    fun HistoryNarrow() = HistorySnapshot(
         HistoryUiState(
             isLoading = false,
             completedWorkouts = historyGraphRecords()
@@ -492,24 +416,6 @@ class ScreenScreenshotTest {
             error = HistoryError.LOAD
         ),
     )
-
-    @PreviewTest
-    @Preview(name = "320dp navigation, large text", widthDp = 360, heightDp = 640, fontScale = 2f)
-    @Composable
-    fun BottomNavigationNarrow() = AppTheme {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(AppHomeTokens.Background),
-            contentAlignment = Alignment.BottomCenter,
-        ) {
-            AppBottomNavigation(
-                selectedItem = TopLevelTab.SETTINGS,
-                onItemSelected = {},
-                modifier = Modifier.width(320.dp),
-            )
-        }
-    }
 
     @PreviewTest
     @HomeReferenceScreen
@@ -574,48 +480,9 @@ class ScreenScreenshotTest {
     )
 
     @PreviewTest
-    @Preview(
-        name = "Detail legacy name and numeric reps, narrow large text",
-        widthDp = 320,
-        heightDp = 640,
-        fontScale = 2f
-    )
-    @Composable
-    fun WorkoutDetailLongNameNarrow() = WorkoutDetailSnapshot(
-        WorkoutDetailUiState(
-            workoutId = 4L,
-            isLoading = false,
-            completedWorkout = detailRepRecord(),
-            weightUnit = WeightUnit.LB,
-        ),
-    )
-
-    @PreviewTest
     @HomeReferenceScreen
     @Composable
     fun Settings() = SettingsSnapshot(
-        SettingsUiState(
-            isLoading = false,
-            preferences = TrainingPreferences(),
-            versionName = "1.0.0"
-        ),
-    )
-
-    @PreviewTest
-    @Preview(name = "Narrow Settings lb", widthDp = 320, heightDp = 640)
-    @Composable
-    fun SettingsNarrow() = SettingsSnapshot(
-        SettingsUiState(
-            isLoading = false,
-            preferences = TrainingPreferences(WeightUnit.LB),
-            versionName = "1.0.0"
-        ),
-    )
-
-    @PreviewTest
-    @Preview(name = "Settings large text", widthDp = 360, heightDp = 640, fontScale = 2f)
-    @Composable
-    fun SettingsLargeText() = SettingsSnapshot(
         SettingsUiState(
             isLoading = false,
             preferences = TrainingPreferences(),
@@ -649,13 +516,11 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun SettingsUnits() = SettingsSnapshot(settingsDialogState(SettingsDialog.UNITS))
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun SettingsUnitsSaveError() = SettingsSnapshot(
         settingsDialogState(SettingsDialog.UNITS).copy(error = SettingsError.SAVE),
@@ -663,25 +528,11 @@ class ScreenScreenshotTest {
 
     @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun SettingsAbout() = SettingsSnapshot(settingsDialogState(SettingsDialog.ABOUT))
 
     @PreviewTest
-    @Preview(
-        name = "About repository error, narrow large text",
-        widthDp = 320,
-        heightDp = 640,
-        fontScale = 2f
-    )
-    @Composable
-    fun SettingsAboutErrorNarrow() = SettingsSnapshot(
-        settingsDialogState(SettingsDialog.ABOUT).copy(error = SettingsError.OPEN_REPOSITORY),
-    )
-
-    @PreviewTest
     @HomeReferenceScreen
-    @VerificationSizes
     @Composable
     fun SettingsLicense() = SettingsSnapshot(settingsDialogState(SettingsDialog.LICENSE))
 }

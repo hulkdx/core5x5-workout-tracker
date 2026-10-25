@@ -35,7 +35,7 @@ private fun RestTimerScreenPreview() {
     }
 }
 
-@Preview(name = "Expired rest, larger text", widthDp = 320, heightDp = 640, fontScale = 2f)
+@Preview(name = "Expired rest", widthDp = 390, heightDp = 844)
 @Composable
 private fun ExpiredRestTimerPreview() {
     AppTheme {

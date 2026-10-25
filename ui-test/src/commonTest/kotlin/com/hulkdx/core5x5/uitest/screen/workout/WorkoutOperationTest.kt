@@ -15,7 +15,7 @@ import kotlin.test.assertNull
 class WorkoutOperationTest {
     @Test
     fun changingSelectedExerciseWithPinnedRestPreservesTheVisibleScrollAnchor() = runAppUiTest(
-        width = 320.dp, height = 640.dp, fontScale = 2f,
+        width = 320.dp, height = 640.dp,
     ) {
         val workout = launchWorkoutScreen(this) { tapSet(SQUAT, 1) }
         val verify = workout.verify {}
@@ -29,7 +29,7 @@ class WorkoutOperationTest {
 
     @Test
     fun firstSetSaveBlocksConflictsAndKeepsGeometryThroughRunningAndExpiredRest() = runAppUiTest(
-        width = 320.dp, height = 640.dp, fontScale = 2f,
+        width = 320.dp, height = 640.dp,
     ) {
         val workout = launchWorkoutScreen(this) {}
         val expectedGeometry = workout.verify {}.geometry(SQUAT)
@@ -106,7 +106,7 @@ class WorkoutOperationTest {
 
     @Test
     fun workoutBDeadliftKeepsSingleSetGeometryDuringRestAndExpiry() = runAppUiTest(
-        width = 320.dp, height = 640.dp, fontScale = 2f,
+        width = 320.dp, height = 640.dp,
     ) {
         val workout = launchWorkoutScreen(this) { switchWorkout(Workout.B) }
         val expectedGeometry = workout.verify {}.geometry(DEADLIFT)

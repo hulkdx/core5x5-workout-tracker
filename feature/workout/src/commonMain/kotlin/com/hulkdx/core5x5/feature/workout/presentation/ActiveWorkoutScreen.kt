@@ -247,10 +247,6 @@ private fun RunningRestWorkoutPreview() = WorkoutPreview(rest = true)
 @Composable
 private fun ExpiredRestWorkoutPreview() = WorkoutPreview(rest = true, expired = true)
 
-@Preview(name = "Narrow workout, larger text", widthDp = 320, heightDp = 640, fontScale = 2f)
-@Composable
-private fun NarrowRestWorkoutPreview() = WorkoutPreview(rest = true, expired = true)
-
 @Composable
 private fun WorkoutPreview(rest: Boolean, expired: Boolean = false) {
     val workout = UnfinishedWorkout(

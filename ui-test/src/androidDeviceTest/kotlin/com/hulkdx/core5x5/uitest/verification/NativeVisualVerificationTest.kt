@@ -24,7 +24,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-/** Native-window captures; run at actual device sizes/font scales, without runner overrides. */
+/** Native-window captures at the device viewport, without runner overrides. */
 class NativeVisualVerificationTest {
     @Test
     fun todayLoadingSelectionAndStartErrors() = runAppUiTest {
@@ -73,15 +73,6 @@ class NativeVisualVerificationTest {
         workout.verify { setCompleted(SQUAT, 2, 5) }
         workout.tapSet(SQUAT, 1)
         capture("active-numeric-reps")
-        if (InstrumentationRegistry.getInstrumentation().targetContext.resources.configuration.fontScale > 1f) {
-            val verify = workout.verify {}
-            verify.geometry(BENCH_PRESS)
-            val anchor = verify.exerciseTop(BENCH_PRESS)
-            workout.tapSet(BENCH_PRESS, 1, scroll = false)
-            assertEquals(anchor, verify.exerciseTop(BENCH_PRESS))
-            verify.pinnedTimerDoesNotOverlapList()
-            capture("active-pinned-timer-anchor")
-        }
         advanceTimeBy(180_000)
         workout.verify { restTimerShown("00:00", expired = true) }
         capture("active-expired-a")

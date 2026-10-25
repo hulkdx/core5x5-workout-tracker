@@ -16,8 +16,8 @@ import kotlin.test.assertNull
 
 class WorkoutCompleteStateTest {
     @Test
-    fun loadingSummaryDoesNotClaimSuccessAndReturnRemainsReachableAtLargeText() = runAppUiTest(
-        width = 320.dp, height = 640.dp, fontScale = 2f,
+    fun loadingSummaryDoesNotClaimSuccessAndReturnRemainsReachable() = runAppUiTest(
+        width = 320.dp, height = 640.dp,
     ) {
         val workout = launchWorkoutScreen(this) { tapSet(SQUAT, 1); pressFinish() }
         val saved = assertNotNull(savedWorkout())

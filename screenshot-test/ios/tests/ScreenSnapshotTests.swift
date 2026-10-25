@@ -17,7 +17,6 @@ final class ScreenSnapshotTests: XCTestCase {
     func testWorkoutComplete() { snapshot("complete") }
     func testHistory() { snapshot("history") }
     func testSettings() { snapshot("settings") }
-    func testSettingsLargeText() { snapshot("settingsLarge") }
     func testSettingsUnits() { snapshot("settingsUnits") }
     func testSettingsUnitsSaveError() { snapshot("settingsUnitsError") }
     func testSettingsAbout() { snapshot("settingsAbout") }

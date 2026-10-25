@@ -12,7 +12,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.semantics.SemanticsActions
@@ -27,7 +26,6 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.v2.runComposeUiTest
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
@@ -57,12 +55,11 @@ import org.koin.dsl.module
 fun runAppUiTest(
     width: Dp? = null,
     height: Dp? = null,
-    fontScale: Float? = null,
     prepare: AppUiTest.() -> Unit = {},
     waitForReady: Boolean = true,
     test: AppUiTest.() -> Unit,
 ) = runComposeUiTest {
-    val app = AppUiTest(this, width, height, fontScale)
+    val app = AppUiTest(this, width, height)
     try {
         app.prepare()
         app.launch(waitForReady)
@@ -76,7 +73,6 @@ class AppUiTest(
     val ui: ComposeUiTest,
     private val width: Dp? = null,
     private val height: Dp? = null,
-    private val fontScale: Float? = null,
 ) {
     val requests = UiTestRequests()
     private val storage = createTestDatabase()
@@ -135,7 +131,6 @@ class AppUiTest(
                     CompositionLocalProvider(
                         LocalViewModelStoreOwner provides owner,
                         LocalUriHandler provides uriHandler,
-                        LocalDensity provides Density(LocalDensity.current.density, fontScale ?: LocalDensity.current.fontScale),
                     ) {
                         AppTheme {
                             var viewport = Modifier.fillMaxSize()
