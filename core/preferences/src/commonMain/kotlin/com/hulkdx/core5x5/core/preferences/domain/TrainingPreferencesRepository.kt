@@ -12,4 +12,8 @@ interface TrainingPreferencesRepository {
     suspend fun setWeightUnit(unit: WeightUnit)
 
     suspend fun setRestDurationSeconds(seconds: Long)
+
+    suspend fun setRestNotificationsEnabled(enabled: Boolean)
+
+    suspend fun setRestSoundEnabled(enabled: Boolean)
 }

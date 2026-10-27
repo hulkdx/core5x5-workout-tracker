@@ -20,6 +20,7 @@ kotlin {
             implementation(project(":core:ui"))
             implementation(project(":core:navigation"))
             implementation(project(":core:preferences"))
+            implementation(project(":core:rest-alerts"))
             implementation(project(":core:training"))
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)

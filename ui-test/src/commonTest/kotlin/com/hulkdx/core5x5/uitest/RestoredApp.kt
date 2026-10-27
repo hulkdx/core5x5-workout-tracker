@@ -15,7 +15,9 @@ import com.hulkdx.core5x5.navigation.navigationSavedStateConfiguration
 
 /** A retained destination has no History click entry; seed its stack, then use the real host. */
 @Composable
-fun RestoredApp(destination: NavKey) {
+fun RestoredApp(
+    destination: NavKey,
+) {
     val state = rememberNavigationState(
         startKey = TodayKey,
         tabDestinations = mapOf(

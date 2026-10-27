@@ -12,10 +12,17 @@ kotlin {
 }
 dependencies {
     implementation(project(":shared"))
+    implementation(project(":core:common"))
+    implementation(project(":core:rest-alerts"))
 
     implementation(libs.androidx.activity.compose)
+    implementation(libs.koin.android)
 
     debugImplementation(libs.compose.uiTooling)
+    androidTestImplementation(project(":core:preferences"))
+    androidTestImplementation(project(":feature:workout"))
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.testExt.junit)
 }
 
 android {
@@ -29,6 +36,7 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     packaging {
         resources {

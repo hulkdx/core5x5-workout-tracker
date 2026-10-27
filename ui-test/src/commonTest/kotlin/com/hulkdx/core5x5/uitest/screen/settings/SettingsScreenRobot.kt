@@ -3,6 +3,8 @@
 package com.hulkdx.core5x5.uitest.screen.settings
 
 import androidx.compose.ui.test.*
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.state.ToggleableState
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.uitest.AppUiTest
 import kotlin.test.assertEquals
@@ -36,6 +38,9 @@ class SettingsScreenRobot(private val app: AppUiTest) {
     fun openRepository() { app.awaitNode(hasTestTag("settings-repository")).performScrollTo().performClick() }
     fun closeAbout() { app.awaitNode(hasTestTag("settings-close")).performScrollTo().performClick() }
     fun openPrivacy() { app.awaitNode(hasTestTag("settings-privacy")).performScrollTo().performClick() }
+    fun toggleNotifications() { app.awaitNode(hasText("Enable") and isToggleable() and isEnabled()).performScrollTo().performClick() }
+    fun toggleSound() { app.awaitNode(hasText("Sound") and isToggleable() and isEnabled()).performScrollTo().performClick() }
+    fun openPreciseTimingSettings() { app.awaitNode(hasTestTag("settings-precise-timing")).performScrollTo().performClick() }
     fun verify(assertions: SettingsScreenVerify.() -> Unit) = SettingsScreenVerify(app).apply(assertions)
 }
 
@@ -44,11 +49,11 @@ class SettingsScreenVerify(private val app: AppUiTest) {
     fun loadErrorShown() { app.awaitNode(hasText("Unable to load preferences. Try again.")).assertIsDisplayed() }
     fun unitSelected(unit: WeightUnit) { app.awaitNode(hasTestTag("settings-unit:${unit.name}")).assertIsSelected() }
     fun savingBlocksUnitChangesAndCancellation() {
-        app.awaitNode(hasText("Saving…")).performScrollTo().assertIsDisplayed()
         for (unit in WeightUnit.entries) {
             app.ui.onNodeWithTag("settings-unit:${unit.name}").performScrollTo().assertIsNotEnabled()
         }
         app.ui.onNodeWithTag("settings-cancel").performScrollTo().assertIsNotEnabled()
+        noSaveStatusText()
     }
     fun unitsShown(label: String) {
         app.awaitNode(hasTestTag("settings-units") and hasText(label, substring = true)).assertTextContains(label)
@@ -58,7 +63,37 @@ class SettingsScreenVerify(private val app: AppUiTest) {
         app.ui.onNodeWithText("Rest Timer").assertDoesNotExist()
         app.ui.onNodeWithText("WORKOUT").assertDoesNotExist()
     }
-    fun preferenceSaveErrorShown() { app.awaitNode(hasText("Unable to save preferences. Try again.")).assertIsDisplayed() }
+    fun failedUnitSaveRetainsSelectionForRetry() {
+        app.awaitNode(hasTestTag("settings-unit:KG") and isEnabled()).assertIsSelected()
+        app.ui.onNodeWithTag("settings-unit:LB").assertIsNotSelected()
+        noSaveStatusText()
+    }
+    fun notificationSwitches(enable: Boolean, sound: Boolean, enabled: Boolean = true) {
+        fun switch(label: String, checked: Boolean, interactive: Boolean) = app.awaitNode(
+            hasText(label) and SemanticsMatcher.expectValue(
+                SemanticsProperties.ToggleableState,
+                if (checked) ToggleableState.On else ToggleableState.Off,
+            ) and (if (interactive) isEnabled() else isNotEnabled()),
+        )
+        val enableRow = switch("Enable", enable, enabled)
+        val soundRow = switch("Sound", sound, enabled && enable)
+        if (enable) enableRow.assertIsOn() else enableRow.assertIsOff()
+        if (sound) soundRow.assertIsOn() else soundRow.assertIsOff()
+        if (enabled) enableRow.assertIsEnabled() else enableRow.assertIsNotEnabled()
+        if (enabled && enable) soundRow.assertIsEnabled() else soundRow.assertIsNotEnabled()
+        app.ui.onAllNodes(isToggleable()).assertCountEquals(2)
+    }
+    fun noSaveStatusText() {
+        app.ui.onNodeWithText("Saving…").assertDoesNotExist()
+        app.ui.onNodeWithText("Unable to save preferences. Try again.").assertDoesNotExist()
+    }
+    fun preciseTimingShown(allowed: Boolean) {
+        app.awaitNode(hasTestTag("settings-precise-timing")).performScrollTo()
+            .assertHasClickAction().assertIsEnabled()
+            .assertTextContains(if (allowed) "Allowed" else "Not allowed")
+            .assertTextContains("Rest notifications may arrive late without precise timing.")
+    }
+    fun preciseTimingAbsent() { app.ui.onNodeWithTag("settings-precise-timing").assertDoesNotExist() }
     fun licenseShown() { app.awaitNode(hasTestTag("settings-back-about")).performScrollTo().assertIsDisplayed() }
     fun uriOpened(uri: String) = assertEquals(uri, app.openedUris.lastOrNull())
     fun privacyOpenErrorShown() {

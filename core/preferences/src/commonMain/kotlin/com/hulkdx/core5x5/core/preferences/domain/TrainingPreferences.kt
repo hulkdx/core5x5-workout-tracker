@@ -1,9 +1,11 @@
 package com.hulkdx.core5x5.core.preferences.domain
 
-/** Display preferences never change the kilograms stored with exercise prescriptions or sessions. */
+/** Training preferences never change the kilograms stored with exercise prescriptions or sessions. */
 data class TrainingPreferences(
     val weightUnit: WeightUnit = WeightUnit.KG,
     val restDurationSeconds: Long = DEFAULT_REST_DURATION_SECONDS,
+    val restNotificationsEnabled: Boolean = true,
+    val restSoundEnabled: Boolean = true,
 ) {
     init {
         require(restDurationSeconds in 1..MAX_REST_DURATION_SECONDS) {

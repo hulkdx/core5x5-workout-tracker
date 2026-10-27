@@ -7,7 +7,13 @@ import org.koin.dsl.module
 
 val settingsModule = module {
     includes(settingsPlatformModule)
-    viewModel { SettingsViewModel(repository = get(), appMetadata = get()) }
+    viewModel {
+        SettingsViewModel(
+            repository = get(),
+            appMetadata = get(),
+            restAlertPermissions = get(),
+        )
+    }
 }
 
 expect val settingsPlatformModule: Module

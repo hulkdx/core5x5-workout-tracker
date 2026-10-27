@@ -34,6 +34,7 @@ android {
 dependencies {
     screenshotTestImplementation(project(":core:ui"))
     screenshotTestImplementation(project(":core:preferences"))
+    screenshotTestImplementation(project(":core:rest-alerts"))
     screenshotTestImplementation(project(":core:training"))
     screenshotTestImplementation(project(":core:navigation"))
     screenshotTestImplementation(project(":feature:workout"))

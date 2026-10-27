@@ -5,6 +5,9 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
+import com.hulkdx.core5x5.core.restalerts.domain.RestAlertPermissionStatus
+import com.hulkdx.core5x5.core.restalerts.domain.RestAlertPermissions
+import com.hulkdx.core5x5.core.restalerts.domain.RestNotificationPermission
 import com.hulkdx.core5x5.feature.settings.di.settingsModule
 import com.hulkdx.core5x5.feature.settings.domain.AppMetadata
 import kotlinx.coroutines.CancellationException
@@ -37,6 +40,10 @@ class SettingsViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val repository = FakePreferencesRepository()
     private val metadata = AppMetadata { "2.7.1" }
+    private val permissions = object : RestAlertPermissions {
+        override val status = MutableStateFlow(RestAlertPermissionStatus())
+        override suspend fun refreshStatus() = Unit
+    }
     private val stores = mutableListOf<ViewModelStore>()
 
     @BeforeTest
@@ -46,6 +53,106 @@ class SettingsViewModelTest {
     fun tearDown() {
         stores.forEach { it.clear() }
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun alertSwitchesSaveIndependentlyAndKeepTheSoundChoiceWhileNotificationsAreOff() = runTest(dispatcher) {
+        repository.values.value = TrainingPreferences(WeightUnit.LB, 91)
+        val viewModel = createLoadedViewModel()
+        viewModel.setRestNotificationsEnabled(false)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(TrainingPreferences(WeightUnit.LB, 91, false, true), viewModel.uiState.value.preferences)
+        viewModel.setRestNotificationsEnabled(true)
+        dispatcher.scheduler.runCurrent()
+        viewModel.setRestSoundEnabled(false)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(TrainingPreferences(WeightUnit.LB, 91, true, false), viewModel.uiState.value.preferences)
+        assertEquals(3, repository.saves)
+    }
+
+    @Test
+    fun enablingWhilePermissionIsDeniedSavesPreferenceForLaterGrant() = runTest(dispatcher) {
+        repository.values.value = TrainingPreferences(restNotificationsEnabled = false)
+        permissions.status.value = RestAlertPermissionStatus(RestNotificationPermission.DENIED)
+        val viewModel = createLoadedViewModel()
+
+        viewModel.setRestNotificationsEnabled(true)
+        dispatcher.scheduler.runCurrent()
+
+        assertTrue(requireNotNull(viewModel.uiState.value.preferences).restNotificationsEnabled)
+        assertEquals(1, repository.saves)
+    }
+
+    @Test
+    fun switchWritesRetainSavedPositionsAndBlockFurtherEditsUntilCommitted() = runTest(dispatcher) {
+        val viewModel = createLoadedViewModel()
+        repository.saveGate = CompletableDeferred()
+        viewModel.setRestSoundEnabled(false)
+        viewModel.setRestNotificationsEnabled(false)
+        viewModel.openUnits()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.isSaving)
+        assertEquals(TrainingPreferences(), viewModel.uiState.value.preferences)
+        assertNull(viewModel.uiState.value.dialog)
+        assertEquals(1, repository.saves)
+        repository.saveGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertFalse(requireNotNull(viewModel.uiState.value.preferences).restSoundEnabled)
+        assertTrue(requireNotNull(viewModel.uiState.value.preferences).restNotificationsEnabled)
+        assertFalse(viewModel.uiState.value.isSaving)
+    }
+
+    @Test
+    fun failedSwitchWritesRetainSavedPositionsAndAllowTheSameActionToRetry() = runTest(dispatcher) {
+        val viewModel = createLoadedViewModel()
+        repository.saveError = IllegalStateException("disk full")
+        viewModel.setRestNotificationsEnabled(false)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(TrainingPreferences(), viewModel.uiState.value.preferences)
+        assertEquals(SettingsError.SAVE, viewModel.uiState.value.error)
+        assertTrue(viewModel.uiState.value.canChangePreferences)
+        repository.saveError = null
+        viewModel.setRestNotificationsEnabled(false)
+        dispatcher.scheduler.runCurrent()
+        assertFalse(requireNotNull(viewModel.uiState.value.preferences).restNotificationsEnabled)
+        assertTrue(requireNotNull(viewModel.uiState.value.preferences).restSoundEnabled)
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun permissionUpdatesPreservePendingSavesAndDenialDoesNotHideOrRewritePreferences() = runTest(dispatcher) {
+        val viewModel = createLoadedViewModel()
+        repository.saveGate = CompletableDeferred()
+        viewModel.openUnits()
+        viewModel.selectWeightUnit(WeightUnit.LB)
+        dispatcher.scheduler.runCurrent()
+        permissions.status.value = RestAlertPermissionStatus(RestNotificationPermission.DENIED, false)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(permissions.status.value, viewModel.uiState.value.restAlertPermissionStatus)
+        assertEquals(SettingsDialog.UNITS, viewModel.uiState.value.dialog)
+        assertTrue(viewModel.uiState.value.isSaving)
+        assertEquals(TrainingPreferences(), viewModel.uiState.value.preferences)
+        repository.saveGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(TrainingPreferences(WeightUnit.LB), viewModel.uiState.value.preferences)
+        assertTrue(viewModel.uiState.value.canChangePreferences)
+    }
+
+    @Test
+    fun permissionCollectionSurvivesPreferenceLoadFailureAndStopsWithTheOwner() = runTest(dispatcher) {
+        repository.loadError = IllegalStateException("read failed")
+        val viewModel = createViewModel()
+        dispatcher.scheduler.runCurrent()
+        permissions.status.value = RestAlertPermissionStatus(RestNotificationPermission.DENIED, true)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(SettingsError.LOAD, viewModel.uiState.value.error)
+        assertEquals(permissions.status.value, viewModel.uiState.value.restAlertPermissionStatus)
+        viewModel.setRestSoundEnabled(false)
+        viewModel.setRestNotificationsEnabled(false)
+        assertEquals(0, repository.saves)
+        stores.single().clear()
+        dispatcher.scheduler.runCurrent()
+        assertEquals(0, permissions.status.subscriptionCount.value)
     }
 
     @Test
@@ -191,6 +298,7 @@ class SettingsViewModelTest {
             modules(settingsModule, module {
                 single<TrainingPreferencesRepository> { repository }
                 single<AppMetadata> { metadata }
+                single<RestAlertPermissions> { permissions }
             })
         }
         fun resolve(store: ViewModelStore): SettingsViewModel = resolveViewModel(
@@ -216,7 +324,11 @@ class SettingsViewModelTest {
         }
     }
 
-    private fun createViewModel(): SettingsViewModel = SettingsViewModel(repository, metadata).also { viewModel ->
+    private fun createViewModel(): SettingsViewModel = SettingsViewModel(
+        repository = repository,
+        appMetadata = metadata,
+        restAlertPermissions = permissions,
+    ).also { viewModel ->
         ViewModelStore().also { it.put("settings", viewModel); stores.add(it) }
     }
 
@@ -237,6 +349,8 @@ private class FakePreferencesRepository : TrainingPreferencesRepository {
     override suspend fun getPreferences(): TrainingPreferences = values.value
     override suspend fun setWeightUnit(unit: WeightUnit) = save { it.copy(weightUnit = unit) }
     override suspend fun setRestDurationSeconds(seconds: Long) = error("Settings only changes the weight unit")
+    override suspend fun setRestNotificationsEnabled(enabled: Boolean) = save { it.copy(restNotificationsEnabled = enabled) }
+    override suspend fun setRestSoundEnabled(enabled: Boolean) = save { it.copy(restSoundEnabled = enabled) }
 
     private suspend fun save(transform: (TrainingPreferences) -> TrainingPreferences) {
         saves++

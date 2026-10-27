@@ -27,4 +27,5 @@ fun SettingsSnapshotContent(scene: String) = SettingsScreen(
     onOpenUnits = {}, onOpenAbout = {}, onOpenLicense = {},
     onSelectUnit = {}, onDismissDialog = {},
     onRetryLoad = {}, onOpenRepository = {}, onOpenPrivacyPolicy = {},
+    onOpenPreciseTimingSettings = {},
 )

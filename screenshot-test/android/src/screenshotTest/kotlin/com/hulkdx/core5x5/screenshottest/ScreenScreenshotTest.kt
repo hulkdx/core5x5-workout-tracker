@@ -610,6 +610,7 @@ private fun SettingsSnapshot(state: SettingsUiState) = ScreenFrame(
         onRetryLoad = {},
         onOpenRepository = {},
         onOpenPrivacyPolicy = {},
+        onOpenPreciseTimingSettings = {},
     )
 }
 

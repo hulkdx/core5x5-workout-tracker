@@ -32,7 +32,10 @@ kotlin {
         androidResources {
             enable = true
         }
-        withHostTest {}
+        withHostTest {
+            // Shared failure-path tests call Log.w; OS behavior is tested on devices.
+            isReturnDefaultValues = true
+        }
         withDeviceTestBuilder {
             sourceSetTreeName = "test"
         }.configure {
@@ -42,9 +45,11 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":core:common"))
             implementation(project(":core:navigation"))
             implementation(libs.kotlinx.serialization.core)
             implementation(project(":core:preferences"))
+            implementation(project(":core:rest-alerts"))
             implementation(project(":core:ui"))
             implementation(project(":feature:workout"))
             implementation(project(":feature:history"))
@@ -64,6 +69,10 @@ kotlin {
             implementation(libs.koin.core.viewmodel)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
+        }
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.core.ktx)
         }
         commonTest.dependencies {
             implementation(libs.androidx.savedstate.compose)

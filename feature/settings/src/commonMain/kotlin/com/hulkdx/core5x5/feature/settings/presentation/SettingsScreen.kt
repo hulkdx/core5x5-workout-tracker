@@ -18,10 +18,13 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -40,6 +43,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.hulkdx.core5x5.core.navigation.TopLevelTab
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
+import com.hulkdx.core5x5.core.restalerts.domain.RestAlertPermissionStatus
+import com.hulkdx.core5x5.core.restalerts.domain.RestNotificationPermission
 import com.hulkdx.core5x5.core.ui.components.AppBottomNavigation
 import com.hulkdx.core5x5.core.ui.components.AppButtonPalette
 import com.hulkdx.core5x5.core.ui.components.AppPrimaryButton
@@ -64,7 +69,10 @@ fun SettingsScreen(
     onRetryLoad: () -> Unit,
     onOpenRepository: () -> Unit,
     onOpenPrivacyPolicy: () -> Unit,
+    onOpenPreciseTimingSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    onRestNotificationsChange: (Boolean, RestNotificationPermission) -> Unit = { _, _ -> },
+    onRestSoundChange: (Boolean) -> Unit = {},
 ) {
     Column(
         modifier = modifier.testTag("settings").fillMaxSize().background(Settings.Background)
@@ -100,6 +108,12 @@ fun SettingsScreen(
                 AppSecondaryButton(label = "Try Again", onClick = onRetryLoad, palette = AppButtonPalette.Home)
             }
         }
+        NotificationsSection(
+            uiState = uiState,
+            onEnableChange = onRestNotificationsChange,
+            onSoundChange = onRestSoundChange,
+            onOpenPreciseTimingSettings = onOpenPreciseTimingSettings,
+        )
         Spacer(Modifier.height(Settings.SectionGap))
         SettingsSection("ABOUT") {
             AppSettingRow(
@@ -160,7 +174,6 @@ fun SettingsScreen(
                     }
                 }
             }
-            SaveStatus(uiState)
             AppSecondaryButton(label = "Cancel", modifier = Modifier.testTag("settings-cancel"), enabled = !uiState.isSaving, onClick = onDismissDialog, palette = AppButtonPalette.Home)
         }
         SettingsDialog.ABOUT -> SettingsDialogSurface("About Core5x5", onDismissDialog) {
@@ -179,6 +192,87 @@ fun SettingsScreen(
             AppSecondaryButton(label = "Back to About", modifier = Modifier.testTag("settings-back-about"), onClick = onOpenAbout, palette = AppButtonPalette.Home)
         }
         null -> Unit
+    }
+}
+
+@Composable
+private fun NotificationsSection(
+    uiState: SettingsUiState,
+    onEnableChange: (Boolean, RestNotificationPermission) -> Unit,
+    onSoundChange: (Boolean) -> Unit,
+    onOpenPreciseTimingSettings: () -> Unit,
+) {
+    val preferences = uiState.preferences ?: TrainingPreferences()
+    val preciseTimingAllowed = uiState.restAlertPermissionStatus.preciseTimingAllowed
+
+    Spacer(Modifier.height(Settings.SectionGap))
+    SettingsSection("NOTIFICATIONS") {
+        SettingsSwitchRow(
+            label = "Enable",
+            checked = uiState.restNotificationsEnabled,
+            enabled = uiState.canChangePreferences,
+            onCheckedChange = { checked -> onEnableChange(checked, uiState.restAlertPermissionStatus.notificationPermission) },
+        )
+        SettingsDivider()
+        SettingsSwitchRow(
+            label = "Sound",
+            checked = preferences.restSoundEnabled,
+            enabled = uiState.canChangeRestSound,
+            onCheckedChange = onSoundChange,
+        )
+        if (preciseTimingAllowed != null) {
+            SettingsDivider()
+            AppSettingRow(
+                label = "Precise timing",
+                value = if (preciseTimingAllowed) "Allowed" else "Not allowed",
+                subtitle = "Rest notifications may arrive late without precise timing.",
+                modifier = Modifier.testTag("settings-precise-timing"),
+                onClick = onOpenPreciseTimingSettings,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsSwitchRow(
+    label: String,
+    checked: Boolean,
+    enabled: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().heightIn(min = Settings.RowHeight)
+            .toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onCheckedChange)
+            .padding(horizontal = Settings.CardInset, vertical = Settings.RowPaddingVertical),
+        horizontalArrangement = Arrangement.spacedBy(Settings.ValueGap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            style = Settings.Label,
+            color = if (enabled) Settings.Primary else Settings.Secondary,
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = null,
+            enabled = enabled,
+            modifier = Modifier.clearAndSetSemantics {},
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Settings.Background,
+                checkedTrackColor = Settings.Action,
+                checkedBorderColor = Settings.Action,
+                uncheckedThumbColor = Settings.Secondary,
+                uncheckedTrackColor = Settings.Card,
+                uncheckedBorderColor = Settings.Border,
+                disabledCheckedThumbColor = Settings.Secondary,
+                disabledCheckedTrackColor = Settings.Border,
+                disabledCheckedBorderColor = Settings.Border,
+                disabledUncheckedThumbColor = Settings.Secondary,
+                disabledUncheckedTrackColor = Settings.Card,
+                disabledUncheckedBorderColor = Settings.Border,
+            ),
+        )
     }
 }
 
@@ -220,12 +314,6 @@ private fun SettingsMessage(text: String, error: Boolean = false) {
 }
 
 @Composable
-private fun SaveStatus(uiState: SettingsUiState) {
-    if (uiState.error == SettingsError.SAVE) SettingsMessage("Unable to save preferences. Try again.", error = true)
-    if (uiState.isSaving) SettingsMessage("Saving…")
-}
-
-@Composable
 private fun SettingsSection(title: String, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(Settings.HeadingGap)) {
         Text(
@@ -259,19 +347,51 @@ private fun SettingsScreenPreview() = SettingsPreview()
 @Composable
 private fun SettingsLbPreview() = SettingsPreview(TrainingPreferences(weightUnit = WeightUnit.LB))
 
+@Preview(name = "Precise timing not allowed", widthDp = 390, heightDp = 874)
 @Composable
-private fun SettingsPreview(preferences: TrainingPreferences = TrainingPreferences()) {
+private fun SettingsPreciseTimingPreview() = SettingsPreview(
+    permissionStatus = RestAlertPermissionStatus(
+        preciseTimingAllowed = false,
+    ),
+)
+
+@Preview(name = "Precise timing allowed", widthDp = 390, heightDp = 874)
+@Composable
+private fun SettingsPreciseTimingAllowedPreview() = SettingsPreview(
+    permissionStatus = RestAlertPermissionStatus(preciseTimingAllowed = true),
+)
+
+@Preview(name = "Notification permission denied", widthDp = 390, heightDp = 874)
+@Composable
+private fun SettingsNotificationPermissionDeniedPreview() = SettingsPreview(
+    permissionStatus = RestAlertPermissionStatus(
+        notificationPermission = RestNotificationPermission.DENIED,
+        preciseTimingAllowed = false,
+    ),
+)
+
+@Composable
+private fun SettingsPreview(
+    preferences: TrainingPreferences = TrainingPreferences(),
+    permissionStatus: RestAlertPermissionStatus = RestAlertPermissionStatus(),
+) {
     AppTheme {
         Column(
             modifier = Modifier.fillMaxSize().background(Settings.Background)
                 .windowInsetsPadding(WindowInsets(top = AppHomeTokens.SystemTopReserve)),
         ) {
             SettingsScreen(
-                uiState = SettingsUiState(isLoading = false, preferences = preferences, versionName = "1.0.0"),
+                uiState = SettingsUiState(
+                    isLoading = false,
+                    preferences = preferences,
+                    versionName = "1.0.0",
+                    restAlertPermissionStatus = permissionStatus,
+                ),
                 modifier = Modifier.weight(1f),
                 onOpenUnits = {}, onOpenAbout = {}, onOpenLicense = {},
                 onSelectUnit = {},
                 onDismissDialog = {}, onRetryLoad = {}, onOpenRepository = {}, onOpenPrivacyPolicy = {},
+                onOpenPreciseTimingSettings = {},
             )
             Box(
                 modifier = Modifier.fillMaxWidth().background(AppHomeTokens.Card)

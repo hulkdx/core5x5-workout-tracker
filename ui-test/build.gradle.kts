@@ -29,12 +29,14 @@ kotlin {
 
     sourceSets {
         commonTest.dependencies {
+            implementation(project(":core:common"))
             implementation(project(":shared"))
             implementation(project(":feature:workout"))
             implementation(project(":feature:settings"))
             implementation(project(":feature:history"))
             implementation(project(":core:navigation"))
             implementation(project(":core:preferences"))
+            implementation(project(":core:rest-alerts"))
             implementation(project(":core:training"))
             implementation(project(":core:ui"))
             implementation(libs.kotlin.test)

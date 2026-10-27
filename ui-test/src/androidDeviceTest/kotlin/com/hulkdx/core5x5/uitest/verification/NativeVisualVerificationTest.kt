@@ -162,7 +162,7 @@ class NativeVisualVerificationTest {
         capture("settings-units")
         blockPreferenceWrites()
         settings.chooseUnit(WeightUnit.LB, waitForSave = false)
-        settings.verify { preferenceSaveErrorShown() }
+        settings.verify { failedUnitSaveRetainsSelectionForRetry() }
         capture("settings-units-save-error")
         settings.cancelUnits()
         settings.openAbout()
