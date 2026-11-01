@@ -1,0 +1,112 @@
+name: Deploy to App Store Connect
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: app-store-com.hulkdx.core5x5
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: 21
+  JAVA_DIST: "zulu"
+
+jobs:
+  Deploy-To-App-Store:
+    runs-on: xcode-27
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: ${{ env.JAVA_DIST }}
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Install signing certificate
+        uses: apple-actions/import-codesign-certs@v7
+        with:
+          p12-file-base64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          p12-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+
+      - name: Install provisioning profile
+        id: profiles
+        uses: apple-actions/download-provisioning-profiles@v7
+        with:
+          bundle-id: com.hulkdx.core5x5
+          profile-type: IOS_APP_STORE
+          issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          api-private-key: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+
+      - name: Prepare export options
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          PROFILE_NAME: ${{ fromJSON(steps.profiles.outputs.profiles)[0].name }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import plistlib
+
+          options = {
+              "method": "app-store-connect",
+              "destination": "export",
+              "signingStyle": "manual",
+              "signingCertificate": "Apple Distribution",
+              "teamID": os.environ["TEAM_ID"],
+              "provisioningProfiles": {
+                  "com.hulkdx.core5x5": os.environ["PROFILE_NAME"]
+              },
+          }
+
+          with open(os.path.join(os.environ["RUNNER_TEMP"], "ExportOptions.plist"), "wb") as f:
+              plistlib.dump(options, f)
+          PY
+
+          echo "IOS_BUILD_NUMBER=$((1000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
+
+      - name: Archive and export iOS app
+        id: build
+        uses: apple-actions/xcodebuild@v1
+        with:
+          project: iosApp/Core5x5.xcodeproj
+          scheme: Core5x5
+          configuration: Release
+          sdk: iphoneos
+          destination: generic/platform=iOS
+          action: archive
+          archive-path: ${{ runner.temp }}/Core5x5.xcarchive
+          export-options-plist: ${{ runner.temp }}/ExportOptions.plist
+          export-path: ${{ runner.temp }}/export
+          build-number: ${{ env.IOS_BUILD_NUMBER }}
+          build-settings: |
+            DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }}
+            CODE_SIGN_STYLE=Manual
+            CODE_SIGN_IDENTITY=Apple Distribution
+            PROVISIONING_PROFILE_SPECIFIER=${{ fromJSON(steps.profiles.outputs.profiles)[0].name }}
+      
+      - name: Upload to App Store Connect
+        env:
+          API_KEY_ID: ${{ vars.APP_STORE_CONNECT_KEY_ID }}
+          API_ISSUER_ID: ${{ vars.APP_STORE_CONNECT_ISSUER_ID }}
+          API_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          IPA_PATH: ${{ steps.build.outputs.ipa-path }}
+        run: |
+          set -euo pipefail
+          umask 077
+
+          KEY_DIR="$HOME/.appstoreconnect/private_keys"
+          mkdir -p "$KEY_DIR"
+
+          printf '%s' "$API_PRIVATE_KEY" > \
+            "$KEY_DIR/AuthKey_${API_KEY_ID}.p8"
+
+          test -f "$IPA_PATH"
+
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "$API_KEY_ID" \
+            --apiIssuer "$API_ISSUER_ID"
+
