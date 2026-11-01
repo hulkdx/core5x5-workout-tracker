@@ -6,6 +6,20 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A11000000000000000000002 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = A11000000000000000000003 /* SnapshotTesting */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A11000000000000000000012 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5BEE5AF596B6E2D1E2E9F60B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A12000000000000000000001;
+			remoteInfo = Core5x5SnapshotHost;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		5609823B61ED0A3097F22BFC /* Core5x5.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Core5x5.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A11000000000000000000001 /* Core5x5SnapshotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Core5x5SnapshotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -13,23 +27,18 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		85211E79E9A94CF1D9E5C20B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		85211E79E9A94CF1D9E5C20B /* Exceptions for "Core5x5" folder in "Core5x5" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = 69BB41A6A62EB34F976F0ACC /* Core5x5 */;
 		};
-		A11000000000000000000018 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		A12000000000000000000009 /* Exceptions for "../screenshot-test/ios/host" folder in "Core5x5SnapshotHost" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Snapshots,
+				Info.plist,
 			);
-			target = A11000000000000000000005 /* Core5x5SnapshotTests */;
-		};
-		A12000000000000000000009 /* Snapshot host plist exclusion */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (Info.plist,);
 			target = A12000000000000000000001 /* Core5x5SnapshotHost */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -38,47 +47,47 @@
 		0EC0AC5D593223D0F010111B /* Core5x5 */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				85211E79E9A94CF1D9E5C20B /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
+				85211E79E9A94CF1D9E5C20B /* Exceptions for "Core5x5" folder in "Core5x5" target */,
 			);
 			path = Core5x5;
 			sourceTree = "<group>";
 		};
-		E6911C8D5FD02012822759B8 /* Configuration */ = {
+		A11000000000000000000004 /* ../screenshot-test/ios/tests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = Configuration;
-			sourceTree = "<group>";
-		};
-		A11000000000000000000004 /* Core5x5SnapshotTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				A11000000000000000000018 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
 			path = "../screenshot-test/ios/tests";
 			sourceTree = "<group>";
 		};
-		A12000000000000000000003 /* Core5x5SnapshotHost */ = {
+		A12000000000000000000003 /* ../screenshot-test/ios/host */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (A12000000000000000000009,);
-			explicitFileTypes = {};
-			explicitFolders = ();
+			exceptions = (
+				A12000000000000000000009 /* Exceptions for "../screenshot-test/ios/host" folder in "Core5x5SnapshotHost" target */,
+			);
 			path = "../screenshot-test/ios/host";
+			sourceTree = "<group>";
+		};
+		E6911C8D5FD02012822759B8 /* Configuration */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Configuration;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		A11000000000000000000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A11000000000000000000002 /* SnapshotTesting in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A12000000000000000000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A8A3B6FAFCDED49C4789554F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -86,13 +95,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A11000000000000000000006 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (A11000000000000000000002 /* SnapshotTesting in Frameworks */,);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		A12000000000000000000006 /* Snapshot host frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -101,8 +103,8 @@
 			children = (
 				E6911C8D5FD02012822759B8 /* Configuration */,
 				0EC0AC5D593223D0F010111B /* Core5x5 */,
-				A12000000000000000000003 /* Core5x5SnapshotHost */,
-				A11000000000000000000004 /* Core5x5SnapshotTests */,
+				A12000000000000000000003 /* ../screenshot-test/ios/host */,
+				A11000000000000000000004 /* ../screenshot-test/ios/tests */,
 				78EDF1B7E5C0FC2E62C4031F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -145,33 +147,49 @@
 		};
 		A11000000000000000000005 /* Core5x5SnapshotTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A11000000000000000000007;
-			buildPhases = (A11000000000000000000008, A11000000000000000000006, A11000000000000000000009,);
-			buildRules = ();
-			dependencies = (A11000000000000000000010,);
-			fileSystemSynchronizedGroups = (A11000000000000000000004,);
+			buildConfigurationList = A11000000000000000000007 /* Build configuration list for PBXNativeTarget "Core5x5SnapshotTests" */;
+			buildPhases = (
+				A11000000000000000000008 /* Sources */,
+				A11000000000000000000006 /* Frameworks */,
+				A11000000000000000000009 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A11000000000000000000010 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A11000000000000000000004 /* ../screenshot-test/ios/tests */,
+			);
 			name = Core5x5SnapshotTests;
-			packageProductDependencies = (A11000000000000000000003 /* SnapshotTesting */,);
+			packageProductDependencies = (
+				A11000000000000000000003 /* SnapshotTesting */,
+			);
 			productName = Core5x5SnapshotTests;
-			productReference = A11000000000000000000001;
+			productReference = A11000000000000000000001 /* Core5x5SnapshotTests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 		A12000000000000000000001 /* Core5x5SnapshotHost */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A12000000000000000000004;
+			buildConfigurationList = A12000000000000000000004 /* Build configuration list for PBXNativeTarget "Core5x5SnapshotHost" */;
 			buildPhases = (
 				A12000000000000000000008 /* Compile Snapshot Kotlin Framework */,
-				A12000000000000000000005 /* Snapshot host sources */,
-				A12000000000000000000006 /* Snapshot host frameworks */,
-				A12000000000000000000007 /* Snapshot host resources */,
+				A12000000000000000000005 /* Sources */,
+				A12000000000000000000006 /* Frameworks */,
+				A12000000000000000000007 /* Resources */,
 			);
-			buildRules = ();
-			dependencies = ();
-			fileSystemSynchronizedGroups = (A12000000000000000000003,);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A12000000000000000000003 /* ../screenshot-test/ios/host */,
+			);
 			name = Core5x5SnapshotHost;
-			packageProductDependencies = ();
+			packageProductDependencies = (
+			);
 			productName = Core5x5SnapshotHost;
-			productReference = A12000000000000000000002;
+			productReference = A12000000000000000000002 /* Core5x5SnapshotHost.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -184,15 +202,15 @@
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
-					A12000000000000000000001 = {
-						CreatedOnToolsVersion = 27.1;
-					};
 					69BB41A6A62EB34F976F0ACC = {
 						CreatedOnToolsVersion = 16.2;
 					};
 					A11000000000000000000005 = {
 						CreatedOnToolsVersion = 26.1;
 						TestTargetID = A12000000000000000000001;
+					};
+					A12000000000000000000001 = {
+						CreatedOnToolsVersion = 27.1;
 					};
 				};
 			};
@@ -221,6 +239,20 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		A11000000000000000000009 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A12000000000000000000007 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E6DFF18BBEB0BE4E26D8DFC6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -228,11 +260,28 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A11000000000000000000009 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-		A12000000000000000000007 /* Snapshot host resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		A12000000000000000000008 /* Compile Snapshot Kotlin Framework */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Compile Snapshot Kotlin Framework";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :screenshot-test:ios:embedAndSignAppleFrameworkForXcode\n";
+		};
 		A32B3D8B6820B1BF0F97C089 /* Compile Kotlin Framework */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -250,25 +299,25 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
-		};
-		A12000000000000000000008 /* Compile Snapshot Kotlin Framework */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = ();
-			inputFileListPaths = ();
-			inputPaths = ();
-			name = "Compile Snapshot Kotlin Framework";
-			outputFileListPaths = ();
-			outputPaths = ();
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :screenshot-test:ios:embedAndSignAppleFrameworkForXcode\n";
+			shellScript = "if [ -f .env ]; then\n    set -o allexport\n    source .env\n    set +o allexport\nfi\nif [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		A11000000000000000000008 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A12000000000000000000005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A439379F12D6EC6888238425 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -276,11 +325,62 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A11000000000000000000008 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-		A12000000000000000000005 /* Snapshot host sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		A11000000000000000000010 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A12000000000000000000001 /* Core5x5SnapshotHost */;
+			targetProxy = A11000000000000000000012 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		164FFCD330978B570048B0E2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = Core5x5SnapshotHost;
+			};
+			name = Debug;
+		};
+		164FFCD430978B570048B0E2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				PRODUCT_NAME = Core5x5SnapshotHost;
+			};
+			name = Release;
+		};
+		164FFCD530978B570048B0E2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = Core5x5SnapshotTests;
+			};
+			name = Debug;
+		};
+		164FFCD630978B570048B0E2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				PRODUCT_NAME = Core5x5SnapshotTests;
+			};
+			name = Release;
+		};
+		164FFCD730978B570048B0E2 /* Snapshot */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = Core5x5;
+			};
+			name = Snapshot;
+		};
 		238EE3E612E7469AAE3AC6F0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -395,88 +495,22 @@
 			};
 			name = Release;
 		};
-		E3565C0CFABBE576170796E8 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = E6911C8D5FD02012822759B8 /* Configuration */;
-			baseConfigurationReferenceRelativePath = Config.xcconfig;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-			};
-			name = Debug;
-		};
 		A11000000000000000000013 /* Snapshot */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = Core5x5SnapshotHost;
-				SDKROOT = iphonesimulator;
-				SUPPORTED_PLATFORMS = iphonesimulator;
-				SUPPORTS_MACCATALYST = NO;
-				INFOPLIST_KEY_CFBundleDisplayName = Core5x5;
 				ARCHS = arm64;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CORE5X5_RECORD_SNAPSHOTS = NO;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../screenshot-test/ios/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/../screenshot-test/ios/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "../screenshot-test/ios/host/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Core5x5;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -488,8 +522,16 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				OTHER_LDFLAGS = "$(inherited) -framework Core5x5Screenshots";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					Core5x5Screenshots,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.hulkdx.core5x5.snapshots;
+				PRODUCT_NAME = Core5x5SnapshotHost;
+				SDKROOT = iphonesimulator;
+				SUPPORTED_PLATFORMS = iphonesimulator;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -576,6 +618,71 @@
 			};
 			name = Snapshot;
 		};
+		E3565C0CFABBE576170796E8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = E6911C8D5FD02012822759B8 /* Configuration */;
+			baseConfigurationReferenceRelativePath = Config.xcconfig;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -584,9 +691,30 @@
 			buildConfigurations = (
 				238EE3E612E7469AAE3AC6F0 /* Debug */,
 				3A4CA89F7B2930DF68E007B3 /* Release */,
+				164FFCD730978B570048B0E2 /* Snapshot */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
+		};
+		A11000000000000000000007 /* Build configuration list for PBXNativeTarget "Core5x5SnapshotTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A11000000000000000000015 /* Snapshot */,
+				164FFCD530978B570048B0E2 /* Debug */,
+				164FFCD630978B570048B0E2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Snapshot;
+		};
+		A12000000000000000000004 /* Build configuration list for PBXNativeTarget "Core5x5SnapshotHost" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A11000000000000000000013 /* Snapshot */,
+				164FFCD330978B570048B0E2 /* Debug */,
+				164FFCD430978B570048B0E2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Snapshot;
 		};
 		BC98B4A9D6A33FFE18E65811 /* Build configuration list for PBXProject "Core5x5" */ = {
 			isa = XCConfigurationList;
@@ -598,53 +726,26 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A11000000000000000000007 = {
-			isa = XCConfigurationList;
-			buildConfigurations = (A11000000000000000000015 /* Snapshot */,);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Snapshot;
-		};
-		A12000000000000000000004 /* Build configuration list for Core5x5SnapshotHost */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (A11000000000000000000013 /* Snapshot */,);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Snapshot;
-		};
 /* End XCConfigurationList section */
-/* Begin PBXBuildFile section */
-		A11000000000000000000002 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = A11000000000000000000003 /* SnapshotTesting */; };
-/* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		A11000000000000000000012 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 5BEE5AF596B6E2D1E2E9F60B /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = A12000000000000000000001;
-			remoteInfo = Core5x5SnapshotHost;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXTargetDependency section */
-		A11000000000000000000010 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = A12000000000000000000001 /* Core5x5SnapshotHost */;
-			targetProxy = A11000000000000000000012 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		A11000000000000000000011 /* swift-snapshot-testing */ = {
+		A11000000000000000000011 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/pointfreeco/swift-snapshot-testing";
-			requirement = {kind = exactVersion; version = 1.19.6; };
+			requirement = {
+				kind = exactVersion;
+				version = 1.19.6;
+			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A11000000000000000000003 /* SnapshotTesting */ = {isa = XCSwiftPackageProductDependency; package = A11000000000000000000011; productName = SnapshotTesting; };
+		A11000000000000000000003 /* SnapshotTesting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A11000000000000000000011 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */;
+			productName = SnapshotTesting;
+		};
 /* End XCSwiftPackageProductDependency section */
-
 	};
 	rootObject = 5BEE5AF596B6E2D1E2E9F60B /* Project object */;
 }

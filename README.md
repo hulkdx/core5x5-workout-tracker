@@ -27,6 +27,14 @@ For iOS, open [Core5x5.xcodeproj](iosApp/Core5x5.xcodeproj) in Xcode and run the
 The Xcode build phase invokes Gradle to build `Core5x5Shared`. iOS development
 requires macOS, Xcode and an installed simulator runtime for simulator runs.
 
+### Running in Xcode - Java mismatch
+
+If you want to run the code in xcode and java version mismatches, run the following line:
+
+```sh
+echo JAVA_HOME=\'/Applications/Android Studio.app/Contents/jbr/Contents/Home\' > ios/.env
+```
+
 ## Code and tests
 
 [Feature modules](feature/) own application behavior and presentation;
