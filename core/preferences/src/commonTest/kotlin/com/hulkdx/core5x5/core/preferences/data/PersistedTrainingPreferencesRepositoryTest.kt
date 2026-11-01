@@ -19,6 +19,78 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class PersistedTrainingPreferencesRepositoryTest {
     @Test
+    fun alertFieldsDefaultIndependentlyWithoutRewritingLegacyOrMalformedStorage() = runTest {
+        for ((raw, expected) in listOf(
+            "LB:91" to TrainingPreferences(WeightUnit.LB, 91),
+            "LB:91:false" to TrainingPreferences(WeightUnit.LB, 91, false, true),
+            "LB:91:false:broken" to TrainingPreferences(WeightUnit.LB, 91, false, true),
+            "LB:91:broken:false" to TrainingPreferences(WeightUnit.LB, 91, true, false),
+            "bad:0:false:false" to TrainingPreferences(restNotificationsEnabled = false, restSoundEnabled = false),
+            "KG:90:TRUE:FALSE" to TrainingPreferences(restDurationSeconds = 90),
+        )) {
+            val storage = MemoryPreferencesStorage(raw)
+            assertEquals(expected, PersistedTrainingPreferencesRepository(storage).preferences.first(), raw)
+            assertEquals(raw, storage.value)
+            assertEquals(0, storage.writes)
+        }
+    }
+
+    @Test
+    fun notificationAndSoundChoicesPersistSeparatelyAndOffPreservesSound() = runTest {
+        val storage = MemoryPreferencesStorage("LB:91:true:true")
+        val repository = PersistedTrainingPreferencesRepository(storage)
+        val observed = mutableListOf<TrainingPreferences>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repository.preferences.collect(observed::add) }
+        repository.setRestNotificationsEnabled(false)
+        assertEquals(TrainingPreferences(WeightUnit.LB, 91, false, true), repository.getPreferences())
+        repository.setRestSoundEnabled(false)
+        repository.setRestNotificationsEnabled(true)
+        assertEquals(TrainingPreferences(WeightUnit.LB, 91, true, false), repository.getPreferences())
+        assertEquals(repository.getPreferences(), PersistedTrainingPreferencesRepository(storage).getPreferences())
+        assertEquals(4, observed.size)
+        assertEquals(repository.getPreferences(), observed.last())
+        repository.setRestNotificationsEnabled(true)
+        repository.setRestSoundEnabled(false)
+        assertEquals(3, storage.writes)
+    }
+
+    @Test
+    fun concurrentAlertUnitAndDurationEditsPreserveEverySavedField() = runTest {
+        val storage = MemoryPreferencesStorage().apply { writeGate = CompletableDeferred() }
+        val repository = PersistedTrainingPreferencesRepository(storage)
+        val updates = listOf(
+            async { repository.setRestNotificationsEnabled(false) },
+            async { repository.setRestSoundEnabled(false) },
+            async { repository.setWeightUnit(WeightUnit.LB) },
+            async { repository.setRestDurationSeconds(42) },
+        )
+        runCurrent()
+        assertTrue(storage.writeStarted)
+        assertNull(storage.value)
+        storage.writeGate?.complete(Unit)
+        updates.forEach { it.await() }
+        assertEquals(TrainingPreferences(WeightUnit.LB, 42, false, false), repository.getPreferences())
+        assertEquals(repository.getPreferences(), PersistedTrainingPreferencesRepository(storage).getPreferences())
+    }
+
+    @Test
+    fun failedAlertWritesDoNotPublishUnsavedSwitchPositionsAndCanRetry() = runTest {
+        val storage = MemoryPreferencesStorage("LB:91:true:false")
+        val repository = PersistedTrainingPreferencesRepository(storage)
+        val observed = mutableListOf<TrainingPreferences>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repository.preferences.collect(observed::add) }
+        storage.failWrite = true
+        assertFailsWith<IllegalStateException> { repository.setRestNotificationsEnabled(false) }
+        assertFailsWith<IllegalStateException> { repository.setRestSoundEnabled(true) }
+        assertEquals(listOf(TrainingPreferences(WeightUnit.LB, 91, true, false)), observed)
+        assertEquals("LB:91:true:false", storage.value)
+        storage.failWrite = false
+        repository.setRestNotificationsEnabled(false)
+        repository.setRestSoundEnabled(true)
+        assertEquals(TrainingPreferences(WeightUnit.LB, 91, false, true), repository.getPreferences())
+    }
+
+    @Test
     fun absentPreferencesLoadKgAndThreeMinutesWithoutCreatingStorage() = runTest {
         val storage = MemoryPreferencesStorage()
         val repository = PersistedTrainingPreferencesRepository(storage)
@@ -45,7 +117,7 @@ class PersistedTrainingPreferencesRepositoryTest {
             observed,
         )
         assertEquals(TrainingPreferences(WeightUnit.LB, 91), PersistedTrainingPreferencesRepository(storage).preferences.first())
-        assertEquals("LB:91", storage.value)
+        assertEquals("LB:91:true:true", storage.value)
     }
 
     @Test

@@ -1,7 +1,11 @@
+@file:OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+
 package com.hulkdx.core5x5.uitest.screen.settings
 
 import androidx.compose.ui.unit.dp
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
+import com.hulkdx.core5x5.core.restalerts.domain.RestAlertPermissionStatus
+import com.hulkdx.core5x5.core.restalerts.domain.RestNotificationPermission
 import com.hulkdx.core5x5.feature.workout.domain.Exercise.SQUAT
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.uitest.UiTestOperation
@@ -10,8 +14,83 @@ import com.hulkdx.core5x5.uitest.screen.history.launchHistoryScreen
 import com.hulkdx.core5x5.uitest.screen.today.launchTodayScreen
 import com.hulkdx.core5x5.uitest.screen.workout.launchWorkoutScreen
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class SettingsScreenTest {
+    @Test
+    fun switchesPersistIndependentlyAndMasterOffRetainsTheSavedSoundChoice() = runAppUiTest {
+        val settings = launchSettingsScreen(this) {}
+        settings.verify { notificationSwitches(enable = true, sound = true); preciseTimingAbsent() }
+        settings.toggleNotifications()
+        settings.verify { notificationSwitches(enable = false, sound = true) }
+        restart()
+        val restored = launchSettingsScreen(this) {}
+        restored.verify { notificationSwitches(enable = false, sound = true) }
+        restored.toggleNotifications()
+        restored.toggleSound()
+        restored.verify { notificationSwitches(enable = true, sound = false) }
+        restart()
+        launchSettingsScreen(this) {}.verify { notificationSwitches(enable = true, sound = false) }
+    }
+
+    @Test
+    fun deniedPermissionKeepsEnableOffAndRefreshesTimingStatus() = runAppUiTest {
+        setRestAlertPermissionStatus(RestAlertPermissionStatus(RestNotificationPermission.DENIED, false))
+        val settings = launchSettingsScreen(this) {}
+        settings.verify {
+            notificationSwitches(enable = false, sound = true)
+            preciseTimingShown(allowed = false)
+        }
+        setRestAlertPermissionStatus(RestAlertPermissionStatus(RestNotificationPermission.GRANTED, true))
+        settings.verify {
+            notificationSwitches(enable = true, sound = true)
+            preciseTimingShown(allowed = true)
+        }
+        setRestAlertPermissionStatus(RestAlertPermissionStatus(RestNotificationPermission.GRANTED))
+        settings.verify { preciseTimingAbsent() }
+    }
+
+    @Test
+    fun pendingSwitchWriteKeepsSavedPositionsAndDisablesBothRowsUntilCommitted() = runAppUiTest {
+        val settings = launchSettingsScreen(this) {}
+        val write = pauseNext(UiTestOperation.WRITE_PREFERENCES)
+        settings.toggleSound()
+        awaitStarted(write)
+        settings.verify { notificationSwitches(enable = true, sound = true, enabled = false); noSaveStatusText() }
+        release(write)
+        settings.verify { notificationSwitches(enable = true, sound = false) }
+    }
+
+    @Test
+    fun failedSwitchWriteRetainsSavedPositionsWithoutStatusTextAndAllowsRetry() = runAppUiTest {
+        val settings = launchSettingsScreen(this) {}
+        blockPreferenceWrites()
+        settings.toggleNotifications()
+        settings.verify { notificationSwitches(enable = true, sound = true); noSaveStatusText() }
+        allowPreferenceWrites()
+        settings.toggleNotifications()
+        settings.verify { notificationSwitches(enable = false, sound = true) }
+    }
+
+    @Test
+    fun preciseTimingRemainsAvailableAfterPreferenceReadAndSettingsLaunchFailures() = runAppUiTest(
+        prepare = { blockPreferenceReads() },
+    ) {
+        setRestAlertPermissionStatus(RestAlertPermissionStatus(RestNotificationPermission.DENIED, false))
+        val settings = launchSettingsScreen(this, waitForPreferences = false) {}
+        settings.verify {
+            loadErrorShown()
+            notificationSwitches(enable = false, sound = true, enabled = false)
+            preciseTimingShown(allowed = false)
+        }
+        failNextTimingSettingsOpen = true
+        settings.openPreciseTimingSettings()
+        settings.verify { preciseTimingShown(allowed = false) }
+        settings.openPreciseTimingSettings()
+        ui.waitForIdle()
+        assertEquals(2, timingSettingsOpens)
+    }
+
     @Test
     fun cancellingUnitsPreservesTheSavedSelectionAfterReopening() = runAppUiTest {
         val settings = launchSettingsScreen(this) { openUnits() }
@@ -40,7 +119,7 @@ class SettingsScreenTest {
         restart()
         awaitStarted(read)
         val settings = launchSettingsScreen(this, waitForPreferences = false) {}
-        settings.verify { loadingShown() }
+        settings.verify { loadingShown(); notificationSwitches(enable = true, sound = true, enabled = false) }
         settings.openAbout()
         settings.openLicense()
         settings.verify { licenseShown() }
@@ -143,7 +222,7 @@ class SettingsScreenTest {
             chooseUnit(WeightUnit.LB, waitForSave = false)
         }
         settings.verify {
-            preferenceSaveErrorShown()
+            failedUnitSaveRetainsSelectionForRetry()
             unitsShown("Kilograms (kg)")
         }
         allowPreferenceWrites()

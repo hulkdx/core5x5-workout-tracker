@@ -25,7 +25,10 @@ kotlin {
         androidResources {
             enable = true
         }
-        withHostTest {}
+        withHostTest {
+            // Shared failure-path tests call Log.w; OS behavior is tested on devices.
+            isReturnDefaultValues = true
+        }
         withDeviceTestBuilder {
             sourceSetTreeName = "test"
         }.configure {
@@ -37,10 +40,12 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":core:common"))
             implementation(project(":core:navigation"))
             implementation(libs.kotlinx.serialization.core)
             implementation(project(":core:training"))
             implementation(project(":core:preferences"))
+            implementation(project(":core:rest-alerts"))
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
             implementation(project(":core:ui"))

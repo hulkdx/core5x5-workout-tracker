@@ -132,5 +132,11 @@ class WorkoutNavigationIntegrationTest {
         override suspend fun setRestDurationSeconds(seconds: Long) {
             preferences.value = preferences.value.copy(restDurationSeconds = seconds)
         }
+        override suspend fun setRestNotificationsEnabled(enabled: Boolean) {
+            preferences.value = preferences.value.copy(restNotificationsEnabled = enabled)
+        }
+        override suspend fun setRestSoundEnabled(enabled: Boolean) {
+            preferences.value = preferences.value.copy(restSoundEnabled = enabled)
+        }
     }
 }

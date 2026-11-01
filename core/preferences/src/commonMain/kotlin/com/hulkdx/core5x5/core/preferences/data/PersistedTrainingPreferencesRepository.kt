@@ -35,6 +35,14 @@ class PersistedTrainingPreferencesRepository(
         update { it.copy(restDurationSeconds = seconds) }
     }
 
+    override suspend fun setRestNotificationsEnabled(enabled: Boolean) {
+        update { it.copy(restNotificationsEnabled = enabled) }
+    }
+
+    override suspend fun setRestSoundEnabled(enabled: Boolean) {
+        update { it.copy(restSoundEnabled = enabled) }
+    }
+
     private suspend fun update(transform: (TrainingPreferences) -> TrainingPreferences) {
         mutex.withLock {
             val saved = load()
@@ -42,7 +50,7 @@ class PersistedTrainingPreferencesRepository(
             if (next != saved) {
                 // Publish only after persistence succeeds. A failed write retains the last saved value.
                 withContext(NonCancellable) {
-                    storage.write("${next.weightUnit.name}:${next.restDurationSeconds}")
+                    storage.write(next.encode())
                     current.value = next
                 }
             }
@@ -51,11 +59,23 @@ class PersistedTrainingPreferencesRepository(
 
     private suspend fun load(): TrainingPreferences {
         current.value?.let { return it }
-        val stored = storage.read()?.split(':')
+        return decode(storage.read()).also { current.value = it }
+    }
+
+    private fun TrainingPreferences.encode(): String =
+        "${weightUnit.name}:$restDurationSeconds:$restNotificationsEnabled:$restSoundEnabled"
+
+    private fun decode(value: String?): TrainingPreferences {
+        val stored = value?.split(':')
         val unit = WeightUnit.entries.firstOrNull { it.name == stored?.getOrNull(0) } ?: WeightUnit.KG
         val duration = stored?.getOrNull(1)?.toLongOrNull()
             ?.takeIf { it in 1..TrainingPreferences.MAX_REST_DURATION_SECONDS }
             ?: TrainingPreferences.DEFAULT_REST_DURATION_SECONDS
-        return TrainingPreferences(unit, duration).also { current.value = it }
+        return TrainingPreferences(
+            weightUnit = unit,
+            restDurationSeconds = duration,
+            restNotificationsEnabled = stored?.getOrNull(2)?.toBooleanStrictOrNull() ?: true,
+            restSoundEnabled = stored?.getOrNull(3)?.toBooleanStrictOrNull() ?: true,
+        )
     }
 }

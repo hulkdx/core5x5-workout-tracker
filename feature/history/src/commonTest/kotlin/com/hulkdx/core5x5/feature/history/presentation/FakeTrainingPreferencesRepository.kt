@@ -21,4 +21,10 @@ class FakeTrainingPreferencesRepository : TrainingPreferencesRepository {
     override suspend fun setRestDurationSeconds(seconds: Long) {
         values.value = values.value.copy(restDurationSeconds = seconds)
     }
+    override suspend fun setRestNotificationsEnabled(enabled: Boolean) {
+        values.value = values.value.copy(restNotificationsEnabled = enabled)
+    }
+    override suspend fun setRestSoundEnabled(enabled: Boolean) {
+        values.value = values.value.copy(restSoundEnabled = enabled)
+    }
 }

@@ -2,8 +2,10 @@ package com.hulkdx.core5x5.feature.settings.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.hulkdx.core5x5.core.common.Logger
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
+import com.hulkdx.core5x5.core.restalerts.domain.RestAlertPermissions
 import com.hulkdx.core5x5.feature.settings.domain.AppMetadata
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -15,13 +17,24 @@ import kotlinx.coroutines.launch
 class SettingsViewModel(
     private val repository: TrainingPreferencesRepository,
     appMetadata: AppMetadata,
+    restAlertPermissions: RestAlertPermissions,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(SettingsUiState(versionName = runCatching { appMetadata.versionName() }.getOrNull()))
+    private val _uiState = MutableStateFlow(
+        SettingsUiState(
+            versionName = runCatching { appMetadata.versionName() }.getOrNull(),
+            restAlertPermissionStatus = restAlertPermissions.status.value,
+        ),
+    )
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
     private var observation: Job? = null
 
     init {
         loadPreferences()
+        viewModelScope.launch {
+            restAlertPermissions.status.collect { status ->
+                _uiState.value = uiState.value.copy(restAlertPermissionStatus = status)
+            }
+        }
     }
 
     fun loadPreferences() {
@@ -48,6 +61,14 @@ class SettingsViewModel(
     fun selectWeightUnit(unit: WeightUnit) {
         if (uiState.value.dialog != SettingsDialog.UNITS) return
         save { repository.setWeightUnit(unit) }
+    }
+
+    fun setRestNotificationsEnabled(enabled: Boolean) {
+        save { repository.setRestNotificationsEnabled(enabled) }
+    }
+
+    fun setRestSoundEnabled(enabled: Boolean) {
+        save { repository.setRestSoundEnabled(enabled) }
     }
 
     fun openAbout() = showDialog(SettingsDialog.ABOUT)
@@ -85,8 +106,9 @@ class SettingsViewModel(
                 _uiState.value = uiState.value.copy(dialog = null)
             } catch (cancelled: CancellationException) {
                 throw cancelled
-            } catch (_: Exception) {
+            } catch (error: Exception) {
                 _uiState.value = uiState.value.copy(error = SettingsError.SAVE)
+                Logger.warn("Settings", "Could not save preferences", error)
             } finally {
                 _uiState.value = uiState.value.copy(isSaving = false)
             }

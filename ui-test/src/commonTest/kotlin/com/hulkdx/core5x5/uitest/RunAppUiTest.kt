@@ -34,9 +34,14 @@ import androidx.navigation3.runtime.NavKey
 import androidx.room3.executeSQL
 import androidx.room3.useWriterConnection
 import com.hulkdx.core5x5.app.AppRoot
+import com.hulkdx.core5x5.core.common.SystemSettingsLauncher
 import com.hulkdx.core5x5.core.preferences.data.PersistedTrainingPreferencesRepository
 import com.hulkdx.core5x5.core.preferences.data.PreferencesStorage
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
+import com.hulkdx.core5x5.core.restalerts.domain.RestAlertId
+import com.hulkdx.core5x5.core.restalerts.domain.RestAlertPermissionStatus
+import com.hulkdx.core5x5.core.restalerts.domain.RestAlertPermissions
+import com.hulkdx.core5x5.core.restalerts.domain.RestNotificationPermission
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSource
 import com.hulkdx.core5x5.core.ui.theme.AppTheme
 import com.hulkdx.core5x5.di.appModule
@@ -46,6 +51,7 @@ import com.hulkdx.core5x5.feature.workout.data.WorkoutDatabase
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
 import com.hulkdx.core5x5.feature.workout.domain.RestTimerRules
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import org.koin.compose.KoinIsolatedContext
 import org.koin.core.KoinApplication
@@ -84,11 +90,21 @@ class AppUiTest(
     private var repository = RoomWorkoutRepository(storage.database.unfinishedWorkoutDao()) { now }
     private var application: KoinApplication? = null
     private var restoredDestination: NavKey? = null
+    private var restAlertJourney: RestAlertJourneyHarness? = null
+
+    fun enableRestAlertVerification(): RestAlertJourneyHarness {
+        check(application == null) { "Enable alert verification in prepare before launching" }
+        permissions.status.value = RestAlertPermissionStatus(RestNotificationPermission.GRANTED)
+        return RestAlertJourneyHarness { now }.also { restAlertJourney = it }
+    }
 
     private var rejectPreferenceWrites = false
     private var rejectPreferenceReads = false
     var failNextUriOpen = false
     val openedUris = mutableListOf<String>()
+    var failNextTimingSettingsOpen = false
+    var timingSettingsOpens = 0
+        private set
     private val preferences = object : PreferencesStorage by storage.preferencesStorage {
         override suspend fun read() = requests.execute(UiTestOperation.READ_PREFERENCES) {
             check(!rejectPreferenceReads) { "Injected preference read failure" }
@@ -97,6 +113,22 @@ class AppUiTest(
         override suspend fun write(value: String) {
             check(!rejectPreferenceWrites) { "Injected preference write failure" }
             requests.execute(UiTestOperation.WRITE_PREFERENCES) { storage.preferencesStorage.write(value) }
+        }
+    }
+    private val permissions = object : RestAlertPermissions {
+        // Keep the native permission prompt out of isolated UI fixtures by default.
+        override val status = MutableStateFlow(
+            RestAlertPermissionStatus(RestNotificationPermission.GRANTED),
+        )
+        override suspend fun refreshStatus() = Unit
+    }
+    private val settingsLauncher = object : SystemSettingsLauncher {
+        override fun openPreciseTimingSettings() {
+            timingSettingsOpens++
+            if (failNextTimingSettingsOpen) {
+                failNextTimingSettingsOpen = false
+                error("Injected system settings failure")
+            }
         }
     }
     private val uriHandler = object : UriHandler {
@@ -118,9 +150,15 @@ class AppUiTest(
             single<CompletedWorkoutSource> { controlled }
             single<TrainingPreferencesRepository> { PersistedTrainingPreferencesRepository(preferences) }
             single<AppMetadata> { AppMetadata { "UI test" } }
+            single<RestAlertPermissions> { permissions }
+            single<SystemSettingsLauncher> { settingsLauncher }
             factory { RestTimerRules { now } }
         }
-        return koinApplication { modules(appModule, overrides) }
+        return koinApplication {
+            modules(appModule)
+            restAlertJourney?.let { modules(it.module) }
+            modules(overrides)
+        }
     }
 
     fun launch(waitForReady: Boolean = true) {
@@ -140,7 +178,11 @@ class AppUiTest(
                             }
                             Box(viewport) {
                                 val destination = restoredDestination
-                                if (destination == null) AppRoot() else RestoredApp(destination)
+                                if (destination == null) {
+                                    AppRoot()
+                                } else {
+                                    RestoredApp(destination)
+                                }
                             }
                         }
                     }
@@ -148,12 +190,17 @@ class AppUiTest(
             }
         }
         if (waitForReady) awaitReady()
+        resumeRestAlertObservation()
     }
 
     private fun awaitReady() =
         awaitNode((hasTestTag("start-workout") or hasTestTag("resume-workout")) and isEnabled())
 
-    fun restart(destination: NavKey? = null, waitForReady: Boolean = true) {
+    fun restart(
+        destination: NavKey? = null,
+        waitForReady: Boolean = true,
+        beforeShowContent: AppUiTest.() -> Unit = {},
+    ) {
         ui.runOnIdle { showContent = false }
         ui.waitForIdle()
         owner.viewModelStore.clear()
@@ -162,8 +209,18 @@ class AppUiTest(
         repository = RoomWorkoutRepository(storage.database.unfinishedWorkoutDao()) { now }
         restoredDestination = destination
         application = createApplication()
+        beforeShowContent()
         ui.runOnIdle { showContent = true }
         if (waitForReady) awaitReady()
+        resumeRestAlertObservation()
+    }
+
+    fun resumeRestAlertObservation() {
+        restAlertJourney?.resume(requireNotNull(application).koin)
+    }
+
+    fun deliverRestAlert(id: RestAlertId) {
+        requireNotNull(restAlertJourney).expire(requireNotNull(application).koin, id)
     }
 
     fun pauseNext(operation: UiTestOperation): UiTestRequest = ui.runOnIdle { requests.pauseNext(operation) }
@@ -207,6 +264,10 @@ class AppUiTest(
     fun allowPreferenceWrites() { rejectPreferenceWrites = false }
     fun blockPreferenceReads() { rejectPreferenceReads = true }
     fun allowPreferenceReads() { rejectPreferenceReads = false }
+
+    fun setRestAlertPermissionStatus(status: RestAlertPermissionStatus) = ui.runOnIdle {
+        permissions.status.value = status
+    }
 
     fun awaitNode(matcher: SemanticsMatcher) = ui.onNode(matcher).also {
         ui.waitUntil(timeoutMillis = 5_000) { ui.onAllNodes(matcher).fetchSemanticsNodes().size == 1 }

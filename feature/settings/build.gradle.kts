@@ -23,16 +23,21 @@ kotlin {
         androidResources {
             enable = true
         }
-        withHostTest {}
+        withHostTest {
+            // Shared failure-path tests call Log.w; OS behavior is tested on devices.
+            isReturnDefaultValues = true
+        }
     }
     iosArm64()
     iosSimulatorArm64()
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":core:common"))
             implementation(project(":core:navigation"))
             implementation(libs.kotlinx.serialization.core)
             implementation(project(":core:preferences"))
+            implementation(project(":core:rest-alerts"))
             implementation(project(":core:ui"))
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
@@ -44,11 +49,15 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.koin.core)
             implementation(libs.koin.core.viewmodel)
+            implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
+        }
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
         }
     }
 }

@@ -3,6 +3,7 @@ package com.hulkdx.core5x5.core.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -25,40 +26,53 @@ fun AppSettingRow(
     value: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    subtitle: String? = null,
     onClick: (() -> Unit)? = null,
 ) {
-    Row(
+    Column(
         modifier = modifier.fillMaxWidth()
             .heightIn(min = Settings.RowHeight)
             .then(if (onClick != null) Modifier.clickable(enabled = enabled, role = Role.Button, onClick = onClick) else Modifier)
             .padding(horizontal = Settings.CardInset, vertical = Settings.RowPaddingVertical),
-        horizontalArrangement = Arrangement.spacedBy(Settings.ValueGap),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(Settings.HeadingGap, Alignment.CenterVertically),
     ) {
-        Text(
-            text = label,
-            modifier = Modifier.weight(1f),
-            style = Settings.Label,
-            color = Settings.Primary,
-        )
-        if (value.isNotEmpty()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Settings.ValueGap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
-                text = value,
+                text = label,
                 modifier = Modifier.weight(1f),
+                style = Settings.Label,
+                color = Settings.Primary,
+            )
+            if (value.isNotEmpty()) {
+                Text(
+                    text = value,
+                    modifier = Modifier.weight(1f),
+                    style = Settings.Value,
+                    color = Settings.Secondary,
+                    textAlign = TextAlign.End,
+                )
+            }
+            if (onClick != null) {
+                Canvas(modifier = Modifier.size(Settings.ChevronSize)) {
+                    val stroke = Settings.BorderStroke.toPx()
+                    val top = Offset(size.width * 0.3f, size.height * 0.15f)
+                    val middle = Offset(size.width * 0.65f, size.height * 0.5f)
+                    val bottom = Offset(size.width * 0.3f, size.height * 0.85f)
+                    drawLine(Settings.Secondary, top, middle, stroke, StrokeCap.Round)
+                    drawLine(Settings.Secondary, middle, bottom, stroke, StrokeCap.Round)
+                }
+            }
+        }
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
                 style = Settings.Value,
                 color = Settings.Secondary,
-                textAlign = TextAlign.End,
             )
-        }
-        if (onClick != null) {
-            Canvas(modifier = Modifier.size(Settings.ChevronSize)) {
-                val stroke = Settings.BorderStroke.toPx()
-                val top = Offset(size.width * 0.3f, size.height * 0.15f)
-                val middle = Offset(size.width * 0.65f, size.height * 0.5f)
-                val bottom = Offset(size.width * 0.3f, size.height * 0.85f)
-                drawLine(Settings.Secondary, top, middle, stroke, StrokeCap.Round)
-                drawLine(Settings.Secondary, middle, bottom, stroke, StrokeCap.Round)
-            }
         }
     }
 }

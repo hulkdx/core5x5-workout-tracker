@@ -4,6 +4,7 @@ import androidx.compose.ui.unit.dp
 import com.hulkdx.core5x5.feature.workout.domain.Exercise
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.uitest.UiTestOperation
+import com.hulkdx.core5x5.uitest.UiTestRequest
 import com.hulkdx.core5x5.uitest.runAppUiTest
 import com.hulkdx.core5x5.uitest.screen.workout.launchWorkoutScreen
 import kotlin.test.Test
@@ -67,12 +68,15 @@ class TodayScreenTest {
 
     @Test
     fun initialLoadingWaitsForStorageWithoutOfferingAnInventedWorkout() = runAppUiTest {
-        val read = pauseNext(UiTestOperation.LOAD_ACTIVE)
-        restart(waitForReady = false)
-        awaitStarted(read)
+        var read: UiTestRequest? = null
+        restart(waitForReady = false) {
+            read = pauseNext(UiTestOperation.LOAD_ACTIVE)
+        }
+        val pausedRead = checkNotNull(read)
+        awaitStarted(pausedRead)
         val today = launchTodayScreen(this) {}
         today.verify { initialLoadingShown(); noSessionCreated() }
-        release(read)
+        release(pausedRead)
         today.verify { nextWorkoutShown(Workout.A) }
         today.startWorkout()
         today.verify { activeWorkoutShown(Workout.A) }
