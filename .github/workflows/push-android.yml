@@ -26,13 +26,16 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Version bump setup
-        run: echo "RELEASE_DATE=$(date -u +%Y.%m.%d)" >> "$GITHUB_ENV"
+        run: |
+          echo "RELEASE_DATE=$(date -u +%Y.%m.%d)" >> "$GITHUB_ENV"
+          # The previous push.yml workflow reached run 36. Renaming it resets the run counter.
+          echo "VERSION_CODE=$((36 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
 
       - name: Version bump
         uses: chkfung/android-version-actions@v1.2.3
         with:
           gradlePath: androidApp/build.gradle.kts
-          versionCode: ${{ github.run_number }}
+          versionCode: ${{ env.VERSION_CODE }}
           versionName: ${{ env.RELEASE_DATE }}
 
       - name: Build release bundle
