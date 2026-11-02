@@ -36,8 +36,8 @@ jobs:
         with:
           bundle-id: com.hulkdx.core5x5
           profile-type: IOS_APP_STORE
-          issuer-id: ${{ vars.APP_STORE_CONNECT_ISSUER_ID }}
-          api-key-id: ${{ vars.APP_STORE_CONNECT_KEY_ID }}
+          issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           api-private-key: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
 
       - name: Prepare export options
@@ -88,8 +88,8 @@ jobs:
       
       - name: Upload to App Store Connect
         env:
-          API_KEY_ID: ${{ vars.APP_STORE_CONNECT_KEY_ID }}
-          API_ISSUER_ID: ${{ vars.APP_STORE_CONNECT_ISSUER_ID }}
+          API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           API_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           IPA_PATH: ${{ steps.build.outputs.ipa-path }}
         run: |
