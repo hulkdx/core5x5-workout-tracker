@@ -1,21 +1,9 @@
-<div align="center">
-  <a href="https://apps.apple.com/us/app/core5x5-workout-tracker/id6829464356">
-    <img
-      alt="Download on the App Store"
-      src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
-      width="160"
-    />
-  </a>
-  <a href="https://play.google.com/store/apps/details?id=com.hulkdx.core5x5">
-    <img
-      alt="Get it on Google Play"
-      src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
-      width="190"
-    />
-  </a>
-</div>
+<p align="center">
+  <a href="https://apps.apple.com/us/app/core5x5-workout-tracker/id6829464356"><img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="55" align="middle"></a>
+  <a href="https://play.google.com/store/apps/details?id=com.hulkdx.core5x5"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="60" align="middle"></a>
+</p>
 
-# Core5x5
+# Core5x5: Workout Tracker
 
 A 5×5 strength-training tracker for Android and iOS, built with Kotlin Multiplatform and Compose Multiplatform.
 
