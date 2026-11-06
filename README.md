@@ -1,4 +1,11 @@
 <div align="center">
+  <a href="https://apps.apple.com/us/app/core5x5-workout-tracker/id6829464356">
+    <img
+      alt="Download on the App Store"
+      src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+      width="160"
+    />
+  </a>
   <a href="https://play.google.com/store/apps/details?id=com.hulkdx.core5x5">
     <img
       alt="Get it on Google Play"
