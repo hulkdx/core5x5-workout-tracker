@@ -10,6 +10,7 @@ import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutExercise
 import com.hulkdx.core5x5.feature.workout.domain.UnfinishedWorkoutSet
 import com.hulkdx.core5x5.feature.workout.domain.Workout
 import com.hulkdx.core5x5.feature.workout.domain.WorkoutPrescription
+import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutDeletion
 import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutExercise
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutRecord
@@ -24,7 +25,10 @@ import kotlinx.coroutines.flow.map
 class RoomWorkoutRepository(
     private val dao: UnfinishedWorkoutDao,
     private val nowEpochMillis: () -> Long = { Clock.System.now().toEpochMilliseconds() },
-) : WorkoutRepository, CompletedWorkoutSource {
+) : WorkoutRepository, CompletedWorkoutSource, CompletedWorkoutDeletion {
+    override suspend fun deleteCompletedWorkout(workoutId: Long): Boolean =
+        dao.deleteCompletedWorkout(workoutId) == 1
+
     override fun observeWorkoutChanges(): Flow<Unit> = dao.observeWorkoutChanges().map { Unit }
 
     override suspend fun getUnfinishedWorkout(): UnfinishedWorkout? =

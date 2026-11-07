@@ -34,6 +34,85 @@ abstract class UnfinishedWorkoutPersistenceTest {
     abstract fun deleteDatabase(name: String)
 
     @Test
+    fun deletingCompletionsCascadesAndRecalculatesTrainingWithoutChangingActiveSnapshot() = runTest {
+        withDatabase("delete-history.db") { database ->
+            var now = 2_000L
+            val dao = database.unfinishedWorkoutDao()
+            val repository = RoomWorkoutRepository(dao) { now }
+            val first = repository.startWorkout(Workout.A)
+            repository.editExercise(first.id, 0, ExerciseEdit(30.0, 5, 5, null))
+            repository.editExercise(first.id, 1, ExerciseEdit(40.0, 5, 5, null))
+            repository.finalizeWorkout(first.id)
+            val second = repository.startWorkout(Workout.B)
+            repository.editExercise(second.id, 0, ExerciseEdit(50.0, 5, 5, null))
+            now = 1_000L // Training order remains session ID order despite the backward clock.
+            repository.finalizeWorkout(second.id)
+            val active = repository.startWorkout(Workout.A)
+            val original = requireNotNull(repository.completeSetAndStartRest(active.id, 0, 0, 60_000L))
+            assertFalse(repository.deleteCompletedWorkout(active.id))
+            assertFalse(repository.deleteCompletedWorkout(Long.MAX_VALUE))
+            assertTrue(repository.deleteCompletedWorkout(second.id))
+            assertFalse(repository.deleteCompletedWorkout(second.id))
+            assertTrue(dao.getExercises(second.id).isEmpty())
+            assertTrue(dao.getSets(second.id).isEmpty())
+            assertNull(repository.getCompletedWorkoutById(second.id))
+            assertEquals(listOf(first.id), repository.getCompletedWorkouts().map { it.id })
+            assertEquals(Workout.B, repository.getNextWorkout())
+            assertEquals(listOf(30.0, 20.0, 20.0), repository.getNextWorkoutPrescription().exercises.map { it.weightKg })
+            assertEquals(40.0, repository.getNextWorkoutPrescription(Workout.A).exercises[1].weightKg)
+            assertEquals(original, repository.getUnfinishedWorkout())
+            assertTrue(repository.deleteCompletedWorkout(first.id))
+            assertEquals(Workout.A, repository.getNextWorkout())
+            assertEquals(listOf(20.0, 20.0, 20.0), repository.getNextWorkoutPrescription().exercises.map { it.weightKg })
+            assertTrue(repository.getCompletedWorkouts().isEmpty())
+            assertEquals(original, repository.getUnfinishedWorkout())
+        }
+    }
+
+    @Test
+    fun failedCascadeRollsBackEntireDeletionAndRetrySucceeds() = runTest {
+        withDatabase("delete-rollback.db") { database ->
+            val dao = database.unfinishedWorkoutDao()
+            val repository = RoomWorkoutRepository(dao) { 1_000L }
+            val session = repository.startWorkout(Workout.A)
+            repository.finalizeWorkout(session.id)
+            val original = repository.getCompletedWorkoutById(session.id)
+            database.useWriterConnection {
+                it.executeSQL("CREATE TRIGGER reject_delete BEFORE DELETE ON unfinished_workout_set BEGIN SELECT RAISE(ABORT, 'Test delete failure'); END")
+            }
+            assertFails { repository.deleteCompletedWorkout(session.id) }
+            assertEquals(original, repository.getCompletedWorkoutById(session.id))
+            database.useWriterConnection { it.executeSQL("DROP TRIGGER reject_delete") }
+            assertTrue(repository.deleteCompletedWorkout(session.id))
+            assertNull(repository.getCompletedWorkoutById(session.id))
+        }
+    }
+
+    @Test
+    fun concurrentReopenAndDeleteAcrossDatabaseInstancesNeverDeletesReopenedSession() = runTest {
+        withDatabase("delete-reopen-race.db") { database ->
+            val repository = RoomWorkoutRepository(database.unfinishedWorkoutDao()) { 1_000L }
+            val session = repository.startWorkout(Workout.A)
+            repository.finalizeWorkout(session.id)
+            val otherDatabase = openDatabase("delete-reopen-race.db")
+            try {
+                val other = RoomWorkoutRepository(otherDatabase.unfinishedWorkoutDao()) { 1_000L }
+                val deletion = async(Dispatchers.Default) { repository.deleteCompletedWorkout(session.id) }
+                val reopening = async(Dispatchers.Default) { other.reopenWorkout(session.id, 1_000L) }
+                if (deletion.await()) {
+                    assertNull(reopening.await())
+                    assertNull(repository.getUnfinishedWorkout())
+                } else {
+                    assertEquals(session.id, reopening.await()?.id)
+                    assertEquals(session.id, repository.getUnfinishedWorkout()?.id)
+                }
+            } finally {
+                otherDatabase.close()
+            }
+        }
+    }
+
+    @Test
     fun reopenedCompletionRetainsSnapshotsAcrossDatabaseReopenAndRefinishesOnce() = runTest {
         val name = "reopen-completion.db"
         deleteDatabase(name)

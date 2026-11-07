@@ -29,6 +29,7 @@ fun HistoryRoute(
             onExerciseSelected = viewModel::selectExercise,
             weightUnit = uiState.weightUnit,
             onRetryPreferences = viewModel::retryPreferences,
+            onDeleteWorkout = viewModel::deleteWorkout,
         )
     }
 }

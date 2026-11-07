@@ -1,5 +1,7 @@
 package com.hulkdx.core5x5.feature.history.presentation
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,9 +15,15 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
@@ -30,9 +38,9 @@ import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutRecord
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSet
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutType
 import com.hulkdx.core5x5.core.ui.components.AppButtonPalette
-import com.hulkdx.core5x5.core.ui.components.AppHistoryCard
 import com.hulkdx.core5x5.core.ui.components.AppSecondaryButton
 import com.hulkdx.core5x5.core.ui.components.WeightUnitError
+import com.hulkdx.core5x5.core.ui.theme.AppColors
 import com.hulkdx.core5x5.core.ui.theme.AppDimensions
 import com.hulkdx.core5x5.core.ui.theme.AppHistoryTokens as History
 import com.hulkdx.core5x5.core.ui.theme.AppTheme
@@ -47,9 +55,35 @@ fun HistoryScreen(
     weightUnit: WeightUnit = uiState.weightUnit,
     onExerciseSelected: (CompletedExerciseType) -> Unit = {},
     onRetryPreferences: () -> Unit = {},
+    onDeleteWorkout: (Long) -> Unit = {},
 ) {
     val months = remember(uiState.completedWorkouts) { uiState.completedWorkouts.historyMonths() }
-    Surface(modifier = modifier.fillMaxSize(), color = History.Background) {
+    var revealedWorkoutId by remember { mutableStateOf<Long?>(null) }
+    LaunchedEffect(uiState.completedWorkouts, uiState.isLoading, uiState.isDeleting) {
+        if (uiState.isLoading || uiState.isDeleting || uiState.completedWorkouts.none { it.id == revealedWorkoutId }) {
+            revealedWorkoutId = null
+        }
+    }
+    Surface(
+        modifier = modifier.fillMaxSize().pointerInput(Unit) {
+            // Observe taps after children handle them, including taps on other controls.
+            // Never consume events: horizontal row drags and vertical list scrolling own them.
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                var moved = false
+                do {
+                    val event = awaitPointerEvent(PointerEventPass.Final)
+                    if (event.changes.size > 1 || event.changes.any {
+                        (it.position - down.position).getDistance() > viewConfiguration.touchSlop
+                    }) {
+                        moved = true
+                    }
+                } while (event.changes.any { it.pressed })
+                if (!moved) revealedWorkoutId = null
+            }
+        },
+        color = History.Background,
+    ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize().testTag("history-list"),
             contentPadding = PaddingValues(
@@ -103,15 +137,39 @@ fun HistoryScreen(
                             )
                         }
                         items(workouts, key = { "workout:${it.id}" }, contentType = { "workout" }) { workout ->
-                            AppHistoryCard(
-                                modifier = Modifier.testTag("history-workout:${workout.id}"),
-                                weekday = workout.weekdayLabel(),
-                                day = workout.dayLabel(),
-                                fullDate = workout.detailDateLabel(),
-                                title = workout.displayName(),
-                                summary = workout.sessionSummary(),
-                                duration = workout.durationLabel(),
-                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(AppDimensions.ContentGap)) {
+                                HistorySessionRow(
+                                    workout = workout,
+                                    revealed = revealedWorkoutId == workout.id,
+                                    enabled = !uiState.isLoading && !uiState.isDeleting,
+                                    isDeleting = uiState.deletingWorkoutId == workout.id,
+                                    onDragStarted = { revealedWorkoutId = null },
+                                    onReveal = { reveal ->
+                                        revealedWorkoutId = if (reveal && !uiState.isLoading && !uiState.isDeleting) {
+                                            workout.id
+                                        } else null
+                                    },
+                                    onDelete = {
+                                        revealedWorkoutId = null
+                                        onDeleteWorkout(workout.id)
+                                    },
+                                )
+                                if (uiState.failedDeletionId == workout.id) {
+                                    Text(
+                                        "Unable to verify deletion. Try again.",
+                                        style = AppTypography.Body,
+                                        color = AppColors.Destructive,
+                                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                                    )
+                                    AppSecondaryButton(
+                                        label = "Try Again",
+                                        onClick = { onDeleteWorkout(workout.id) },
+                                        enabled = !uiState.isLoading && !uiState.isDeleting,
+                                        modifier = Modifier.testTag("history-retry-delete:${workout.id}"),
+                                        palette = AppButtonPalette.Home,
+                                    )
+                                }
+                            }
                         }
                     }
                 }

@@ -42,6 +42,7 @@ import com.hulkdx.core5x5.core.restalerts.domain.RestAlertId
 import com.hulkdx.core5x5.core.restalerts.domain.RestAlertPermissionStatus
 import com.hulkdx.core5x5.core.restalerts.domain.RestAlertPermissions
 import com.hulkdx.core5x5.core.restalerts.domain.RestNotificationPermission
+import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutDeletion
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSource
 import com.hulkdx.core5x5.core.ui.theme.AppTheme
 import com.hulkdx.core5x5.di.appModule
@@ -148,6 +149,7 @@ class AppUiTest(
             single { repository }
             single<WorkoutRepository> { controlled }
             single<CompletedWorkoutSource> { controlled }
+            single<CompletedWorkoutDeletion> { controlled }
             single<TrainingPreferencesRepository> { PersistedTrainingPreferencesRepository(preferences) }
             single<AppMetadata> { AppMetadata { "UI test" } }
             single<RestAlertPermissions> { permissions }

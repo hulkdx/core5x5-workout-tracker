@@ -35,6 +35,7 @@ fun AppHistoryCard(
     summary: String,
     duration: String,
     modifier: Modifier = Modifier,
+    trailingContent: (@Composable () -> Unit)? = null,
 ) {
     Surface(
         modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
@@ -65,6 +66,7 @@ fun AppHistoryCard(
                     }
                 }
             }
+            trailingContent?.invoke()
         }
     }
 }

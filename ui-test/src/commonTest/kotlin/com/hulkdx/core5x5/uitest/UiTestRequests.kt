@@ -1,5 +1,6 @@
 package com.hulkdx.core5x5.uitest
 
+import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutDeletion
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSource
 import com.hulkdx.core5x5.feature.workout.data.RoomWorkoutRepository
 import com.hulkdx.core5x5.feature.workout.domain.ExerciseEdit
@@ -9,7 +10,7 @@ import kotlinx.coroutines.CompletableDeferred
 
 enum class UiTestOperation {
     LOAD_ACTIVE, LOAD_PRESCRIPTION, START, SWITCH, COMPLETE_SET, SAVE_REPS, RESET_SET,
-    EDIT, FINISH, REOPEN, LOAD_COMPLETE, LOAD_DETAIL, READ_PREFERENCES, WRITE_PREFERENCES,
+    EDIT, FINISH, REOPEN, DELETE_COMPLETE, LOAD_COMPLETE, LOAD_DETAIL, READ_PREFERENCES, WRITE_PREFERENCES,
 }
 
 class UiTestRequest(
@@ -73,7 +74,11 @@ class UiTestRequests {
 class UiTestWorkoutRepository(
     private val delegate: RoomWorkoutRepository,
     private val requests: UiTestRequests,
-) : WorkoutRepository by delegate, CompletedWorkoutSource by delegate {
+) : WorkoutRepository by delegate, CompletedWorkoutSource by delegate, CompletedWorkoutDeletion {
+    override suspend fun deleteCompletedWorkout(workoutId: Long) = requests.execute(UiTestOperation.DELETE_COMPLETE) {
+        delegate.deleteCompletedWorkout(workoutId)
+    }
+
     override suspend fun getUnfinishedWorkout() = requests.execute(UiTestOperation.LOAD_ACTIVE) {
         delegate.getUnfinishedWorkout()
     }

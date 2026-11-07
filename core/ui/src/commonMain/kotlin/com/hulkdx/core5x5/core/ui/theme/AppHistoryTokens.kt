@@ -21,6 +21,7 @@ object AppHistoryTokens {
     val MonthCardGap = 6.dp
     val CardGap = 6.dp
     val BottomPadding = 24.dp
+    val DeleteActionWidth = 88.dp
     val CardHeight = 76.dp
     val CardPadding = 8.dp
     val CardRadius = 9.dp

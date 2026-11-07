@@ -11,7 +11,11 @@ data class HistoryUiState(
     val selectedExercise: CompletedExerciseType = CompletedExerciseType.SQUAT,
     val weightUnit: WeightUnit = WeightUnit.KG,
     val hasPreferencesError: Boolean = false,
-)
+    val deletingWorkoutId: Long? = null,
+    val failedDeletionId: Long? = null,
+) {
+    val isDeleting: Boolean get() = deletingWorkoutId != null
+}
 
 enum class HistoryError {
     LOAD,

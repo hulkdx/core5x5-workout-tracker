@@ -39,6 +39,13 @@ interface UnfinishedWorkoutDao {
     """)
     suspend fun getLastCompletedWorkout(): Workout?
 
+    // The parent delete cascades to exercise and set snapshots in the same SQLite statement.
+    @Query("""
+        DELETE FROM unfinished_workout WHERE id = :workoutId
+        AND completedAtEpochMillis IS NOT NULL AND unfinishedSlot IS NULL
+    """)
+    suspend fun deleteCompletedWorkout(workoutId: Long): Int
+
     @Query("SELECT * FROM unfinished_workout WHERE id = :workoutId")
     suspend fun getWorkout(workoutId: Long): UnfinishedWorkoutEntity?
 

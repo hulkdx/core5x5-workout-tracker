@@ -8,6 +8,7 @@ import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutExercise
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutRecord
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSet
+import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutDeletion
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutSource
 import com.hulkdx.core5x5.core.training.domain.CompletedWorkoutType
 import com.hulkdx.core5x5.feature.history.di.historyModule
@@ -48,6 +49,107 @@ class HistoryViewModelTest {
     fun tearDown() {
         stores.forEach { it.clear() }
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun deletionStartsImmediatelyAndGuardsDuplicatesUntilCommitted() = runTest(dispatcher) {
+        source.history = listOf(record(2, CompletedWorkoutType.B), record(1, CompletedWorkoutType.A))
+        val viewModel = createHistoryViewModel()
+        dispatcher.scheduler.runCurrent()
+        viewModel.deleteWorkout(99)
+        assertEquals(0, source.deleteCount)
+        source.deleteGate = CompletableDeferred()
+        viewModel.deleteWorkout(2)
+        viewModel.deleteWorkout(2)
+        viewModel.deleteWorkout(1)
+        viewModel.loadHistory()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.isDeleting)
+        assertEquals(2L, viewModel.uiState.value.deletingWorkoutId)
+        assertEquals(1, source.deleteCount)
+        viewModel.selectExercise(CompletedExerciseType.DEADLIFT)
+        preferences.setWeightUnit(WeightUnit.LB)
+        source.deleteGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(listOf(1L), viewModel.uiState.value.completedWorkouts.map { it.id })
+        assertEquals(CompletedExerciseType.DEADLIFT, viewModel.uiState.value.selectedExercise)
+        assertNull(viewModel.uiState.value.deletingWorkoutId)
+        assertFalse(viewModel.uiState.value.isDeleting)
+        assertEquals(WeightUnit.LB, viewModel.uiState.value.weightUnit)
+    }
+
+    @Test
+    fun deletionFailurePreservesRowAndLostReplyRetryIsSafe() = runTest(dispatcher) {
+        source.history = listOf(record(1, CompletedWorkoutType.A))
+        val viewModel = createHistoryViewModel()
+        dispatcher.scheduler.runCurrent()
+        source.deleteFailure = IllegalStateException("write failed")
+        viewModel.deleteWorkout(1)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(1L, viewModel.uiState.value.failedDeletionId)
+        assertEquals(1, viewModel.uiState.value.completedWorkouts.size)
+        source.deleteFailure = null
+        source.loseDeleteReply = true
+        viewModel.deleteWorkout(1)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(1L, viewModel.uiState.value.failedDeletionId)
+        assertTrue(source.history.isEmpty())
+        source.loseDeleteReply = false
+        viewModel.deleteWorkout(1)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.completedWorkouts.isEmpty())
+        assertNull(viewModel.uiState.value.deletingWorkoutId)
+    }
+
+    @Test
+    fun refreshReconcilesLostDeleteReplyAndClearsInlineError() = runTest(dispatcher) {
+        source.history = listOf(record(1, CompletedWorkoutType.A))
+        val viewModel = createHistoryViewModel()
+        dispatcher.scheduler.runCurrent()
+        source.loseDeleteReply = true
+        viewModel.deleteWorkout(1)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(1L, viewModel.uiState.value.failedDeletionId)
+        viewModel.loadHistory()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.completedWorkouts.isEmpty())
+        assertNull(viewModel.uiState.value.failedDeletionId)
+    }
+
+    @Test
+    fun refreshFailureAfterDeleteNeverRestoresDeletedRow() = runTest(dispatcher) {
+        source.history = listOf(record(1, CompletedWorkoutType.A))
+        val viewModel = createHistoryViewModel()
+        dispatcher.scheduler.runCurrent()
+        source.failure = IllegalStateException("refresh failed")
+        viewModel.deleteWorkout(1)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.completedWorkouts.isEmpty())
+        assertEquals(HistoryError.LOAD, viewModel.uiState.value.error)
+        assertNull(viewModel.uiState.value.failedDeletionId)
+        assertNull(viewModel.uiState.value.deletingWorkoutId)
+    }
+
+    @Test
+    fun staleDeletionRefreshesAndOwnerCleanupCancelsPendingDelete() = runTest(dispatcher) {
+        source.history = listOf(record(1, CompletedWorkoutType.A))
+        val viewModel = createHistoryViewModel()
+        dispatcher.scheduler.runCurrent()
+        source.history = emptyList() // A different owner reopened or removed the displayed session.
+        viewModel.deleteWorkout(1)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.completedWorkouts.isEmpty())
+        assertEquals(2, source.historyReadCount)
+        source.history = listOf(record(2, CompletedWorkoutType.B))
+        viewModel.loadHistory()
+        dispatcher.scheduler.runCurrent()
+        source.deleteGate = CompletableDeferred()
+        viewModel.deleteWorkout(2)
+        dispatcher.scheduler.runCurrent()
+        stores.single().clear()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(source.deleteCancelled)
+        assertNull(viewModel.uiState.value.failedDeletionId)
     }
 
     @Test
@@ -197,6 +299,7 @@ class HistoryViewModelTest {
         val application = koinApplication {
             modules(historyModule, module {
                 single<CompletedWorkoutSource> { source }
+                single<CompletedWorkoutDeletion> { source }
                 single<TrainingPreferencesRepository> { preferences }
             })
         }
@@ -266,14 +369,35 @@ class HistoryViewModelTest {
     }
 
     private fun createHistoryViewModel(): HistoryViewModel =
-        HistoryViewModel(source, preferences).also { newStore().put("history", it) }
+        HistoryViewModel(source, preferences, source).also { newStore().put("history", it) }
 
     private fun createDetailViewModel(workoutId: Long): WorkoutDetailViewModel =
         WorkoutDetailViewModel(source, workoutId, preferences).also { newStore().put("detail:$workoutId", it) }
 
     private fun newStore(): ViewModelStore = ViewModelStore().also(stores::add)
 
-    private class FakeCompletedWorkoutSource : CompletedWorkoutSource {
+    private class FakeCompletedWorkoutSource : CompletedWorkoutSource, CompletedWorkoutDeletion {
+        var deleteGate: CompletableDeferred<Unit>? = null
+        var deleteFailure: Exception? = null
+        var loseDeleteReply = false
+        var deleteCount = 0
+        var deleteCancelled = false
+
+        override suspend fun deleteCompletedWorkout(workoutId: Long): Boolean {
+            deleteCount++
+            try {
+                deleteGate?.await()
+            } catch (cancelled: CancellationException) {
+                deleteCancelled = true
+                throw cancelled
+            }
+            deleteFailure?.let { throw it }
+            val existed = history.any { it.id == workoutId }
+            history = history.filterNot { it.id == workoutId }
+            if (loseDeleteReply) error("Lost delete reply")
+            return existed
+        }
+
         var history = emptyList<CompletedWorkoutRecord>()
         val records = mutableMapOf<Long, CompletedWorkoutRecord>()
         var failure: Exception? = null
