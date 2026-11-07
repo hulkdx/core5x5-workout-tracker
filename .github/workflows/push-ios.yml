@@ -81,6 +81,7 @@ jobs:
           export-path: ${{ runner.temp }}/export
           build-number: ${{ env.IOS_BUILD_NUMBER }}
           build-settings: |
+            MARKETING_VERSION=1.0.${{ github.run_number }}
             DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }}
             CODE_SIGN_STYLE=Manual
             CODE_SIGN_IDENTITY=Apple Distribution
