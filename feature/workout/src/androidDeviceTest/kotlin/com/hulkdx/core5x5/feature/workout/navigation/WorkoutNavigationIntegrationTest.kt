@@ -23,6 +23,7 @@ import com.hulkdx.core5x5.core.navigation.CoreNavigator
 import com.hulkdx.core5x5.core.navigation.TopLevelTab
 import com.hulkdx.core5x5.core.navigation.rememberCoreNavigator
 import com.hulkdx.core5x5.core.navigation.rememberNavigationState
+import com.hulkdx.core5x5.core.preferences.domain.Appearance
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
@@ -134,6 +135,10 @@ class WorkoutNavigationIntegrationTest {
         }
         override suspend fun setRestNotificationsEnabled(enabled: Boolean) {
             preferences.value = preferences.value.copy(restNotificationsEnabled = enabled)
+        }
+
+        override suspend fun setAppearance(appearance: Appearance) {
+            preferences.value = preferences.value.copy(appearance = appearance)
         }
         override suspend fun setRestSoundEnabled(enabled: Boolean) {
             preferences.value = preferences.value.copy(restSoundEnabled = enabled)

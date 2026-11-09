@@ -1,5 +1,6 @@
 package com.hulkdx.core5x5.feature.workout.presentation
 
+import com.hulkdx.core5x5.core.preferences.domain.Appearance
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
@@ -41,6 +42,11 @@ class FakeTrainingPreferencesRepository(
         values.value = value
     }
 
+
+    override suspend fun setAppearance(appearance: Appearance) {
+        value = value.copy(appearance = appearance)
+        values.value = value
+    }
     override suspend fun setRestSoundEnabled(enabled: Boolean) {
         value = value.copy(restSoundEnabled = enabled)
         values.value = value

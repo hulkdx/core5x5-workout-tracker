@@ -16,4 +16,7 @@ interface TrainingPreferencesRepository {
     suspend fun setRestNotificationsEnabled(enabled: Boolean)
 
     suspend fun setRestSoundEnabled(enabled: Boolean)
+
+    /** Settings saves the app-wide appearance without replacing other training preferences. */
+    suspend fun setAppearance(appearance: Appearance)
 }

@@ -17,10 +17,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -57,12 +57,13 @@ fun AppBottomNavigation(
         (widestLabel + 1).toDp()
     }
     val preferredItemWidth = maxOf(AppDimensions.NavigationItemWidth, labelWidth)
+    val borderColor = Home.Border
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .background(if (useHomeDesign) Home.Card else AppColors.Elevated)
             .drawBehind {
-                if (useHomeDesign) drawLine(Home.Border, Offset.Zero, Offset(size.width, 0f), Home.BorderStroke.toPx())
+                if (useHomeDesign) drawLine(borderColor, Offset.Zero, Offset(size.width, 0f), Home.BorderStroke.toPx())
             }
             .heightIn(min = if (useHomeDesign) Home.NavigationHeight else AppDimensions.NavigationHeight),
     ) {

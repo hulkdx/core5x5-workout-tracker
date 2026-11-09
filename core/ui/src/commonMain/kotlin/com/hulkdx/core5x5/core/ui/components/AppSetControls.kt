@@ -72,7 +72,7 @@ fun AppSetControls(
             val foreground = when (set.state) {
                 AppSetState.Default -> AppColors.SecondaryText
                 AppSetState.Active -> AppColors.Action
-                AppSetState.Completed -> AppColors.Background
+                AppSetState.Completed -> AppColors.OnAction
                 AppSetState.Disabled -> AppColors.DisabledText
             }
             Surface(
@@ -163,7 +163,7 @@ private fun RefinedSetControl(
                     modifier = Modifier.clearAndSetSemantics {},
                     style = labelStyle,
                     color = when {
-                        completed -> Home.Background
+                        completed -> AppColors.OnAction
                         current -> Home.Primary
                         else -> Home.Secondary
                     },

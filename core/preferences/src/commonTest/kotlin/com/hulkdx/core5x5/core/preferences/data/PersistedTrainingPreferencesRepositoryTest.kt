@@ -1,7 +1,13 @@
 package com.hulkdx.core5x5.core.preferences.data
 
+import com.hulkdx.core5x5.core.preferences.domain.Appearance
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -10,14 +16,60 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PersistedTrainingPreferencesRepositoryTest {
+    @Test
+    fun appearanceDefaultsIndependentlyAndReadsNeverRewriteExistingRecords() = runTest {
+        for ((raw, expected) in listOf(
+            "LB:91:false:true" to Appearance.SYSTEM,
+            "LB:91:false:true:unknown" to Appearance.SYSTEM,
+            "LB:91:false:true:LIGHT" to Appearance.LIGHT,
+            "LB:91:false:true:DARK" to Appearance.DARK,
+        )) {
+            val storage = MemoryPreferencesStorage(raw)
+            assertEquals(
+                TrainingPreferences(WeightUnit.LB, 91, false, true, expected),
+                PersistedTrainingPreferencesRepository(storage).getPreferences(),
+            )
+            assertEquals(raw, storage.value)
+            assertEquals(0, storage.writes)
+        }
+    }
+
+    @Test
+    fun appearanceSurvivesReopeningAndConcurrentTrainingPreferenceChanges() = runTest {
+        val storage = MemoryPreferencesStorage("LB:91:false:true")
+        val repository = PersistedTrainingPreferencesRepository(storage)
+        val changes = listOf(
+            async { repository.setAppearance(Appearance.LIGHT) },
+            async { repository.setWeightUnit(WeightUnit.KG) },
+            async { repository.setRestSoundEnabled(false) },
+        )
+        changes.forEach { it.await() }
+        val expected = TrainingPreferences(WeightUnit.KG, 91, false, false, Appearance.LIGHT)
+        assertEquals(expected, repository.getPreferences())
+        assertEquals(expected, PersistedTrainingPreferencesRepository(storage).getPreferences())
+        repository.setAppearance(Appearance.LIGHT)
+        assertEquals(3, storage.writes)
+    }
+
+    @Test
+    fun failedAppearanceSaveRetainsPublishedAndPersistedChoiceUntilRetrySucceeds() = runTest {
+        val storage = MemoryPreferencesStorage("LB:91:false:true:DARK")
+        val repository = PersistedTrainingPreferencesRepository(storage)
+        val observed = mutableListOf<TrainingPreferences>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repository.preferences.collect(observed::add) }
+        storage.failWrite = true
+        assertFailsWith<IllegalStateException> { repository.setAppearance(Appearance.LIGHT) }
+        assertEquals(listOf(Appearance.DARK), observed.map { it.appearance })
+        assertEquals(Appearance.DARK, PersistedTrainingPreferencesRepository(storage).getPreferences().appearance)
+        storage.failWrite = false
+        repository.setAppearance(Appearance.LIGHT)
+        assertEquals(listOf(Appearance.DARK, Appearance.LIGHT), observed.map { it.appearance })
+        assertEquals(Appearance.LIGHT, PersistedTrainingPreferencesRepository(storage).getPreferences().appearance)
+    }
+
     @Test
     fun alertFieldsDefaultIndependentlyWithoutRewritingLegacyOrMalformedStorage() = runTest {
         for ((raw, expected) in listOf(
@@ -117,7 +169,7 @@ class PersistedTrainingPreferencesRepositoryTest {
             observed,
         )
         assertEquals(TrainingPreferences(WeightUnit.LB, 91), PersistedTrainingPreferencesRepository(storage).preferences.first())
-        assertEquals("LB:91:true:true", storage.value)
+        assertEquals("LB:91:true:true:SYSTEM", storage.value)
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.hulkdx.core5x5.feature.settings.presentation
 
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.hulkdx.core5x5.core.preferences.domain.Appearance
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
@@ -10,6 +11,15 @@ import com.hulkdx.core5x5.core.restalerts.domain.RestAlertPermissions
 import com.hulkdx.core5x5.core.restalerts.domain.RestNotificationPermission
 import com.hulkdx.core5x5.feature.settings.di.settingsModule
 import com.hulkdx.core5x5.feature.settings.domain.AppMetadata
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotSame
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -25,15 +35,6 @@ import org.koin.core.annotation.KoinInternalApi
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import org.koin.viewmodel.resolveViewModel
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotSame
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
@@ -194,6 +195,40 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun appearanceSelectionWaitsForSavedSuccessAndRetainsTheDialogAfterFailure() = runTest(dispatcher) {
+        repository.values.value = TrainingPreferences(WeightUnit.LB, 91, false, true, Appearance.DARK)
+        val viewModel = createLoadedViewModel()
+        // Only an open appearance selector can submit an appearance change.
+        viewModel.selectAppearance(Appearance.LIGHT)
+        assertEquals(0, repository.saves)
+        viewModel.openAppearance()
+        repository.saveGate = CompletableDeferred()
+        repository.saveError = IllegalStateException("write failed")
+        viewModel.selectAppearance(Appearance.LIGHT)
+        viewModel.selectAppearance(Appearance.SYSTEM)
+        viewModel.dismissDialog()
+        dispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.isSaving)
+        assertEquals(SettingsDialog.APPEARANCE, viewModel.uiState.value.dialog)
+        assertEquals(Appearance.DARK, viewModel.uiState.value.preferences?.appearance)
+        assertEquals(1, repository.saves)
+
+        repository.saveGate?.complete(Unit)
+        dispatcher.scheduler.runCurrent()
+        assertFalse(viewModel.uiState.value.isSaving)
+        assertEquals(SettingsError.SAVE, viewModel.uiState.value.error)
+        assertEquals(SettingsDialog.APPEARANCE, viewModel.uiState.value.dialog)
+        assertEquals(Appearance.DARK, viewModel.uiState.value.preferences?.appearance)
+
+        repository.saveError = null
+        viewModel.selectAppearance(Appearance.LIGHT)
+        dispatcher.scheduler.runCurrent()
+        assertEquals(TrainingPreferences(WeightUnit.LB, 91, false, true, Appearance.LIGHT), viewModel.uiState.value.preferences)
+        assertNull(viewModel.uiState.value.dialog)
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
     fun pendingUnitChangeKeepsObservingExternalPreferenceUpdates() = runTest(dispatcher) {
         repository.values.value = TrainingPreferences(restDurationSeconds = 91)
         val viewModel = createLoadedViewModel()
@@ -350,6 +385,8 @@ private class FakePreferencesRepository : TrainingPreferencesRepository {
     override suspend fun setWeightUnit(unit: WeightUnit) = save { it.copy(weightUnit = unit) }
     override suspend fun setRestDurationSeconds(seconds: Long) = error("Settings only changes the weight unit")
     override suspend fun setRestNotificationsEnabled(enabled: Boolean) = save { it.copy(restNotificationsEnabled = enabled) }
+
+    override suspend fun setAppearance(appearance: Appearance) = save { it.copy(appearance = appearance) }
     override suspend fun setRestSoundEnabled(enabled: Boolean) = save { it.copy(restSoundEnabled = enabled) }
 
     private suspend fun save(transform: (TrainingPreferences) -> TrainingPreferences) {

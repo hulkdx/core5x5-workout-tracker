@@ -19,8 +19,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import com.hulkdx.core5x5.core.ui.theme.AppColors
@@ -74,7 +74,7 @@ fun AppWorkoutIndicator(label: String, modifier: Modifier = Modifier) {
             ),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = label, style = AppTypography.Label, color = AppColors.Background)
+            Text(text = label, style = AppTypography.Label, color = AppColors.OnAction)
         }
     }
 }

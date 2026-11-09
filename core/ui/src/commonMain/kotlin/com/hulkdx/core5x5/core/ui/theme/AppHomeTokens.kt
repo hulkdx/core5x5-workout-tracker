@@ -1,5 +1,6 @@
 package com.hulkdx.core5x5.core.ui.theme
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -7,13 +8,13 @@ import androidx.compose.ui.unit.sp
 
 /** home.* raster estimates from 01. HomeScreen.png; see design/specs/today.md. */
 object AppHomeTokens {
-    val Background = Color(0xFF0E1011)
-    val Card = Color(0xFF141617)
-    val Primary = Color(0xFFF5F8F7)
-    val Secondary = Color(0xFFA7B5C9)
-    val Action = AppColors.Action
-    val ActionPressed = AppColors.ActionPressed
-    val Border = Color(0xFF282C2E)
+    val Background: Color @Composable get() = themeColor(Color(0xFF0E1011), Color(0xFFF4F6F5))
+    val Card: Color @Composable get() = themeColor(Color(0xFF141617), Color(0xFFFFFFFF))
+    val Primary: Color @Composable get() = themeColor(Color(0xFFF5F8F7), Color(0xFF18211C))
+    val Secondary: Color @Composable get() = themeColor(Color(0xFFA7B5C9), Color(0xFF526159))
+    val Action: Color @Composable get() = AppColors.Action
+    val ActionPressed: Color @Composable get() = AppColors.ActionPressed
+    val Border: Color @Composable get() = themeColor(Color(0xFF282C2E), Color(0xFFD7DFDA))
     val SystemTopReserve = 44.dp
     val SystemBottomReserve = 20.dp
     val Inset = 16.dp

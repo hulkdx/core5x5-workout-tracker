@@ -1,5 +1,6 @@
 package com.hulkdx.core5x5.core.ui.theme
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -7,11 +8,11 @@ import androidx.compose.ui.unit.sp
 
 /** complete.* raster estimates from 06. CompleteWorkout.png, normalized to width 390. */
 object AppCompleteTokens {
-    val Background = Color(0xFF0A1013)
-    val Card = Color(0xFF151B20)
-    val Border = Color(0xFF303C43)
-    val Action = AppColors.Action
-    val ActionPressed = AppColors.ActionPressed
+    val Background: Color @Composable get() = themeColor(Color(0xFF0A1013), Color(0xFFF4F6F5))
+    val Card: Color @Composable get() = themeColor(Color(0xFF151B20), Color(0xFFFFFFFF))
+    val Border: Color @Composable get() = themeColor(Color(0xFF303C43), Color(0xFFCDD7D0))
+    val Action: Color @Composable get() = AppColors.Action
+    val ActionPressed: Color @Composable get() = AppColors.ActionPressed
     val SystemTopReserve = 44.dp
     val SystemBottomReserve = 20.dp
     val Inset = 20.dp

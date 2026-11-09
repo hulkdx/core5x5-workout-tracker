@@ -20,5 +20,5 @@ data class SettingsUiState(
     val canChangeRestSound: Boolean get() = canChangePreferences && restNotificationsEnabled
 }
 
-enum class SettingsDialog { UNITS, ABOUT, LICENSE }
+enum class SettingsDialog { UNITS, APPEARANCE, ABOUT, LICENSE }
 enum class SettingsError { LOAD, SAVE, OPEN_REPOSITORY, OPEN_PRIVACY_POLICY }

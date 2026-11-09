@@ -91,10 +91,11 @@ private fun HistoryDateTile(weekday: String, day: String, fullDate: String) {
 
 @Composable
 private fun HistoryClockIcon() {
+    val color = History.Secondary
     Canvas(Modifier.size(History.ClockSize).clearAndSetSemantics {}) {
         val stroke = size.width * 0.08f
-        drawCircle(History.Secondary, radius = size.width / 2 - stroke, style = Stroke(stroke))
-        drawLine(History.Secondary, center, Offset(center.x, size.height * 0.24f), stroke, StrokeCap.Round)
-        drawLine(History.Secondary, center, Offset(size.width * 0.69f, size.height * 0.62f), stroke, StrokeCap.Round)
+        drawCircle(color, radius = size.width / 2 - stroke, style = Stroke(stroke))
+        drawLine(color, center, Offset(center.x, size.height * 0.24f), stroke, StrokeCap.Round)
+        drawLine(color, center, Offset(size.width * 0.69f, size.height * 0.62f), stroke, StrokeCap.Round)
     }
 }

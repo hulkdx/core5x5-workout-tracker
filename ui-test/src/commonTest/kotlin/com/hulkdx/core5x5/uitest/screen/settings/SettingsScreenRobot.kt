@@ -2,9 +2,10 @@
 
 package com.hulkdx.core5x5.uitest.screen.settings
 
-import androidx.compose.ui.test.*
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.test.*
+import com.hulkdx.core5x5.core.preferences.domain.Appearance
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.uitest.AppUiTest
 import kotlin.test.assertEquals
@@ -21,6 +22,11 @@ fun launchSettingsScreen(
 }
 
 class SettingsScreenRobot(private val app: AppUiTest) {
+    fun openAppearance() { app.awaitNode(hasTestTag("settings-appearance") and isEnabled()).performScrollTo().performClick() }
+    fun chooseAppearance(appearance: Appearance, waitForSave: Boolean = true) {
+        app.awaitNode(hasTestTag("settings-appearance:${appearance.name}") and isEnabled()).performClick()
+        if (waitForSave) app.awaitAbsent("settings-dialog")
+    }
     fun openUnits() { app.awaitNode(hasTestTag("settings-units") and isEnabled()).performScrollTo().performClick() }
     fun cancelUnits() {
         app.awaitNode(hasTestTag("settings-cancel")).performScrollTo().performClick()
@@ -45,6 +51,9 @@ class SettingsScreenRobot(private val app: AppUiTest) {
 }
 
 class SettingsScreenVerify(private val app: AppUiTest) {
+    fun appearanceSelected(appearance: Appearance) {
+        app.awaitNode(hasTestTag("settings-appearance:${appearance.name}") and isEnabled()).assertIsSelected()
+    }
     fun loadingShown() { app.awaitNode(hasText("Loading preferences…")).assertIsDisplayed() }
     fun loadErrorShown() { app.awaitNode(hasText("Unable to load preferences. Try again.")).assertIsDisplayed() }
     fun unitSelected(unit: WeightUnit) { app.awaitNode(hasTestTag("settings-unit:${unit.name}")).assertIsSelected() }

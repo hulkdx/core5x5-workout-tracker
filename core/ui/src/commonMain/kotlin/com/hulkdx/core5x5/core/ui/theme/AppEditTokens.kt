@@ -1,5 +1,6 @@
 package com.hulkdx.core5x5.core.ui.theme
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -11,9 +12,9 @@ object AppEditTokens {
     val Gap = 12.dp
     val CardPadding = 14.dp
     val NameGap = 8.dp
-    val Control = Color(0xFF232A30)
-    val Sheet = Color(0xFF171E23)
-    val FieldBorder = Color(0xFF39454E)
+    val Control: Color @Composable get() = themeColor(Color(0xFF232A30), Color(0xFFE8EEEA))
+    val Sheet: Color @Composable get() = themeColor(Color(0xFF171E23), Color(0xFFFFFFFF))
+    val FieldBorder: Color @Composable get() = themeColor(Color(0xFF39454E), Color(0xFFA6B6AC))
     val Title = AppHomeTokens.Title.copy(fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.SemiBold)
     val Body = AppHomeTokens.Prescription.copy(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Normal)
     val Value = Body.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.SemiBold)

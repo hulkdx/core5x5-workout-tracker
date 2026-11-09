@@ -23,18 +23,26 @@ import com.hulkdx.core5x5.core.ui.theme.AppTypography
 
 /** Color overrides preserve the shared button's geometry and interaction behavior. */
 data class AppButtonPalette(
-    val background: Color = AppColors.Background,
-    val surface: Color = AppColors.Elevated,
-    val pressedSurface: Color = AppColors.Pressed,
-    val primaryText: Color = AppColors.PrimaryText,
-    val action: Color = AppColors.Action,
-    val actionPressed: Color = AppColors.ActionPressed,
-    val border: Color = AppColors.Border,
+    val onAction: Color,
+    val surface: Color,
+    val pressedSurface: Color,
+    val primaryText: Color,
+    val action: Color,
+    val actionPressed: Color,
+    val border: Color,
 ) {
     companion object {
-        val Default = AppButtonPalette()
-        val Home = AppButtonPalette(
-            background = AppHomeTokens.Background,
+        val Default: AppButtonPalette @Composable get() = AppButtonPalette(
+            onAction = AppColors.OnAction,
+            surface = AppColors.Elevated,
+            pressedSurface = AppColors.Pressed,
+            primaryText = AppColors.PrimaryText,
+            action = AppColors.Action,
+            actionPressed = AppColors.ActionPressed,
+            border = AppColors.Border,
+        )
+        val Home: AppButtonPalette @Composable get() = AppButtonPalette(
+            onAction = AppColors.OnAction,
             surface = AppHomeTokens.Card,
             pressedSurface = AppHomeTokens.Border,
             primaryText = AppHomeTokens.Primary,
@@ -91,7 +99,7 @@ private fun AppButton(
         shape = RoundedCornerShape(AppDimensions.RadiusMedium),
         colors = ButtonDefaults.buttonColors(
             containerColor = background,
-            contentColor = if (primary) palette.background else palette.primaryText,
+            contentColor = if (primary) palette.onAction else palette.primaryText,
             disabledContainerColor = AppColors.Disabled,
             disabledContentColor = AppColors.DisabledText,
         ),

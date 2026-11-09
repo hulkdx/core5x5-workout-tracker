@@ -29,6 +29,7 @@ fun AppSettingRow(
     subtitle: String? = null,
     onClick: (() -> Unit)? = null,
 ) {
+    val chevronColor = Settings.Secondary
     Column(
         modifier = modifier.fillMaxWidth()
             .heightIn(min = Settings.RowHeight)
@@ -62,8 +63,8 @@ fun AppSettingRow(
                     val top = Offset(size.width * 0.3f, size.height * 0.15f)
                     val middle = Offset(size.width * 0.65f, size.height * 0.5f)
                     val bottom = Offset(size.width * 0.3f, size.height * 0.85f)
-                    drawLine(Settings.Secondary, top, middle, stroke, StrokeCap.Round)
-                    drawLine(Settings.Secondary, middle, bottom, stroke, StrokeCap.Round)
+                    drawLine(chevronColor, top, middle, stroke, StrokeCap.Round)
+                    drawLine(chevronColor, middle, bottom, stroke, StrokeCap.Round)
                 }
             }
         }

@@ -20,13 +20,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.preferences.domain.formatWeight
@@ -128,6 +128,8 @@ private fun ExerciseSelector(selected: CompletedExerciseType, onSelected: (Compl
 
 @Composable
 private fun WeightPlot(points: List<HistoryWeightPoint>, exercise: CompletedExerciseType, unit: WeightUnit) {
+    val borderColor = History.Border
+    val actionColor = History.Action
     // A zero baseline avoids exaggerating small weight changes and handles flat/zero histories.
     val maximum = points.maxOf { it.weightKg }.takeIf { it > 0.0 } ?: 1.0
     val description = remember(points, exercise, unit) {
@@ -152,13 +154,13 @@ private fun WeightPlot(points: List<HistoryWeightPoint>, exercise: CompletedExer
             )
             listOf(0f, 0.5f, 1f).forEach { fraction ->
                 val y = inset + fraction * height
-                drawLine(History.Border, Offset(inset, y), Offset(inset + width, y), History.BorderStroke.toPx())
+                drawLine(borderColor, Offset(inset, y), Offset(inset + width, y), History.BorderStroke.toPx())
             }
             for (index in 1 until points.size) {
-                drawLine(History.Action, position(index - 1), position(index), History.GraphStroke.toPx(), StrokeCap.Round)
+                drawLine(actionColor, position(index - 1), position(index), History.GraphStroke.toPx(), StrokeCap.Round)
             }
             points.indices.forEach { index ->
-                drawCircle(History.Action, radius = inset, center = position(index))
+                drawCircle(actionColor, radius = inset, center = position(index))
             }
         }
     }

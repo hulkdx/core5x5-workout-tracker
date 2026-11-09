@@ -28,11 +28,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -42,14 +42,16 @@ import com.hulkdx.core5x5.core.ui.theme.AppCompleteTokens as Complete
 
 @Composable
 fun AppCompletionSuccessIcon() {
+    val actionColor = Complete.Action
+    val onActionColor = AppColors.OnAction
     Canvas(Modifier.size(Complete.SuccessSize).clearAndSetSemantics {}) {
-        drawCircle(Complete.Action)
+        drawCircle(actionColor)
         val check = Path().apply {
             moveTo(size.width * 0.24f, size.height * 0.50f)
             lineTo(size.width * 0.42f, size.height * 0.68f)
             lineTo(size.width * 0.77f, size.height * 0.31f)
         }
-        drawPath(check, Complete.Background, style = Stroke(
+        drawPath(check, onActionColor, style = Stroke(
             width = size.width * 0.10f, cap = StrokeCap.Round, join = StrokeJoin.Round,
         ))
     }
@@ -123,7 +125,7 @@ fun AppNextWorkoutSummary(title: String, indicator: String, modifier: Modifier =
                         .clearAndSetSemantics {},
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(indicator, style = Complete.BadgeLabel, color = Complete.Background)
+                    Text(indicator, style = Complete.BadgeLabel, color = AppColors.OnAction)
                 }
             }
         }
@@ -143,7 +145,7 @@ fun AppCompletionButton(label: String, onClick: () -> Unit, modifier: Modifier =
         interactionSource = interactionSource,
         colors = ButtonDefaults.buttonColors(
             containerColor = if (pressed) Complete.ActionPressed else Complete.Action,
-            contentColor = Complete.Background,
+            contentColor = AppColors.OnAction,
         ),
     ) {
         Text(label, style = Complete.ButtonLabel, textAlign = TextAlign.Center)

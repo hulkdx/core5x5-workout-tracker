@@ -3,6 +3,7 @@ package com.hulkdx.core5x5.feature.settings.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hulkdx.core5x5.core.common.Logger
+import com.hulkdx.core5x5.core.preferences.domain.Appearance
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.restalerts.domain.RestAlertPermissions
@@ -61,6 +62,15 @@ class SettingsViewModel(
     fun selectWeightUnit(unit: WeightUnit) {
         if (uiState.value.dialog != SettingsDialog.UNITS) return
         save { repository.setWeightUnit(unit) }
+    }
+
+    fun openAppearance() {
+        if (uiState.value.canChangePreferences) showDialog(SettingsDialog.APPEARANCE)
+    }
+
+    fun selectAppearance(appearance: Appearance) {
+        if (uiState.value.dialog != SettingsDialog.APPEARANCE) return
+        save { repository.setAppearance(appearance) }
     }
 
     fun setRestNotificationsEnabled(enabled: Boolean) {

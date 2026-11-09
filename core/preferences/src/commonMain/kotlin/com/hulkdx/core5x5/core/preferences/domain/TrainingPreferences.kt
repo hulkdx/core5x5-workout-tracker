@@ -6,6 +6,7 @@ data class TrainingPreferences(
     val restDurationSeconds: Long = DEFAULT_REST_DURATION_SECONDS,
     val restNotificationsEnabled: Boolean = true,
     val restSoundEnabled: Boolean = true,
+    val appearance: Appearance = Appearance.SYSTEM,
 ) {
     init {
         require(restDurationSeconds in 1..MAX_REST_DURATION_SECONDS) {

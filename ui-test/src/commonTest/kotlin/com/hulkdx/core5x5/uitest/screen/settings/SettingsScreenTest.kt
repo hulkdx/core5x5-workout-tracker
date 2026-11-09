@@ -3,6 +3,7 @@
 package com.hulkdx.core5x5.uitest.screen.settings
 
 import androidx.compose.ui.unit.dp
+import com.hulkdx.core5x5.core.preferences.domain.Appearance
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.restalerts.domain.RestAlertPermissionStatus
 import com.hulkdx.core5x5.core.restalerts.domain.RestNotificationPermission
@@ -17,6 +18,34 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class SettingsScreenTest {
+    @Test
+    fun appearanceChoicePersistsAndCancelKeepsTheSavedSelection() = runAppUiTest {
+        val settings = launchSettingsScreen(this) {}
+        settings.openAppearance()
+        settings.verify { appearanceSelected(Appearance.SYSTEM) }
+        settings.chooseAppearance(Appearance.LIGHT)
+        restart()
+        val restored = launchSettingsScreen(this) {}
+        restored.openAppearance()
+        restored.verify { appearanceSelected(Appearance.LIGHT) }
+        restored.cancelUnits()
+        restored.openAppearance()
+        restored.verify { appearanceSelected(Appearance.LIGHT) }
+        restored.chooseAppearance(Appearance.DARK)
+    }
+
+    @Test
+    fun failedAppearanceSaveRetainsTheSelectedChoiceAndCanRetry() = runAppUiTest {
+        val settings = launchSettingsScreen(this) {}
+        settings.openAppearance()
+        blockPreferenceWrites()
+        settings.chooseAppearance(Appearance.LIGHT, waitForSave = false)
+        settings.verify { appearanceSelected(Appearance.SYSTEM); noSaveStatusText() }
+        allowPreferenceWrites()
+        settings.chooseAppearance(Appearance.LIGHT)
+        settings.openAppearance()
+        settings.verify { appearanceSelected(Appearance.LIGHT) }
+    }
     @Test
     fun switchesPersistIndependentlyAndMasterOffRetainsTheSavedSoundChoice() = runAppUiTest {
         val settings = launchSettingsScreen(this) {}

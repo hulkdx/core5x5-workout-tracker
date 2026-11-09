@@ -1,5 +1,6 @@
 package com.hulkdx.core5x5.core.ui.theme
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -12,23 +13,24 @@ object AppMotion {
     const val NavigationDurationMillis = 200
 }
 
-/** Measured dark tokens from the workspace's design/tokens.json. */
+/** Shared semantic colors; dark values retain the established application palette. */
 object AppColors {
-    val Background = Color(0xFF0C1114)
-    val Elevated = Color(0xFF151B20)
-    val Subtle = Color(0xFF11171B)
-    val Pressed = Color(0xFF1C252A)
-    val Disabled = Color(0xFF1D252A)
-    val PrimaryText = Color(0xFFF5F8F7)
-    val SecondaryText = Color(0xFF9BA6AD)
-    val MutedText = Color(0xFF68747A)
-    val DisabledText = Color(0xFF59656C)
+    val Background: Color @Composable get() = themeColor(Color(0xFF0C1114), Color(0xFFF4F6F5))
+    val Elevated: Color @Composable get() = themeColor(Color(0xFF151B20), Color(0xFFFFFFFF))
+    val Subtle: Color @Composable get() = themeColor(Color(0xFF11171B), Color(0xFFEDF1EF))
+    val Pressed: Color @Composable get() = themeColor(Color(0xFF1C252A), Color(0xFFE1E8E4))
+    val Disabled: Color @Composable get() = themeColor(Color(0xFF1D252A), Color(0xFFE4E9E6))
+    val PrimaryText: Color @Composable get() = themeColor(Color(0xFFF5F8F7), Color(0xFF18211C))
+    val SecondaryText: Color @Composable get() = themeColor(Color(0xFF9BA6AD), Color(0xFF526159))
+    val MutedText: Color @Composable get() = themeColor(Color(0xFF68747A), Color(0xFF59675E))
+    val DisabledText: Color @Composable get() = themeColor(Color(0xFF59656C), Color(0xFF748178))
+    val OnAction: Color @Composable get() = themeColor(Color(0xFF0E1011), Color.White)
     // Shared green accents for every screen, including completion and legacy controls.
-    val Action = Color(0xFF35E575)
-    val ActionPressed = Color(0xFF2FCC67)
-    val ActionTint = Color(0xFF183823)
-    val Border = Color(0xFF273137)
-    val Destructive = Color(0xFFF06C6C)
+    val Action: Color @Composable get() = themeColor(Color(0xFF35E575), Color(0xFF147638))
+    val ActionPressed: Color @Composable get() = themeColor(Color(0xFF2FCC67), Color(0xFF106331))
+    val ActionTint: Color @Composable get() = themeColor(Color(0xFF183823), Color(0xFFDCEFE2))
+    val Border: Color @Composable get() = themeColor(Color(0xFF273137), Color(0xFFCDD7D0))
+    val Destructive: Color @Composable get() = themeColor(Color(0xFFF06C6C), Color(0xFFBA3030))
 }
 
 /** The type.* measurements, using platform sans-serif in place of the reference Inter font. */

@@ -24,13 +24,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.hulkdx.core5x5.core.ui.theme.AppColors
@@ -90,9 +90,9 @@ fun AppHomeStartButton(
         interactionSource = interactionSource,
         colors = ButtonDefaults.buttonColors(
             containerColor = if (pressed) Home.ActionPressed else Home.Action,
-            contentColor = Home.Background,
+            contentColor = AppColors.OnAction,
             disabledContainerColor = if (dimWhenDisabled) AppColors.Disabled else Home.Action,
-            disabledContentColor = if (dimWhenDisabled) AppColors.DisabledText else Home.Background,
+            disabledContentColor = if (dimWhenDisabled) AppColors.DisabledText else AppColors.OnAction,
         ),
     ) {
         Text(text = label, style = Home.Button, textAlign = androidx.compose.ui.text.style.TextAlign.Center)

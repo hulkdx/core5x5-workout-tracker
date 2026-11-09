@@ -1,5 +1,6 @@
 package com.hulkdx.core5x5.core.ui.theme
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -7,13 +8,13 @@ import androidx.compose.ui.unit.sp
 
 /** history.* geometry from 07 History.png; colors align with Today by user direction. */
 object AppHistoryTokens {
-    val Background = AppHomeTokens.Background
-    val Card = AppHomeTokens.Card
-    val DateTile = Color(0xFF1D2022)
-    val Border = AppHomeTokens.Border
-    val Primary = AppHomeTokens.Primary
-    val Secondary = AppHomeTokens.Secondary
-    val Action = AppHomeTokens.Action
+    val Background: Color @Composable get() = AppHomeTokens.Background
+    val Card: Color @Composable get() = AppHomeTokens.Card
+    val DateTile: Color @Composable get() = themeColor(Color(0xFF1D2022), Color(0xFFEDF1EF))
+    val Border: Color @Composable get() = AppHomeTokens.Border
+    val Primary: Color @Composable get() = AppHomeTokens.Primary
+    val Secondary: Color @Composable get() = AppHomeTokens.Secondary
+    val Action: Color @Composable get() = AppHomeTokens.Action
     val Inset = 20.dp
     val TopGap = 14.dp
     val TitleGap = 16.dp

@@ -48,6 +48,8 @@ fun SettingsRoute(onTabSelected: (TopLevelTab) -> Unit, modifier: Modifier = Mod
                 }
             },
             onOpenUnits = viewModel::openUnits,
+            onOpenAppearance = viewModel::openAppearance,
+            onSelectAppearance = viewModel::selectAppearance,
             onOpenAbout = viewModel::openAbout,
             onOpenLicense = viewModel::openLicense,
             onSelectUnit = viewModel::selectWeightUnit,

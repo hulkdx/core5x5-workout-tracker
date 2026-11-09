@@ -2,6 +2,7 @@ package com.hulkdx.core5x5.feature.settings.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,11 +27,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -41,6 +44,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.hulkdx.core5x5.core.navigation.TopLevelTab
+import com.hulkdx.core5x5.core.preferences.domain.Appearance
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.restalerts.domain.RestAlertPermissionStatus
@@ -73,6 +77,8 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     onRestNotificationsChange: (Boolean, RestNotificationPermission) -> Unit = { _, _ -> },
     onRestSoundChange: (Boolean) -> Unit = {},
+    onOpenAppearance: () -> Unit = {},
+    onSelectAppearance: (Appearance) -> Unit = {},
 ) {
     Column(
         modifier = modifier.testTag("settings").fillMaxSize().background(Settings.Background)
@@ -99,6 +105,14 @@ fun SettingsScreen(
                         value = preferences.weightUnit.displayName(),
                         enabled = uiState.canChangePreferences,
                         onClick = onOpenUnits,
+                    )
+                    SettingsDivider()
+                    AppSettingRow(
+                        label = "Appearance",
+                        modifier = Modifier.testTag("settings-appearance"),
+                        value = preferences.appearance.displayName(),
+                        enabled = uiState.canChangePreferences,
+                        onClick = onOpenAppearance,
                     )
                 }
             }
@@ -143,35 +157,33 @@ fun SettingsScreen(
     }
 
     when (uiState.dialog) {
+        SettingsDialog.APPEARANCE -> SettingsDialogSurface("Appearance", onDismissDialog) {
+            Column(modifier = Modifier.selectableGroup()) {
+                Appearance.entries.forEach { appearance ->
+                    SettingsChoiceRow(
+                        label = appearance.displayName(),
+                        tag = "settings-appearance:${appearance.name}",
+                        selected = uiState.preferences?.appearance == appearance,
+                        enabled = !uiState.isSaving,
+                        onSelect = { onSelectAppearance(appearance) },
+                    )
+                }
+            }
+            AppSecondaryButton(
+                label = "Cancel", modifier = Modifier.testTag("settings-cancel"), enabled = !uiState.isSaving,
+                onClick = onDismissDialog, palette = AppButtonPalette.Home,
+            )
+        }
         SettingsDialog.UNITS -> SettingsDialogSurface("Units", onDismissDialog) {
             Column(modifier = Modifier.selectableGroup()) {
                 WeightUnit.entries.forEach { unit ->
-                    val selected = uiState.preferences?.weightUnit == unit
-                    Row(
-                        modifier = Modifier.testTag("settings-unit:${unit.name}").fillMaxWidth().heightIn(min = AppDimensions.SettingHeight)
-                            .selectable(
-                                selected = selected,
-                                enabled = !uiState.isSaving,
-                                role = Role.RadioButton,
-                                onClick = { onSelectUnit(unit) },
-                            ),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = unit.displayName(),
-                            modifier = Modifier.weight(1f),
-                            style = AppTypography.Body,
-                            color = Settings.Primary,
-                        )
-                        if (selected) {
-                            Text(
-                                text = "✓",
-                                modifier = Modifier.clearAndSetSemantics {},
-                                style = AppTypography.Body,
-                                color = Settings.Action,
-                            )
-                        }
-                    }
+                    SettingsChoiceRow(
+                        label = unit.displayName(),
+                        tag = "settings-unit:${unit.name}",
+                        selected = uiState.preferences?.weightUnit == unit,
+                        enabled = !uiState.isSaving,
+                        onSelect = { onSelectUnit(unit) },
+                    )
                 }
             }
             AppSecondaryButton(label = "Cancel", modifier = Modifier.testTag("settings-cancel"), enabled = !uiState.isSaving, onClick = onDismissDialog, palette = AppButtonPalette.Home)
@@ -192,6 +204,29 @@ fun SettingsScreen(
             AppSecondaryButton(label = "Back to About", modifier = Modifier.testTag("settings-back-about"), onClick = onOpenAbout, palette = AppButtonPalette.Home)
         }
         null -> Unit
+    }
+}
+
+@Composable
+private fun SettingsChoiceRow(label: String, tag: String, selected: Boolean, enabled: Boolean, onSelect: () -> Unit) {
+    Row(
+        modifier = Modifier.testTag(tag).fillMaxWidth().heightIn(min = AppDimensions.SettingHeight)
+            .clip(RoundedCornerShape(Settings.CardRadius))
+            .selectable(
+                selected = selected,
+                enabled = enabled,
+                role = Role.RadioButton,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(color = Settings.Action),
+                onClick = onSelect,
+            )
+            .padding(horizontal = Settings.HeadingGap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, Modifier.weight(1f), style = AppTypography.Body, color = Settings.Primary)
+        if (selected) {
+            Text("✓", Modifier.clearAndSetSemantics {}, style = AppTypography.Body, color = Settings.Action)
+        }
     }
 }
 
@@ -259,7 +294,7 @@ private fun SettingsSwitchRow(
             enabled = enabled,
             modifier = Modifier.clearAndSetSemantics {},
             colors = SwitchDefaults.colors(
-                checkedThumbColor = Settings.Background,
+                checkedThumbColor = AppColors.OnAction,
                 checkedTrackColor = Settings.Action,
                 checkedBorderColor = Settings.Action,
                 uncheckedThumbColor = Settings.Secondary,

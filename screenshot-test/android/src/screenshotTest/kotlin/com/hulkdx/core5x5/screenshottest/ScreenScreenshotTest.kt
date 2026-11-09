@@ -11,6 +11,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.hulkdx.core5x5.core.navigation.TopLevelTab
+import com.hulkdx.core5x5.core.preferences.domain.Appearance
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
@@ -545,7 +546,7 @@ private fun settingsDialogState(dialog: SettingsDialog) = SettingsUiState(
 )
 
 @Composable
-private fun WorkoutDetailSnapshot(state: WorkoutDetailUiState) = ScreenFrame {
+private fun WorkoutDetailSnapshot(state: WorkoutDetailUiState, darkTheme: Boolean = true) = ScreenFrame(darkTheme = darkTheme) {
     WorkoutDetailScreen(
         uiState = state,
         onBack = {},
@@ -556,19 +557,20 @@ private fun WorkoutDetailSnapshot(state: WorkoutDetailUiState) = ScreenFrame {
 }
 
 @Composable
-private fun HistorySnapshot(state: HistoryUiState) = ScreenFrame(
+private fun HistorySnapshot(state: HistoryUiState, darkTheme: Boolean = true) = ScreenFrame(
     navigationItem = TopLevelTab.HISTORY,
+    darkTheme = darkTheme,
 ) {
     HistoryScreen(uiState = state, onRetryLoad = {}, weightUnit = WeightUnit.KG)
 }
 
 @Composable
-private fun TodaySnapshot(state: TodayUiState) = ScreenFrame(navigationItem = TopLevelTab.TODAY) {
+private fun TodaySnapshot(state: TodayUiState, darkTheme: Boolean = true) = ScreenFrame(navigationItem = TopLevelTab.TODAY, darkTheme = darkTheme) {
     TodayScreen(uiState = state, onStartWorkout = {}, onResumeWorkout = {}, onRetryLoad = {})
 }
 
 @Composable
-private fun ActiveWorkoutSnapshot(state: ActiveWorkoutUiState) = AppTheme {
+private fun ActiveWorkoutSnapshot(state: ActiveWorkoutUiState, darkTheme: Boolean = true) = AppTheme(darkTheme = darkTheme) {
     ActiveWorkoutScreen(
         uiState = state,
         onBack = {},
@@ -584,7 +586,7 @@ private fun ActiveWorkoutSnapshot(state: ActiveWorkoutUiState) = AppTheme {
 }
 
 @Composable
-private fun WorkoutCompleteSnapshot(state: WorkoutCompleteUiState) = AppTheme {
+private fun WorkoutCompleteSnapshot(state: WorkoutCompleteUiState, darkTheme: Boolean = true) = AppTheme(darkTheme = darkTheme) {
     WorkoutCompleteScreen(
         uiState = state,
         onRetryLoad = {},
@@ -597,8 +599,9 @@ private fun WorkoutCompleteSnapshot(state: WorkoutCompleteUiState) = AppTheme {
 }
 
 @Composable
-private fun SettingsSnapshot(state: SettingsUiState) = ScreenFrame(
+private fun SettingsSnapshot(state: SettingsUiState, darkTheme: Boolean = true) = ScreenFrame(
     navigationItem = TopLevelTab.SETTINGS,
+    darkTheme = darkTheme,
 ) {
     SettingsScreen(
         uiState = state,
@@ -617,9 +620,10 @@ private fun SettingsSnapshot(state: SettingsUiState) = ScreenFrame(
 @Composable
 private fun ScreenFrame(
     navigationItem: TopLevelTab? = null,
+    darkTheme: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    AppTheme {
+    AppTheme(darkTheme = darkTheme) {
         if (navigationItem != null) {
             TopLevelScreenLayout(
                 selectedTab = navigationItem,
@@ -642,7 +646,7 @@ private fun ScreenFrame(
 }
 
 @Composable
-private fun ExerciseEditSnapshot() = AppTheme {
+private fun ExerciseEditSnapshot(darkTheme: Boolean = true) = AppTheme(darkTheme = darkTheme) {
     ExerciseEditScreen(
         state = ExerciseEditUiState(0, "Squat", 80.0, WeightUnit.KG, 5, 5, null, 180_000),
         onDismiss = {},
@@ -659,4 +663,93 @@ private fun ExerciseEditSnapshot() = AppTheme {
             bottom = AppHomeTokens.SystemBottomReserve
         ),
     )
+}
+
+/** Uses the same states and geometry as dark references, with explicit light palette coverage. */
+class LightModeScreenshotTest {
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun WorkoutComplete() = WorkoutCompleteSnapshot(completedWorkoutState(Workout.A), darkTheme = false)
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun Today() = TodaySnapshot(TodayUiState(isLoading = false, nextWorkout = Workout.A), darkTheme = false)
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun TodayError() = TodaySnapshot(TodayUiState(isLoading = false, error = TodayError.START), darkTheme = false)
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ActiveWorkout() = ActiveWorkoutSnapshot(activeWorkoutReference(Workout.A), darkTheme = false)
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun RestComplete() = ActiveWorkoutSnapshot(
+        activeWorkoutReference(Workout.B).copy(restTimer = RestTimerUiState(isVisible = true, isExpired = true)),
+        darkTheme = false,
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun ExerciseEdit() = ExerciseEditSnapshot(darkTheme = false)
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun CustomRest() = AppTheme(darkTheme = false) {
+        Box(Modifier.fillMaxSize().background(com.hulkdx.core5x5.core.ui.theme.AppEditTokens.Sheet)) {
+            CustomRestContent(150, {}, {}, {})
+        }
+    }
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun History() = HistorySnapshot(HistoryUiState(isLoading = false, completedWorkouts = historyGraphRecords()), darkTheme = false)
+
+    @PreviewTest
+    @ReferenceScreen
+    @Composable
+    fun WorkoutDetail() = WorkoutDetailSnapshot(
+        WorkoutDetailUiState(workoutId = 1L, isLoading = false, completedWorkout = historyRecords().first()),
+        darkTheme = false,
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun Settings() = SettingsSnapshot(
+        SettingsUiState(isLoading = false, preferences = TrainingPreferences(appearance = Appearance.LIGHT), versionName = "1.0.0"),
+        darkTheme = false,
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun AppearanceSelector() = SettingsSnapshot(
+        settingsDialogState(SettingsDialog.APPEARANCE).copy(preferences = TrainingPreferences(appearance = Appearance.LIGHT)),
+        darkTheme = false,
+    )
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun UnitsSelector() = SettingsSnapshot(settingsDialogState(SettingsDialog.UNITS), darkTheme = false)
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun About() = SettingsSnapshot(settingsDialogState(SettingsDialog.ABOUT), darkTheme = false)
+
+    @PreviewTest
+    @HomeReferenceScreen
+    @Composable
+    fun License() = SettingsSnapshot(settingsDialogState(SettingsDialog.LICENSE), darkTheme = false)
 }

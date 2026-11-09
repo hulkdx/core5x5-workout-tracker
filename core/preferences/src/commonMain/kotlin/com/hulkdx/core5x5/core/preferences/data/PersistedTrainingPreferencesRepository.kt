@@ -1,5 +1,6 @@
 package com.hulkdx.core5x5.core.preferences.data
 
+import com.hulkdx.core5x5.core.preferences.domain.Appearance
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
@@ -43,6 +44,10 @@ class PersistedTrainingPreferencesRepository(
         update { it.copy(restSoundEnabled = enabled) }
     }
 
+    override suspend fun setAppearance(appearance: Appearance) {
+        update { it.copy(appearance = appearance) }
+    }
+
     private suspend fun update(transform: (TrainingPreferences) -> TrainingPreferences) {
         mutex.withLock {
             val saved = load()
@@ -63,7 +68,7 @@ class PersistedTrainingPreferencesRepository(
     }
 
     private fun TrainingPreferences.encode(): String =
-        "${weightUnit.name}:$restDurationSeconds:$restNotificationsEnabled:$restSoundEnabled"
+        "${weightUnit.name}:$restDurationSeconds:$restNotificationsEnabled:$restSoundEnabled:${appearance.name}"
 
     private fun decode(value: String?): TrainingPreferences {
         val stored = value?.split(':')
@@ -76,6 +81,7 @@ class PersistedTrainingPreferencesRepository(
             restDurationSeconds = duration,
             restNotificationsEnabled = stored?.getOrNull(2)?.toBooleanStrictOrNull() ?: true,
             restSoundEnabled = stored?.getOrNull(3)?.toBooleanStrictOrNull() ?: true,
+            appearance = Appearance.entries.firstOrNull { it.name == stored?.getOrNull(4) } ?: Appearance.SYSTEM,
         )
     }
 }

@@ -1,5 +1,6 @@
 package com.hulkdx.core5x5.core.ui.theme
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -14,7 +15,7 @@ object AppActiveTokens {
     val SetDiameter = 42.dp
     val SetActiveStroke = 2.dp
     val TopBarHeight = AppDimensions.TouchTargetMin
-    val SetSurface = Color(0xFF1D2022)
+    val SetSurface: Color @Composable get() = themeColor(Color(0xFF1D2022), Color(0xFFEDF1EF))
     val Exercise = AppTypography.Heading.copy(fontSize = 22.sp, lineHeight = 28.sp)
     val Metadata = AppTypography.Body.copy(lineHeight = 22.sp)
     val SetLabel = AppHomeTokens.Exercise

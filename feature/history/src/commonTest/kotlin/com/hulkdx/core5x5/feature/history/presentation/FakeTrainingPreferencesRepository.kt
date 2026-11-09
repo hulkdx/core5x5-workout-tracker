@@ -1,5 +1,6 @@
 package com.hulkdx.core5x5.feature.history.presentation
 
+import com.hulkdx.core5x5.core.preferences.domain.Appearance
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferences
 import com.hulkdx.core5x5.core.preferences.domain.TrainingPreferencesRepository
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
@@ -23,6 +24,10 @@ class FakeTrainingPreferencesRepository : TrainingPreferencesRepository {
     }
     override suspend fun setRestNotificationsEnabled(enabled: Boolean) {
         values.value = values.value.copy(restNotificationsEnabled = enabled)
+    }
+
+    override suspend fun setAppearance(appearance: Appearance) {
+        values.value = values.value.copy(appearance = appearance)
     }
     override suspend fun setRestSoundEnabled(enabled: Boolean) {
         values.value = values.value.copy(restSoundEnabled = enabled)
