@@ -124,6 +124,19 @@ class HistoryScreenTest {
     }
 
     @Test
+    fun graphPointActionShowsRecordedWeightAndUtcTime() = runAppUiTest {
+        launchWorkoutScreen(this) {
+            tapSet(SQUAT, 1)
+            pressFinish()
+            returnToToday()
+        }
+        launchHistoryScreen(this) { openGraph() }.verify {
+            selectNextGraphPoint()
+            selectedPointShowsRecordedUtcTime("20 kg")
+        }
+    }
+
+    @Test
     fun successiveSavedWorkoutsAreBothAvailableInHistory() = runAppUiTest {
         launchWorkoutScreen(this) {
             tapSet(SQUAT, 1)
