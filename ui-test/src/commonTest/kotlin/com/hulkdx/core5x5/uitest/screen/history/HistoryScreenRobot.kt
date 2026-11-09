@@ -113,7 +113,7 @@ class HistoryScreenRobot(private val app: AppUiTest) {
         app.awaitNode(hasTestTag("tab:SETTINGS")).performClick()
         app.awaitNode(hasTestTag("settings"))
         app.awaitNode(hasTestTag("tab:HISTORY")).performClick()
-        app.awaitNode(hasTestTag("history-graph-screen"))
+        app.awaitNode(hasTestTag("history-list"))
     }
 
     fun verify(assertions: HistoryScreenVerify.() -> Unit) = HistoryScreenVerify(app).apply(assertions)
