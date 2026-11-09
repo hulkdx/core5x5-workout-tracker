@@ -13,6 +13,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun HistoryRoute(
     onTabSelected: (TopLevelTab) -> Unit,
+    onOpenGraph: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: HistoryViewModel = koinViewModel()
@@ -26,7 +27,7 @@ fun HistoryRoute(
         HistoryScreen(
             uiState = uiState,
             onRetryLoad = viewModel::loadHistory,
-            onExerciseSelected = viewModel::selectExercise,
+            onOpenGraph = onOpenGraph,
             weightUnit = uiState.weightUnit,
             onRetryPreferences = viewModel::retryPreferences,
             onDeleteWorkout = viewModel::deleteWorkout,

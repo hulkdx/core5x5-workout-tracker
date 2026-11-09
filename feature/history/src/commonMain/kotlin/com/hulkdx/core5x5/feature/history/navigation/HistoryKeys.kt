@@ -12,6 +12,10 @@ import kotlinx.serialization.modules.subclass
 data object HistoryKey : NavKey
 
 @Serializable
+@SerialName("history-graph")
+data object HistoryGraphKey : NavKey
+
+@Serializable
 @SerialName("detail")
 data class WorkoutDetailKey(val workoutId: Long) : NavKey {
     init { require(workoutId > 0) { "A workout ID must be positive" } }
@@ -20,6 +24,7 @@ data class WorkoutDetailKey(val workoutId: Long) : NavKey {
 val historyNavigationSerializers = SerializersModule {
     polymorphic(NavKey::class) {
         subclass(HistoryKey::class, HistoryKey.serializer())
+        subclass(HistoryGraphKey::class, HistoryGraphKey.serializer())
         subclass(WorkoutDetailKey::class, WorkoutDetailKey.serializer())
     }
 }

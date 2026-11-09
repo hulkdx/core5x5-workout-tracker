@@ -2,6 +2,7 @@ package com.hulkdx.core5x5.feature.history.presentation
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,13 +22,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.hulkdx.core5x5.core.preferences.domain.WeightUnit
 import com.hulkdx.core5x5.core.preferences.domain.formatWeight
 import com.hulkdx.core5x5.core.training.domain.CompletedExerciseType
@@ -45,6 +51,8 @@ fun HistoryWeightGraph(
     modifier: Modifier = Modifier,
 ) {
     val points = remember(workouts, selectedExercise) { workouts.weightHistory(selectedExercise) }
+    var selectedWorkoutId by remember(selectedExercise) { mutableStateOf<Long?>(null) }
+    val selectedPoint = points.firstOrNull { it.workoutId == selectedWorkoutId }
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(History.CardRadius),
@@ -75,7 +83,21 @@ fun HistoryWeightGraph(
                     style = History.Day,
                     color = History.Primary,
                 )
-                WeightPlot(points, selectedExercise, weightUnit)
+                WeightPlot(
+                    points = points,
+                    exercise = selectedExercise,
+                    unit = weightUnit,
+                    selectedWorkoutId = selectedWorkoutId,
+                    onPointSelected = { selectedWorkoutId = it },
+                )
+                Text(
+                    text = selectedPoint?.let {
+                        "Selected: ${formatWeight(it.weightKg, weightUnit)} · ${it.completedAtEpochMillis.toHistoryDateTime()}"
+                    } ?: "Tap a point to see its recorded weight and date/time.",
+                    modifier = Modifier.testTag("history-selected-point").semantics { liveRegion = LiveRegionMode.Polite },
+                    style = History.Metadata,
+                    color = History.Primary,
+                )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(History.GraphGap)) {
                     Text(
                         points.first().completedAtEpochMillis.toHistoryDetailDate(),
@@ -127,14 +149,20 @@ private fun ExerciseSelector(selected: CompletedExerciseType, onSelected: (Compl
 }
 
 @Composable
-private fun WeightPlot(points: List<HistoryWeightPoint>, exercise: CompletedExerciseType, unit: WeightUnit) {
+private fun WeightPlot(
+    points: List<HistoryWeightPoint>,
+    exercise: CompletedExerciseType,
+    unit: WeightUnit,
+    selectedWorkoutId: Long?,
+    onPointSelected: (Long) -> Unit,
+) {
     val borderColor = History.Border
     val actionColor = History.Action
     // A zero baseline avoids exaggerating small weight changes and handles flat/zero histories.
     val maximum = points.maxOf { it.weightKg }.takeIf { it > 0.0 } ?: 1.0
     val description = remember(points, exercise, unit) {
         "${exercise.displayName()} weight history. " + points.joinToString("; ") {
-            "${it.completedAtEpochMillis.toHistoryDetailDate()}: ${formatWeight(it.weightKg, unit)}"
+            "${it.completedAtEpochMillis.toHistoryDateTime()}: ${formatWeight(it.weightKg, unit)}"
         }
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(History.GraphGap)) {
@@ -143,7 +171,32 @@ private fun WeightPlot(points: List<HistoryWeightPoint>, exercise: CompletedExer
             Text(formatWeight(0.0, unit), style = History.Metadata, color = History.Secondary)
         }
         Canvas(
-            Modifier.weight(1f).height(History.GraphHeight).testTag("history-weight-plot").semantics { contentDescription = description },
+            Modifier.weight(1f)
+                .height(History.GraphHeight)
+                .testTag("history-weight-plot")
+                .pointerInput(points, selectedWorkoutId) {
+                    detectTapGestures { position ->
+                        val index = points.closestWeightPointIndex(
+                            tapX = position.x,
+                            tapY = position.y,
+                            plotWidth = size.width.toFloat(),
+                            plotHeight = size.height.toFloat(),
+                            pointInset = History.GraphPointRadius.toPx(),
+                            touchRadius = 24.dp.toPx(),
+                            selectedWorkoutId = selectedWorkoutId,
+                        )
+                        if (index != null) onPointSelected(points[index].workoutId)
+                    }
+                }
+                .semantics {
+                    contentDescription = description
+                    // An accessible action cycles through all saved points, even overlapping ones.
+                    onClick(label = "Inspect next recorded weight") {
+                        val current = points.indexOfFirst { it.workoutId == selectedWorkoutId }
+                        onPointSelected(points[(current + 1) % points.size].workoutId)
+                        true
+                    }
+                },
         ) {
             val inset = History.GraphPointRadius.toPx()
             val width = (size.width - inset * 2).coerceAtLeast(0f)
@@ -160,7 +213,11 @@ private fun WeightPlot(points: List<HistoryWeightPoint>, exercise: CompletedExer
                 drawLine(actionColor, position(index - 1), position(index), History.GraphStroke.toPx(), StrokeCap.Round)
             }
             points.indices.forEach { index ->
-                drawCircle(actionColor, radius = inset, center = position(index))
+                drawCircle(
+                    actionColor,
+                    radius = if (points[index].workoutId == selectedWorkoutId) inset * 1.8f else inset,
+                    center = position(index),
+                )
             }
         }
     }

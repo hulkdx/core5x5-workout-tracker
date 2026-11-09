@@ -53,7 +53,7 @@ fun HistoryScreen(
     onRetryLoad: () -> Unit,
     modifier: Modifier = Modifier,
     weightUnit: WeightUnit = uiState.weightUnit,
-    onExerciseSelected: (CompletedExerciseType) -> Unit = {},
+    onOpenGraph: () -> Unit = {},
     onRetryPreferences: () -> Unit = {},
     onDeleteWorkout: (Long) -> Unit = {},
 ) {
@@ -105,6 +105,14 @@ fun HistoryScreen(
                     color = History.Primary,
                 )
             }
+            item(key = "view-graph", contentType = "action") {
+                AppSecondaryButton(
+                    label = "View weight graph",
+                    onClick = onOpenGraph,
+                    modifier = Modifier.testTag("history-open-graph"),
+                    palette = AppButtonPalette.Home,
+                )
+            }
             when {
                 uiState.isLoading && uiState.completedWorkouts.isEmpty() -> item(key = "loading") { LoadingHistory() }
                 uiState.error != null && uiState.completedWorkouts.isEmpty() -> item(key = "error") { HistoryLoadError(onRetryLoad) }
@@ -112,15 +120,6 @@ fun HistoryScreen(
                 else -> {
                     if (uiState.error != null) {
                         item(key = "error") { HistoryLoadError(onRetryLoad) }
-                    }
-                    item(key = "weight-graph", contentType = "graph") {
-                        HistoryWeightGraph(
-                            workouts = uiState.completedWorkouts,
-                            selectedExercise = uiState.selectedExercise,
-                            weightUnit = weightUnit,
-                            onExerciseSelected = onExerciseSelected,
-                            modifier = Modifier.padding(bottom = History.TitleGap - History.CardGap),
-                        )
                     }
                     months.entries.forEachIndexed { index, (month, workouts) ->
                         item(key = "month:$month", contentType = "month") {

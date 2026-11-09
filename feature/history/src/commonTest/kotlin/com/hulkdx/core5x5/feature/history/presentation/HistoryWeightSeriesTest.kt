@@ -64,6 +64,39 @@ class HistoryWeightSeriesTest {
         assertEquals(listOf(0.0, 0.0), points.map { it.weightKg })
     }
 
+    @Test
+    fun tappingPointsUsesTimeAndWeightCoordinatesAndIgnoresDistantTaps() {
+        val points = listOf(record(1, 100, 20.0), record(2, 200, 40.0), record(3, 500, 80.0))
+            .weightHistory(CompletedExerciseType.SQUAT)
+        fun tap(x: Float, y: Float) = points.closestWeightPointIndex(
+            tapX = x, tapY = y, plotWidth = 206f, plotHeight = 106f, pointInset = 3f, touchRadius = 15f,
+        )
+        assertEquals(0, tap(3f, 81f))
+        assertEquals(1, tap(53f, 56f))
+        assertEquals(2, tap(203f, 3f))
+        assertEquals(null, tap(100f, 100f))
+    }
+
+    @Test
+    fun overlappingPointsCycleWhileSingleAndZeroSeriesStaySelectable() {
+        val tied = listOf(record(1, 100, 0.0), record(2, 100, 0.0))
+            .weightHistory(CompletedExerciseType.SQUAT)
+        fun tap(selectedId: Long?) = tied.closestWeightPointIndex(
+            tapX = 53f, tapY = 103f, plotWidth = 106f, plotHeight = 106f,
+            pointInset = 3f, touchRadius = 24f, selectedWorkoutId = selectedId,
+        )
+        assertEquals(0, tap(null))
+        assertEquals(1, tap(1L))
+        assertEquals(0, tap(2L))
+        assertEquals(0, tied.take(1).closestWeightPointIndex(
+            tapX = 53f, tapY = 103f, plotWidth = 106f, plotHeight = 106f,
+            pointInset = 3f, touchRadius = 24f,
+        ))
+        assertEquals(null, emptyList<HistoryWeightPoint>().closestWeightPointIndex(
+            0f, 0f, 106f, 106f, 3f, 24f,
+        ))
+    }
+
     private fun record(
         id: Long,
         timestamp: Long,

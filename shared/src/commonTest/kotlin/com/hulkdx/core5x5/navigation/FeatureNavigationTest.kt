@@ -7,6 +7,7 @@ import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import androidx.savedstate.compose.serialization.serializers.MutableStateSerializer
 import com.hulkdx.core5x5.core.navigation.TopLevelTab
 import com.hulkdx.core5x5.feature.history.navigation.HistoryKey
+import com.hulkdx.core5x5.feature.history.navigation.HistoryGraphKey
 import com.hulkdx.core5x5.feature.history.navigation.WorkoutDetailKey
 import com.hulkdx.core5x5.feature.settings.navigation.SettingsKey
 import com.hulkdx.core5x5.feature.workout.navigation.ActiveWorkoutKey
@@ -36,7 +37,7 @@ class FeatureNavigationTest {
     fun transitionsDistinguishTabsIncludingRetainedNestedDestinations() {
         val keys = mapOf<NavKey, List<Any>>(
             TodayKey to listOf("today", "active", "complete"),
-            HistoryKey to listOf("history", "detail"),
+            HistoryKey to listOf("history", "history-graph", "detail"),
             SettingsKey to listOf("settings"),
         )
         assertTrue(isTabSwitch("today", "history", keys))
@@ -47,6 +48,7 @@ class FeatureNavigationTest {
         assertFalse(isTabSwitch("active", "complete", keys))
         assertFalse(isTabSwitch("complete", "today", keys))
         assertFalse(isTabSwitch("detail", "history", keys))
+        assertFalse(isTabSwitch("history-graph", "history", keys))
         assertFalse(isTabSwitch("removed-entry", "today", keys))
     }
 
@@ -58,6 +60,7 @@ class FeatureNavigationTest {
             NavBackStack<NavKey>(TodayKey, ActiveWorkoutKey(id)),
             NavBackStack<NavKey>(TodayKey, WorkoutCompleteKey(id)),
             NavBackStack<NavKey>(HistoryKey, WorkoutDetailKey(id)),
+            NavBackStack<NavKey>(HistoryKey, HistoryGraphKey),
         ).forEach { original ->
             val restored = roundTrip(original)
             assertNotSame(original, restored)

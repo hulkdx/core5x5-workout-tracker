@@ -83,6 +83,14 @@ fun Long.toHistoryDetailDate(): String {
     return "${MONTH_NAMES[date.month - 1]} ${date.day}, ${date.year}"
 }
 
+/** The recorded time is UTC, matching the History date contract. */
+fun Long.toHistoryDateTime(): String {
+    val timeOfDay = this - floorDiv(MILLIS_PER_DAY) * MILLIS_PER_DAY
+    val hours = (timeOfDay / 3_600_000L).toString().padStart(2, '0')
+    val minutes = ((timeOfDay % 3_600_000L) / 60_000L).toString().padStart(2, '0')
+    return "${toHistoryDetailDate()} at $hours:$minutes UTC"
+}
+
 /** Converts the saved UTC epoch timestamp without introducing a platform date dependency. */
 private fun Long.toCivilDate(): CivilDate {
     val days = floorDiv(MILLIS_PER_DAY)
