@@ -47,14 +47,15 @@ class HistoryScreenTest {
             returnToToday()
         }
         val history = launchHistoryScreen(this) {}
+        history.openGraph()
         history.verify { loggedSquatWeightShown("22.5 kg") }
+        history.returnFromGraph()
         history.revealDelete(2)
         history.verify { savedWorkoutShown(Workout.B, id = 2, prescribedSets = 11) }
         history.tapRevealedDelete(2)
-        history.verify {
-            latestWeightShown("20 kg")
-            savedWorkoutShown(Workout.A, id = 1)
-        }
+        history.verify { savedWorkoutShown(Workout.A, id = 1) }
+        history.openGraph()
+        history.verify { latestWeightShown("20 kg") }
     }
 
     @Test
@@ -95,8 +96,7 @@ class HistoryScreenTest {
             pressFinish()
             returnToToday()
         }
-        launchHistoryScreen(this) {}.verify {
-            savedWorkoutShown(Workout.A)
+        launchHistoryScreen(this) { openGraph() }.verify {
             loggedSquatWeightShown("20 kg")
         }
     }
@@ -116,8 +116,11 @@ class HistoryScreenTest {
             returnToToday()
         }
         launchHistoryScreen(this) {
+            openGraph()
             selectLift(CompletedExerciseType.BENCH_PRESS)
+            returnFromGraph()
             visitSettingsAndReturn()
+            openGraph()
         }.verify {
             selectedLiftShown("Bench Press")
         }
