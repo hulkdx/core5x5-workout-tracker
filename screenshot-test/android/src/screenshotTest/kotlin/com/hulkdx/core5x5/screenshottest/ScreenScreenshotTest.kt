@@ -22,6 +22,7 @@ import com.hulkdx.core5x5.core.ui.theme.AppDimensions
 import com.hulkdx.core5x5.core.ui.theme.AppHomeTokens
 import com.hulkdx.core5x5.core.ui.theme.AppTheme
 import com.hulkdx.core5x5.feature.history.presentation.HistoryError
+import com.hulkdx.core5x5.feature.history.presentation.HistoryGraphScreen
 import com.hulkdx.core5x5.feature.history.presentation.HistoryScreen
 import com.hulkdx.core5x5.feature.history.presentation.HistoryUiState
 import com.hulkdx.core5x5.feature.history.presentation.WorkoutDetailError
@@ -377,21 +378,21 @@ class ScreenScreenshotTest {
     @PreviewTest
     @HomeReferenceScreen
     @Composable
-    fun HistoryGraphSingle() = HistorySnapshot(
+    fun HistoryGraphSingle() = GraphSnapshot(
         HistoryUiState(isLoading = false, completedWorkouts = historyGraphRecords().take(1)),
     )
 
     @PreviewTest
     @HomeReferenceScreen
     @Composable
-    fun HistoryGraphFlat() = HistorySnapshot(
+    fun HistoryGraphFlat() = GraphSnapshot(
         HistoryUiState(isLoading = false, completedWorkouts = historyReferenceRecords()),
     )
 
     @PreviewTest
     @HomeReferenceScreen
     @Composable
-    fun HistoryGraphZero() = HistorySnapshot(
+    fun HistoryGraphZero() = GraphSnapshot(
         HistoryUiState(isLoading = false, completedWorkouts = historyGraphRecords().map { workout ->
             workout.copy(exercises = workout.exercises.map { it.copy(weightKg = 0.0) })
         }),
@@ -400,7 +401,7 @@ class ScreenScreenshotTest {
     @PreviewTest
     @HomeReferenceScreen
     @Composable
-    fun HistoryGraphNoLift() = HistorySnapshot(
+    fun HistoryGraphNoLift() = GraphSnapshot(
         HistoryUiState(
             isLoading = false, completedWorkouts = historyGraphRecords().take(1),
             selectedExercise = CompletedExerciseType.DEADLIFT
@@ -410,7 +411,7 @@ class ScreenScreenshotTest {
     @PreviewTest
     @HomeReferenceScreen
     @Composable
-    fun HistoryGraphRefreshError() = HistorySnapshot(
+    fun HistoryGraphRefreshError() = GraphSnapshot(
         HistoryUiState(
             isLoading = false,
             completedWorkouts = historyGraphRecords(),
@@ -553,6 +554,17 @@ private fun WorkoutDetailSnapshot(state: WorkoutDetailUiState, darkTheme: Boolea
         onRetryLoad = {},
         windowInsets = WindowInsets(0, 0, 0, 0),
         modifier = Modifier.fillMaxSize(),
+    )
+}
+
+@Composable
+private fun GraphSnapshot(state: HistoryUiState, darkTheme: Boolean = true) = ScreenFrame(darkTheme = darkTheme) {
+    HistoryGraphScreen(
+        uiState = state,
+        onBack = {},
+        onRetryLoad = {},
+        onExerciseSelected = {},
+        windowInsets = WindowInsets(0, 0, 0, 0),
     )
 }
 
