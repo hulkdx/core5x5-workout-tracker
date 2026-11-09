@@ -142,6 +142,11 @@ class HistoryScreenVerify(private val app: AppUiTest) {
     fun selectNextGraphPoint() {
         app.awaitNode(hasTestTag("history-weight-plot")).performClick()
     }
+    fun selectedPointShowsRecordedUtcTime(weight: String) {
+        app.awaitNode(hasTestTag("history-selected-point"))
+            .assertTextContains("Selected: $weight", substring = true)
+            .assertTextContains("UTC", substring = true)
+    }
 
     fun savedWorkoutShown(workout: Workout, id: Long = 1, prescribedSets: Int = 15) {
         app.scrollToNode("history-list", hasTestTag("history-workout:$id"))
