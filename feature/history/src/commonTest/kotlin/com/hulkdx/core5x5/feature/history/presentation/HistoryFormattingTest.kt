@@ -32,6 +32,13 @@ class HistoryFormattingTest {
     }
 
     @Test
+    fun graphPointShowsRecordedUtcDateAndTimeAcrossDayBoundaries() {
+        assertEquals("January 1, 1970 at 00:00 UTC", 0L.toHistoryDateTime())
+        assertEquals("January 1, 1970 at 02:03 UTC", 7_380_000L.toHistoryDateTime())
+        assertEquals("December 31, 1969 at 23:59 UTC", (-60_000L).toHistoryDateTime())
+    }
+
+    @Test
     fun durationsUseCompactListAndClockLabels() {
         val workout = record(
             startedAt = 0L,
