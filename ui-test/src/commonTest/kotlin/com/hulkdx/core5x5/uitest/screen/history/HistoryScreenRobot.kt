@@ -93,8 +93,19 @@ class HistoryScreenRobot(private val app: AppUiTest) {
         }
     }
 
+    fun openGraph() {
+        app.scrollToNode("history-list", hasTestTag("history-open-graph"))
+        app.awaitNode(hasTestTag("history-open-graph")).performClick()
+        app.awaitNode(hasTestTag("history-graph-screen"))
+    }
+
+    fun returnFromGraph() {
+        app.awaitNode(hasTestTag("workout-back")).performClick()
+        app.awaitNode(hasTestTag("history-list"))
+    }
+
     fun selectLift(exercise: CompletedExerciseType) {
-        app.ui.onNodeWithTag("history-list").performScrollToNode(hasTestTag("history-lift-selector"))
+        app.awaitNode(hasTestTag("history-graph-screen"))
         app.awaitNode(hasTestTag("history-lift-selector")).performClick()
         app.awaitNode(hasTestTag("history-lift:${exercise.name}")).performClick()
     }
@@ -102,7 +113,7 @@ class HistoryScreenRobot(private val app: AppUiTest) {
         app.awaitNode(hasTestTag("tab:SETTINGS")).performClick()
         app.awaitNode(hasTestTag("settings"))
         app.awaitNode(hasTestTag("tab:HISTORY")).performClick()
-        app.awaitNode(hasTestTag("history-list"))
+        app.awaitNode(hasTestTag("history-graph-screen"))
     }
 
     fun verify(assertions: HistoryScreenVerify.() -> Unit) = HistoryScreenVerify(app).apply(assertions)
@@ -124,6 +135,13 @@ class HistoryScreenVerify(private val app: AppUiTest) {
     fun noGraphShown() {
         assertTrue(app.ui.onAllNodesWithTag("history-weight-plot").fetchSemanticsNodes().isEmpty())
     }
+    fun selectedPointShown(weight: String, date: String) {
+        app.awaitNode(hasTestTag("history-selected-point"))
+            .assertTextContains("Selected: $weight · $date")
+    }
+    fun selectNextGraphPoint() {
+        app.awaitNode(hasTestTag("history-weight-plot")).performClick()
+    }
 
     fun savedWorkoutShown(workout: Workout, id: Long = 1, prescribedSets: Int = 15) {
         app.scrollToNode("history-list", hasTestTag("history-workout:$id"))
@@ -136,15 +154,15 @@ class HistoryScreenVerify(private val app: AppUiTest) {
         app.awaitNode(hasText("No completed workouts yet. Finish a workout to see it here.")).assertIsDisplayed()
     }
     fun selectedLiftShown(name: String) {
-        app.ui.onNodeWithTag("history-list").performScrollToNode(hasTestTag("history-lift-selector"))
+        app.awaitNode(hasTestTag("history-graph-screen"))
         app.awaitNode(hasTestTag("history-lift-selector")).assertTextContains("Lift: $name")
     }
     fun latestWeightShown(weight: String) {
-        app.scrollToNode("history-list", hasText("Latest: $weight"))
+        app.awaitNode(hasTestTag("history-graph-screen"))
         app.awaitNode(hasText("Latest: $weight")).assertIsDisplayed()
     }
     fun loggedSquatWeightShown(weight: String) {
-        app.ui.onNodeWithTag("history-list").performScrollToNode(hasTestTag("history-weight-plot"))
+        app.awaitNode(hasTestTag("history-graph-screen"))
         app.awaitNode(hasTestTag("history-weight-plot")).assertIsDisplayed()
             .assertContentDescriptionContains("Squat weight history.", substring = true)
             .assertContentDescriptionContains(weight, substring = true)
