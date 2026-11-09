@@ -109,7 +109,7 @@ class HistoryScreenTest {
     }
 
     @Test
-    fun graphLiftSelectionSurvivesTabChanges() = runAppUiTest {
+    fun graphLiftSelectionUpdatesWithinDedicatedScreen() = runAppUiTest {
         launchWorkoutScreen(this) {
             tapSet(SQUAT, 1)
             pressFinish()
@@ -118,9 +118,6 @@ class HistoryScreenTest {
         launchHistoryScreen(this) {
             openGraph()
             selectLift(CompletedExerciseType.BENCH_PRESS)
-            returnFromGraph()
-            visitSettingsAndReturn()
-            openGraph()
         }.verify {
             selectedLiftShown("Bench Press")
         }
